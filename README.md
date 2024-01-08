@@ -116,7 +116,7 @@ sequenceDiagram
     actor BR as WebBrowser
     actor JHS as JupyterHTMLServer
 
-    box azure JupyterXeusKernel
+    box transparent azure JupyterXeusKernel
     participant 0PS as 0MQPollerServer
 
     participant XK as XeusKernel
