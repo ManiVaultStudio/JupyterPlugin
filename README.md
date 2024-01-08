@@ -34,7 +34,7 @@ Jupyter comprises a webserver that can ve viewed using a standard HTTP and JavaS
 
 flowchart LR
 
-    User["<span style='min-width: 60px; display: block; color:white'><img src='https://symbols.getvecta.com/stencil_253/0_actor.d8114c3f96.svg' width='60' height='60' /><span>"]
+    User["<ins>User</ins><span style='min-width: 60px; display: block; color:white'><img src='https://symbols.getvecta.com/stencil_253/0_actor.d8114c3f96.svg' width='60' height='60' /><span>"]
     Browser["<ins>Browser</ins> 
     JavaScript/HTML
     "]
