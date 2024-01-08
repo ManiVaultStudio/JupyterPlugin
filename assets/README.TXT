@@ -1,0 +1,1 @@
+svgs used here are Open Licensed from svgrepo.com
