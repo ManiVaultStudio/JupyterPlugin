@@ -31,22 +31,10 @@ Jupyter comprises a webserver that can ve viewed using a standard HTTP and JavaS
 ---
     title: Jupyter Architecture
 ---
-%%{
-  init: {
-    'theme': 'base',
-    'themeVariables': {
-      'primaryColor': '#006100',
-      'primaryTextColor': '#fff',
-      'primaryBorderColor': '#7C0000',
-      'lineColor': '#F8B229',
-      'secondaryColor': '#999999',
-      'tertiaryColor': '#fff'
-    }
-  }
-}%%
+
 flowchart LR
 
-    User[<span style='min-width: 60px; display: block; color:white'><img src='https://symbols.getvecta.com/stencil_253/0_actor.d8114c3f96.svg' width='60' height='60' /><span>]
+    User[<span style='min-width: 60px; display: block; color:white'><img src='./assets/user-rounded.svg' width='60' height='60' /><span>]
     Browser["<ins>Browser</ins> 
     JavaScript/HTML
     "]
