@@ -42,14 +42,20 @@ find_package(Qt6 COMPONENTS Widgets WebEngineWidgets REQUIRED)
 set(JUPYTERPLUGIN_SOURCES
     src/JupyterPlugin.h
     src/JupyterPlugin.cpp
-    src/JupyterXeusHernel.h
-    src/JupyterXeusHernel.cpp
+    src/XeusKernel.h
+    src/XeusKernel.cpp
+    src/XeusServer.h
+    src/XeusServer.cpp
+    src/XeusInterpreter.h
+    src/XeusInterpreter.cpp
     src/JupyterPlugin.json
 )
 
 set(PLUGIN_MOC_HEADERS
 	src/JupyterPlugin.h
-    src/JupyterXeusHernel.h
+    src/XeusKernel.h
+    src/XeusServer.h
+    src/XeusInterpreter.h
 )
 
 source_group( Plugin FILES ${JUPYTERPLUGIN_SOURCES})

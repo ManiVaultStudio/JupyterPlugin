@@ -110,25 +110,25 @@ This diagram only shows the interaction of messages that execute Python code in 
 #### Interacting with JupyterXeusKernel: sequence diagram
 
 ```mermaid
-%%{init: {'sequence': {'mirrorActors': false}}}%%
+%%{init: {'sequence': {'mirrorActors': false, 'boxMargin': 20 }}}%%
 sequenceDiagram
     %% autonumber
     actor BR as WebBrowser
     actor JHS as JupyterHTMLServer
 
-    box transparent azure JupyterXeusKernel
+    box transparent JupyterXeusKernel
     participant 0PS as 0MQPollerServer
 
     participant XK as XeusKernel
     participant XI as XeusInterpreter
     end
 
+
     Note over 0PS: Running in <br> QT Worker thread
 
     Note over BR,JHS: HTTP/Websockets
     BR--)JHS: 
     JHS--)BR:  
-
 
 
     Note over JHS,0PS: 0MQ: using different <br> ports per comms type
@@ -150,7 +150,7 @@ sequenceDiagram
 
 ```
 
-The main point her are the 3 architectural subcomponents of the JupyterXeusKernel: 
+The main points here are the 3 architectural subcomponents of the JupyterXeusKernel: 
 
 1. 0MGPollerServer: Handles the logical level Jupyter protocol in a QT event loop compliant manner (events to an from WorkerThread)
 2. XeusKernel: Handle the application level Jupyter protocol. In particular it dispatches execution related functions to the interpreter 

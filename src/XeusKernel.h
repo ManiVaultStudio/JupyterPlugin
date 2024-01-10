@@ -1,9 +1,12 @@
 #pragma once
 #include <QObject>
 #include <QProcess>
+#include "xeus/xkernel.hpp"
+#include "xeus/xkernel_configuration.hpp"
+#include <string>
 
 /**
- * Jupyter Xeus kernel class
+ * Xeus kernel class 
  * 
  * Hosts a Xeus kernel incorporating a Python interpreter and 0MQ 
  * communication context.
@@ -18,15 +21,19 @@
  *  - 
  * @authors B. van Lew
 */
-class JupyterXeusKernel : public QObject
+class XeusKernel : public QObject
 {
     Q_OBJECT
 
 public: 
-    JupyterXeusKernel();
+    XeusKernel(const std::string &connection_filename);
 
     bool startJupyterLabServer(QString noteBookDirectory);
+    bool startKernel();
+    void stopKernel();
 
 private:
-    QProcess jupyterLabServer;
+    std::unique_ptr<xeus::xkernel> m_kernel;
+    QProcess m_jupyterLabServer_process;
+    std::string m_connection_filename;
 };

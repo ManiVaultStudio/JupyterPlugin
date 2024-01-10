@@ -116,6 +116,10 @@ void JupyterPlugin::init()
     _eventListener.addSupportedEventType(static_cast<std::uint32_t>(EventType::DatasetRemoved));
     _eventListener.addSupportedEventType(static_cast<std::uint32_t>(EventType::DatasetDataSelectionChanged));
     _eventListener.registerDataEventByType(PointType, std::bind(&JupyterPlugin::onDataEvent, this, std::placeholders::_1));
+
+    _xeusKernel = std::unique_ptr<XeusKernel>("TODO: Add configfile path here from action");
+    _xeusKernel->startJupyterLabServer();
+    _xeusKernel->startKernel();
 }
 
 void JupyterPlugin::onDataEvent(mv::DatasetEvent* dataEvent)

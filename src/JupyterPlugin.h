@@ -9,6 +9,8 @@
 
 #include <QWidget>
 
+#include "XeusKernel.h"
+
 /** All plugin related classes are in the HDPS plugin namespace */
 using namespace mv::plugin;
 
@@ -62,6 +64,7 @@ protected:
     mv::Dataset<Points>   _points;                    /** Points smart pointer */
     QString                 _currentDatasetName;        /** Name of the current dataset */
     QLabel*                 _currentDatasetNameLabel;   /** Label that show the current dataset name */
+    std::unique_ptr<XeusKernel> _xeusKernel;  /** the xeus kernel that manages the jupyter comms and the python interpreter*/
 };
 
 /**
