@@ -1,10 +1,14 @@
 #pragma once
+
+// QTs slots clashes with Python.h slots
+#undef slots
 #include "xeus-python/xinterpreter.hpp"
+#define slots Q_SLOTS
 
 /**
  * This class wraps the xeus python interpreter
  * In the slicer implementation (xSlicerInterpreter.cxx in SlicerJupyter)
- * the wrapping adds additional functionality.
+ * the wrapping adds additional functionality.ine
  * In the first iteration this wapper is effectively a noop 
  * but it provides a point for additional functionality when 
  * processing python code.

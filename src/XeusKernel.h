@@ -1,8 +1,8 @@
 #pragma once
 #include <QObject>
 #include <QProcess>
-#include "xeus/xkernel.hpp"
-#include "xeus/xkernel_configuration.hpp"
+#include <xeus/xkernel.hpp>
+#include <xeus/xkernel_configuration.hpp>
 #include <string>
 
 /**
@@ -26,10 +26,10 @@ class XeusKernel : public QObject
     Q_OBJECT
 
 public: 
-    XeusKernel(const std::string &connection_filename);
+    XeusKernel(std::string connection_filename);
 
     bool startJupyterLabServer(QString noteBookDirectory);
-    bool startKernel();
+    void startKernel();
     void stopKernel();
 
 private:

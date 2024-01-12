@@ -34,7 +34,20 @@ file(TO_CMAKE_PATH ${MV_INSTALL_DIR} MV_INSTALL_DIR)
 # Dependencies
 # -----------------------------------------------------------------------------
 find_package(Qt6 COMPONENTS Widgets WebEngineWidgets REQUIRED)
+find_package(xeus-zmq REQUIRED)
+find_package(xeus-python REQUIRED)
+find_package(Python COMPONENTS Development REQUIRED)
 
+macro(print_all_variables)
+    message(STATUS "print_all_variables------------------------------------------{")
+    get_cmake_property(_variableNames VARIABLES)
+    foreach (_variableName ${_variableNames})
+        message(STATUS "${_variableName}=${${_variableName}}")
+    endforeach()
+    message(STATUS "print_all_variables------------------------------------------}")
+endmacro()
+
+print_all_variables()
 # -----------------------------------------------------------------------------
 # Source files
 # -----------------------------------------------------------------------------
@@ -54,8 +67,6 @@ set(JUPYTERPLUGIN_SOURCES
 set(PLUGIN_MOC_HEADERS
 	src/JupyterPlugin.h
     src/XeusKernel.h
-    src/XeusServer.h
-    src/XeusInterpreter.h
 )
 
 source_group( Plugin FILES ${JUPYTERPLUGIN_SOURCES})
@@ -73,7 +84,18 @@ target_sources(${JUPYTERPLUGIN} PRIVATE ${JUPYTERPLUGIN_MOC})
 # Target include directories
 # -----------------------------------------------------------------------------
 # Include HDPS headers, including system data plugins
-target_include_directories(${JUPYTERPLUGIN} PRIVATE "${MV_INSTALL_DIR}/$<CONFIGURATION>/include/")
+target_include_directories(${JUPYTERPLUGIN} PRIVATE 
+    "${MV_INSTALL_DIR}/$<CONFIGURATION>/include/" 
+    "${xeus_INCLUDE_DIR}"
+    "${xeus-zmq_INCLUDE_DIR}" 
+    "${xeus-python_INCLUDE_DIR}" 
+    "${xtl_INCLUDE_DIR}"
+    "${zeromq_INCLUDE_DIRS_RELEASE}" 
+    "${cppzmq_INCLUDE_DIR}" 
+    "${nlohmann_json_INCLUDE_DIR}"
+    "${pybind11_INCLUDE_DIR}"
+    "${PYTHON_INCLUDE_DIR}"
+)
 
 # -----------------------------------------------------------------------------
 # Target properties
@@ -101,6 +123,11 @@ set(POINTDATA_LINK_LIBRARY "${PLUGIN_LINK_PATH}/${CMAKE_SHARED_LIBRARY_PREFIX}Po
 
 target_link_libraries(${JUPYTERPLUGIN} PRIVATE "${MV_LINK_LIBRARY}")
 target_link_libraries(${JUPYTERPLUGIN} PRIVATE "${POINTDATA_LINK_LIBRARY}")
+target_link_libraries(${JUPYTERPLUGIN} PRIVATE "${xeus-zmq_STATIC_LIBRARY}")
+target_link_libraries(${JUPYTERPLUGIN} PRIVATE "${PYTHON_LIBRARY}")
+target_link_libraries(${JUPYTERPLUGIN} PRIVATE "${xeus-python_LIBRARIES}")
+target_link_libraries(${JUPYTERPLUGIN} PRIVATE "${xeus_LIBRARIES}")
+
 
 # -----------------------------------------------------------------------------
 # Target installation

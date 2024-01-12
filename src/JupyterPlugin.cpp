@@ -7,6 +7,7 @@
 #include <QDebug>
 #include <QMimeData>
 #include <QProcess>
+#include <QDir>
 
 Q_PLUGIN_METADATA(IID "nl.BioVault.JupyterPlugin")
 
@@ -117,8 +118,9 @@ void JupyterPlugin::init()
     _eventListener.addSupportedEventType(static_cast<std::uint32_t>(EventType::DatasetDataSelectionChanged));
     _eventListener.registerDataEventByType(PointType, std::bind(&JupyterPlugin::onDataEvent, this, std::placeholders::_1));
 
-    _xeusKernel = std::unique_ptr<XeusKernel>("TODO: Add configfile path here from action");
-    _xeusKernel->startJupyterLabServer();
+    auto jupyter_configFilepath = std::string("TODO: Add configfile path here from action");
+    _xeusKernel = std::make_unique<XeusKernel>(jupyter_configFilepath);
+    _xeusKernel->startJupyterLabServer(QDir::current().path());
     _xeusKernel->startKernel();
 }
 
