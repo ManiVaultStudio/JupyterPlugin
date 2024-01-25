@@ -8,3 +8,6 @@
 [submodule "external/json"]
 	path = external/json
 	url = git@github.com:nlohmann/json.git
+[submodule "external/cppzmq"]
+	path = external/cppzmq
+	url = git@github.com:zeromq/cppzmq.git
