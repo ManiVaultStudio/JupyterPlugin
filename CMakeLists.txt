@@ -34,9 +34,11 @@ file(TO_CMAKE_PATH ${MV_INSTALL_DIR} MV_INSTALL_DIR)
 # Dependencies
 # -----------------------------------------------------------------------------
 find_package(Qt6 COMPONENTS Widgets WebEngineWidgets REQUIRED)
+find_package(xeus REQUIRED)
 find_package(xeus-zmq REQUIRED)
 find_package(xeus-python REQUIRED)
-find_package(Python COMPONENTS Development REQUIRED)
+find_package(ZeroMQ REQUIRED)
+find_package(Python 3.11 COMPONENTS Development Interpreter REQUIRED)
 
 macro(print_all_variables)
     message(STATUS "print_all_variables------------------------------------------{")
@@ -90,7 +92,7 @@ target_include_directories(${JUPYTERPLUGIN} PRIVATE
     "${xeus-zmq_INCLUDE_DIR}" 
     "${xeus-python_INCLUDE_DIR}" 
     "${xtl_INCLUDE_DIR}"
-    "${zeromq_INCLUDE_DIRS_RELEASE}" 
+    "${ZeroMQ_INCLUDE_DIR}" 
     "${cppzmq_INCLUDE_DIR}" 
     "${nlohmann_json_INCLUDE_DIR}"
     "${pybind11_INCLUDE_DIR}"
@@ -120,14 +122,25 @@ set(MV_LINK_SUFFIX $<IF:$<CXX_COMPILER_ID:MSVC>,${CMAKE_LINK_LIBRARY_SUFFIX},${C
 
 set(MV_LINK_LIBRARY "${MV_LINK_PATH}/${CMAKE_SHARED_LIBRARY_PREFIX}MV_Public${MV_LINK_SUFFIX}")
 set(POINTDATA_LINK_LIBRARY "${PLUGIN_LINK_PATH}/${CMAKE_SHARED_LIBRARY_PREFIX}PointData${MV_LINK_SUFFIX}") 
+if (MSVC)
+    set(zeromq_LIBS_DEBUG "libzmq-v142-mt-4_3_5") # not the libzmq-v142-mt-gd-4_3_5 version
+endif()
+find_library(ZMQ_LIB ${zeromq_LIBS_DEBUG} PATHS ${ZeroMQ_ROOT} REQUIRED) 
 
 target_link_libraries(${JUPYTERPLUGIN} PRIVATE "${MV_LINK_LIBRARY}")
 target_link_libraries(${JUPYTERPLUGIN} PRIVATE "${POINTDATA_LINK_LIBRARY}")
-target_link_libraries(${JUPYTERPLUGIN} PRIVATE "${xeus-zmq_STATIC_LIBRARY}")
+target_link_libraries(${JUPYTERPLUGIN} PRIVATE xeus)
+target_link_libraries(${JUPYTERPLUGIN} PRIVATE xeus-zmq)
+target_link_libraries(${JUPYTERPLUGIN} PRIVATE xeus-python)
 target_link_libraries(${JUPYTERPLUGIN} PRIVATE "${PYTHON_LIBRARY}")
-target_link_libraries(${JUPYTERPLUGIN} PRIVATE "${xeus-python_LIBRARIES}")
-target_link_libraries(${JUPYTERPLUGIN} PRIVATE "${xeus_LIBRARIES}")
+target_link_libraries(${JUPYTERPLUGIN} PRIVATE ${ZMQ_LIB})
+target_link_libraries(${JUPYTERPLUGIN} PRIVATE pybind11::embed)
 
+if (MSVC)
+    target_compile_options(${JUPYTERPLUGIN} PUBLIC /wd4251 /wd4141)
+    target_compile_options(${JUPYTERPLUGIN} PUBLIC /wd4018 /wd4267 /wd4715 /wd4146 /wd4129)
+endif()
+target_compile_features(${JUPYTERPLUGIN} PRIVATE cxx_std_14)
 
 # -----------------------------------------------------------------------------
 # Target installation

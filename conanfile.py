@@ -133,14 +133,25 @@ class JupyterPluginConan(ConanFile):
         qt_root = str(list(qtpath.glob("**/Qt6Config.cmake"))[0].parents[3].as_posix())
         tc.variables["Qt6_ROOT"] = f"{qt_root}"
 
+        xeus_root = pathlib.Path(self.deps_cpp_info["xeus"].rootpath).as_posix()
+        tc.variables["xeus_ROOT"] = f"{xeus_root}"
+
         xzmq_root = pathlib.Path(self.deps_cpp_info["xeus-zmq"].rootpath).as_posix()
         tc.variables["xeus-zmq_ROOT"] = f"{xzmq_root}"
+
+        xpython_root = pathlib.Path(self.deps_cpp_info["xeus-python"].rootpath).as_posix()
+        tc.variables["xeus-python_ROOT"] = f"{xpython_root}"
+
+        tc.variables["nlohmann_json_ROOT"] = pathlib.Path(self.deps_cpp_info["nlohmann_json"].rootpath).as_posix()
+
+        tc.variables["ZeroMQ_ROOT"] = pathlib.Path(self.deps_cpp_info["zeromq"].rootpath).as_posix()
+
         
         tc.generate()
 
     def _configure_cmake(self):
         cmake = CMake(self)
-        cmake.configure(build_script_folder="ManiVaultStudio/JupyterPlugin")
+        cmake.configure(build_script_folder="ManiVaultStudio/JupyterPlugin", cli_args=["--log-level=DEBUG"])
         cmake.verbose = True
         return cmake
 
@@ -153,8 +164,8 @@ class JupyterPluginConan(ConanFile):
         shutil.copytree(hdps_pkg_root, self.install_dir)
 
         cmake = self._configure_cmake()
-        # cmake.build(build_type="Debug")
-        # cmake.install(build_type="Debug")
+        cmake.build(build_type="Debug")
+        cmake.install(build_type="Debug")
 
         # cmake_release = self._configure_cmake()
         cmake.build(build_type="Release")
@@ -163,17 +174,17 @@ class JupyterPluginConan(ConanFile):
     def package(self):
         package_dir = os.path.join(self.build_folder, "package")
         print("Packaging install dir: ", package_dir)
-        # subprocess.run(
-        #     [
-        #         "cmake",
-        #         "--install",
-        #         self.build_folder,
-        #         "--config",
-        #         "Debug",
-        #         "--prefix",
-        #         os.path.join(package_dir, "Debug"),
-        #     ]
-        # )
+        subprocess.run(
+            [
+                "cmake",
+                "--install",
+                self.build_folder,
+                "--config",
+                "Debug",
+                "--prefix",
+                os.path.join(package_dir, "Debug"),
+            ]
+        )
         subprocess.run(
             [
                 "cmake",

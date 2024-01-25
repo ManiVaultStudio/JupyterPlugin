@@ -6,6 +6,9 @@
 #include <zmq_addon.hpp>
 #include <xeus/xhistory_manager.hpp>
 #include <xeus-zmq/xserver_shell_main.hpp>
+#include <xeus-python/xinterpreter.hpp>
+#include <xeus-python/xdebugger.hpp>
+#include <xeus-python/xpaths.hpp>
 #include <memory>
 
 
@@ -17,18 +20,24 @@ XeusKernel::XeusKernel(std::string connection_filename) : m_connection_filename(
 void XeusKernel::startKernel()
 {
     auto context = xeus::make_context<zmq::context_t>();
+    static const std::string executable(xpyt::get_python_path());
+    nl::json debugger_config;
+    debugger_config["python"] = executable;
 
-    xeus::xconfiguration config = xeus::load_configuration(m_connection_filename);
+    // Test without configuration file (default zmq ports)
+    // xeus::xconfiguration config = xeus::load_configuration(m_connection_filename);
     std::unique_ptr<xeus::xinterpreter> interpreter = std::unique_ptr<xeus::xinterpreter>(new xpyt::interpreter());
     std::unique_ptr<xeus::xhistory_manager> hist = xeus::make_in_memory_history_manager();
     m_kernel = std::make_unique<xeus::xkernel>(
-        config,
+        // config,
         "ManiVaultStudio",
         std::move(context),
         std::move(interpreter),
         xeus::make_xserver_shell_main,
         std::move(hist),
-        nullptr
+        nullptr,
+        xpyt::make_python_debugger,
+        debugger_config
     );
 
     m_kernel->start();

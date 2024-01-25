@@ -4,6 +4,7 @@
 #include <xeus/xkernel.hpp>
 #include <xeus/xkernel_configuration.hpp>
 #include <string>
+#include <nlohmann/json.hpp>
 
 /**
  * Xeus kernel class 
@@ -27,6 +28,7 @@ class XeusKernel : public QObject
 
 public: 
     XeusKernel(std::string connection_filename);
+    virtual ~XeusKernel()=default;
 
     bool startJupyterLabServer(QString noteBookDirectory);
     void startKernel();
