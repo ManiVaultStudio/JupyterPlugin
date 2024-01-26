@@ -11,3 +11,6 @@
 [submodule "external/cppzmq"]
 	path = external/cppzmq
 	url = git@github.com:zeromq/cppzmq.git
+[submodule "external/xtl"]
+	path = external/xtl
+	url = git@github.com:xtensor-stack/xtl.git
