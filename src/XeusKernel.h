@@ -35,7 +35,12 @@ public:
     void stopKernel();
 
 private:
-    std::unique_ptr<xeus::xkernel> m_kernel;
+    void onReadyStandardOutput();
+    void onReadyStandardError();
+
+private:
+    xeus::xkernel *m_kernel;
     QProcess m_jupyterLabServer_process;
     std::string m_connection_filename;
+
 };

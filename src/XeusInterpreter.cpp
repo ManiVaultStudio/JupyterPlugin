@@ -2,7 +2,7 @@
 
 XeusInterpreter::XeusInterpreter()
 {
-   
+    python_interpreter = new pybind11::scoped_interpreter;
 }
 
 void XeusInterpreter::configure_impl()

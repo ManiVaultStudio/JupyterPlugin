@@ -13,6 +13,16 @@ set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_AUTOMOC ON)
 
+set(QTVERSION 6)
+add_subdirectory(external/json)
+add_subdirectory(external/xtl)
+add_subdirectory(external/libzmq)
+add_subdirectory(external/cppzmq)
+find_package(Python 3.11 COMPONENTS Development Interpreter REQUIRED)
+add_subdirectory(external/pybind11)
+set(pybind11_ROOT "C:/Users/bvanlew/.conan/data/pybind11/2.11.1/_/_/package/5ab84d6acfe1f23c4fae0ab88f26e3a396351ac9")
+
+
 if(MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /DWIN32 /EHsc /MP /permissive- /Zc:__cplusplus")
 	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /NODEFAULTLIB:LIBCMT")
@@ -30,15 +40,21 @@ if(NOT DEFINED MV_INSTALL_DIR)
 endif()
 file(TO_CMAKE_PATH ${MV_INSTALL_DIR} MV_INSTALL_DIR)
 
-# -----------------------------------------------------------------------------
-# Dependencies
-# -----------------------------------------------------------------------------
+set(xtl_DIR "${CMAKE_BINARY_DIR}/external/xtl" CACHE PATH "")
+set(nlohmann_json_DIR "${CMAKE_BINARY_DIR}/external/json" CACHE PATH "")
+set(cppzmq_DIR "${CMAKE_BINARY_DIR}/external/cppzmq" CACHE PATH "")
+set(ZeroMQ_DIR ${CMAKE_BINARY_DIR}/external/libzmq CACHE PATH "")
+
 find_package(Qt6 COMPONENTS Widgets WebEngineWidgets REQUIRED)
+set(pybind11_INCLUDE_DIR "./external/pybind11/install")
+set(xeus_ROOT "" CACHE PATH "path to the xeus dependency root")
 find_package(xeus REQUIRED)
+set(xeus-zmq_ROOT "" CACHE PATH "path to the xeus-zmq dependency root")
 find_package(xeus-zmq REQUIRED)
+
+set(xeus-python_ROOT "" CACHE PATH "path to the xeus-python dependency root")
 find_package(xeus-python REQUIRED)
-find_package(ZeroMQ REQUIRED)
-find_package(Python 3.11 COMPONENTS Development Interpreter REQUIRED)
+
 
 macro(print_all_variables)
     message(STATUS "print_all_variables------------------------------------------{")
@@ -91,7 +107,7 @@ target_include_directories(${JUPYTERPLUGIN} PRIVATE
     "${xeus_INCLUDE_DIR}"
     "${xeus-zmq_INCLUDE_DIR}" 
     "${xeus-python_INCLUDE_DIR}" 
-    "${xtl_INCLUDE_DIR}"
+    "${xtl_INCLUDE_DIRS}"
     "${ZeroMQ_INCLUDE_DIR}" 
     "${cppzmq_INCLUDE_DIR}" 
     "${nlohmann_json_INCLUDE_DIR}"
@@ -125,7 +141,6 @@ set(POINTDATA_LINK_LIBRARY "${PLUGIN_LINK_PATH}/${CMAKE_SHARED_LIBRARY_PREFIX}Po
 if (MSVC)
     set(zeromq_LIBS_DEBUG "libzmq-v142-mt-4_3_5") # not the libzmq-v142-mt-gd-4_3_5 version
 endif()
-find_library(ZMQ_LIB ${zeromq_LIBS_DEBUG} PATHS ${ZeroMQ_ROOT} REQUIRED) 
 
 target_link_libraries(${JUPYTERPLUGIN} PRIVATE "${MV_LINK_LIBRARY}")
 target_link_libraries(${JUPYTERPLUGIN} PRIVATE "${POINTDATA_LINK_LIBRARY}")
@@ -133,7 +148,6 @@ target_link_libraries(${JUPYTERPLUGIN} PRIVATE xeus)
 target_link_libraries(${JUPYTERPLUGIN} PRIVATE xeus-zmq)
 target_link_libraries(${JUPYTERPLUGIN} PRIVATE xeus-python)
 target_link_libraries(${JUPYTERPLUGIN} PRIVATE "${PYTHON_LIBRARY}")
-target_link_libraries(${JUPYTERPLUGIN} PRIVATE ${ZMQ_LIB})
 target_link_libraries(${JUPYTERPLUGIN} PRIVATE pybind11::embed)
 
 if (MSVC)

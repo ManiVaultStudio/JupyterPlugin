@@ -4,6 +4,7 @@
 #undef slots
 #include "xeus-python/xinterpreter.hpp"
 #define slots Q_SLOTS
+#include <pybind11/embed.h>
 
 /**
  * This class wraps the xeus python interpreter
@@ -42,4 +43,6 @@ private:
     nl::json kernel_info_request_impl() override;
 
     void shutdown_request_impl() override;
+
+    pybind11::scoped_interpreter* python_interpreter;
 };
