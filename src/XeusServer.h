@@ -34,7 +34,7 @@ public:
                  const xeus::xconfiguration& config,
                  nl::json::error_handler_t eh);
 
-    virtual ~XeusServer()=default;
+    virtual ~XeusServer();
 
     // The Slicer implementation gives the option
     // to get and change the poll interval.
@@ -47,3 +47,7 @@ protected:
 
     QTimer* m_pollTimer;
 };
+
+std::unique_ptr<xeus::xserver> make_XeusServer(xeus::xcontext& context,
+    const xeus::xconfiguration& config,
+    nl::json::error_handler_t eh);

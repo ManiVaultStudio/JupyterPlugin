@@ -1,4 +1,5 @@
 #include "XeusInterpreter.h"
+#include <QDebug>
 
 XeusInterpreter::XeusInterpreter()
 {
@@ -18,6 +19,8 @@ nl::json XeusInterpreter::execute_request_impl(int execution_counter,
   nl::json user_expressions,
   bool allow_stdin) 
 {
+    qDebug() << "code: " << code.c_str();
+
     return xpyt::interpreter::execute_request_impl(
         execution_counter,
         code,

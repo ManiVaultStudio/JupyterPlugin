@@ -1,5 +1,6 @@
 #include "XeusKernel.h"
 #include "XeusInterpreter.h"
+#include "XeusServer.h"
 
 #include <QStandardPaths>
 #include <QDir>
@@ -29,7 +30,7 @@ void XeusKernel::startKernel()
     debugger_config["python"] = executable;
 
     //// Test without configuration file (default zmq ports)
-    //// xeus::xconfiguration config = xeus::load_configuration(m_connection_filename);
+    xeus::xconfiguration config = xeus::load_configuration("D:\\TempProj\\DevBundle\\Jupyter\\install\\Debug\\external_kernels\\ManiVault\\connection.json");
     auto context = xeus::make_context<zmq::context_t>();
     std::unique_ptr<XeusInterpreter> interpreter = std::unique_ptr<XeusInterpreter>(new XeusInterpreter());
     std::unique_ptr<xeus::xhistory_manager> hist = xeus::make_in_memory_history_manager();
@@ -37,13 +38,13 @@ void XeusKernel::startKernel()
         xeus::get_user_name(),
         std::move(context),
         std::move(interpreter),
-        xeus::make_xserver_shell_main
+        make_XeusServer
         //std::move(hist),
         //xeus::make_console_logger(xeus::xlogger::msg_type, xeus::make_file_logger(xeus::xlogger::content, "xeus.log"))
         //xpyt::make_python_debugger,
         //debugger_config
     );
-    const auto& config = m_kernel->get_config();
+    //const auto& config = m_kernel->get_config();
     qInfo() << "Xeus Kernel settings";
     qInfo() << "transport protocol: " << config.m_transport.c_str();
     qInfo() << "IP address: " << config.m_ip.c_str();
@@ -65,20 +66,25 @@ void XeusKernel::stopKernel()
 
 bool XeusKernel::startJupyterLabServer(QString noteBookDirectory)
 {
-    //auto searchPath = QStringList(QCoreApplication::applicationDirPath() + "/python");
+    auto searchPath = QStringList(QCoreApplication::applicationDirPath() + "/python");
+    QString execString = QStandardPaths::findExecutable("python", searchPath);
+    QStringList args;
+    //args << "-m" << "jupyter" << "lab" << "--no-browser ";
+    //args << "-m" << "jupyter" << "lab" << "--ServerApp.kernel_manager_class=MVJupyterPluginManager.ExternalMappingKernelManager" << "--no-browser";
+    //m_jupyterLabServer_process.setWorkingDirectory(searchPath[0]);
+    //m_jupyterLabServer_process.start(execString, args);
+
+    //
+    //m_jupyterLabServer_process.setProcessChannelMode(QProcess::MergedChannels);
+    /*
     auto vbsExe = QDir::toNativeSeparators(QCoreApplication::applicationDirPath() + "/python/runjupyter.vbs");
-    //QString pythonExecutable = QStandardPaths::findExecutable("pythonw", searchPath);
     QStringList args;
     args << "/nologo" << vbsExe;
     qInfo() << "Executing: " << vbsExe;
-    //args << "-m" << "jupyter" << "lab" << "--no-browser";
-    //QString execString = QStandardPaths::findExecutable("cscript"); // + " //nologo " + vbsExe;
     QString execString = QString("cscript");
-    //args << QCoreApplication::applicationDirPath() + "/python/runjupyter.vbs";
-    //m_jupyterLabServer_process.setArguments(args);
-    //m_jupyterLabServer_process.setWorkingDirectory(QCoreApplication::applicationDirPath() + "/python");
-    //m_jupyterLabServer_process.setProcessChannelMode(QProcess::MergedChannels);
     m_jupyterLabServer_process.start(execString, args);
+    */
+
     auto success = m_jupyterLabServer_process.waitForStarted(60000);
     if (!success) {
         qDebug() << "Error starting Jupyter Lab: " << m_jupyterLabServer_process.errorString();
