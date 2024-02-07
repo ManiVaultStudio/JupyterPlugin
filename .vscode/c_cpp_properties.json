@@ -14,7 +14,8 @@
                 "C:/Users/bvanlew/.conan/data/nlohmann_json/3.11.3/_/_/package/5ab84d6acfe1f23c4fae0ab88f26e3a396351ac9/include",
                 "C:/Users/bvanlew/.conan/data/xtl/0.7.5/_/_/package/5ab84d6acfe1f23c4fae0ab88f26e3a396351ac9/include",
                 "C:/Users/bvanlew/.conan/data/pybind11/2.11.1/_/_/package/5ab84d6acfe1f23c4fae0ab88f26e3a396351ac9/include",
-                "C:/Users/bvanlew/AppData/Local/Programs/Python/Python311/include"
+                "C:/Users/bvanlew/AppData/Local/Programs/Python/Python311/include",
+                "D:/TempProj/DevBundle/Jupyter/install/Debug/include"
             ],
             "defines": [
                 "_DEBUG",

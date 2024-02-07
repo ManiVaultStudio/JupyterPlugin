@@ -155,3 +155,35 @@ The main points here are the 3 architectural subcomponents of the JupyterXeusKer
 1. 0MGPollerServer: Handles the logical level Jupyter protocol in a QT event loop compliant manner (events to an from WorkerThread)
 2. XeusKernel: Handle the application level Jupyter protocol. In particular it dispatches execution related functions to the interpreter 
 3. XeusInterpreter hosts the Python execution context (using the python.dll) 
+
+### Making a development environment
+
+To test this plugin a python environment is needed with both jupyter lab and the MVJupyterPluginManager (contained in this repo.) The python version should be 3.11
+
+1. To emulate a shipped embedded python download the python [embeddable package for your OS](https://www.python.org/downloads/release/python-3117/).
+2. Add pip to this environment [using get-pip.py](https://pip.pypa.io/en/stable/installation/)
+3. pip install [jupyterlab](https://pypi.org/project/jupyterlab/)
+4. Install the MVJupyterPluginManager package in this repo using 
+```
+pip install <path-to-this-repo>
+```
+5. Build ManiVault along with the JupyterPlugin and start the session.
+6. Loading the Jupyter Plugin in ManiVault (it is a View plugin) starts the kernel.
+7. Once the kernel is running start Jupyter Lab giving the kernel manager and provisioner classes (from MVJupyterPluginManager) to the Jupyter server/client software: 
+
+```
+python -m jupyterlab_server --ServerApp.kernel_manager_class=MVJupyterPluginManager.ExternalMappingKernelManager --KernelProvisionerFactory.default_provisioner_name=mvjupyterplugin-existing-provisioner
+```
+8. At this point Jupyter Lab will start and connect to the running ManiVault kernel. This will show in the output with output similar to this: 
+
+```
+INFO:root:Attaching to ManiVault kernel
+DEBUG:asyncio:Using selector: SelectSelector
+INFO:MVJupyterPluginManager.provisioning:ManiVault JupyterPython kernel = D:\TempProj\DevBundle\Jupyter\install\Debug\external_kernels\ManiVault\connection.json
+INFO:MVJupyterPluginManager.provisioning:Loaded the ManiVault connection information
+[I 2024-02-07 13:31:19.502 ServerApp] Kernel started: ea4b5ff9-49ca-4164-adf6-86460e73b265
+[I 2024-02-07 13:31:19.504 ServerApp] Attaching ea4b5ff9-49ca-4164-adf6-86460e73b265 to an existing kernel...
+INFO:MVJupyterPluginManager.manager:ManiVault Jupyter kernel = D:\TempProj\DevBundle\Jupyter\install\Debug\external_kernels\ManiVault\connection.json
+[I 2024-02-07 13:31:19.530 ServerApp] Connecting to kernel ea4b5ff9-49ca-4164-adf6-86460e73b265.
+[I 2024-02-07 13:31:19.553 ServerApp] Connecting to kernel ea4b5ff9-49ca-4164-adf6-86460e73b265.
+```
