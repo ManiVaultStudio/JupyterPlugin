@@ -79,6 +79,8 @@ set(JUPYTERPLUGIN_SOURCES
     src/XeusServer.cpp
     src/XeusInterpreter.h
     src/XeusInterpreter.cpp
+    src/MVData.cpp
+    src/MVData.h
     src/JupyterPlugin.json
 )
 

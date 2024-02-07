@@ -1,5 +1,8 @@
 #include "XeusInterpreter.h"
+#include "MVData.h"
 #include <QDebug>
+#include <pybind11/pybind11.h>
+namespace py = pybind11;
 
 XeusInterpreter::XeusInterpreter()
 {
@@ -9,6 +12,10 @@ XeusInterpreter::XeusInterpreter()
 void XeusInterpreter::configure_impl()
 {
     xpyt::interpreter::configure_impl();
+    py::gil_scoped_acquire acquire;
+    py::module sys = py::module::import("sys");
+    py::module MVData_module = get_MVData_module();
+    sys.attr("modules")["MVData"] = MVData_module;
 }
 
 // Execute incoming code and publish the result
@@ -65,6 +72,14 @@ void XeusInterpreter::shutdown_request_impl()
     return xpyt::interpreter::shutdown_request_impl();
 }
 
+PYBIND11_MODULE(mvtest, m) {
+    m.doc() = "ManiVault test module";
+
+    // Add bindings here
+    m.def("sayhello", []() {
+        return "Hello, World!";
+    });
+}
 
 
 

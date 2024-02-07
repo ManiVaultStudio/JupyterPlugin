@@ -1,0 +1,38 @@
+[build-system]
+requires = [
+    "setuptools>=61",
+    "wheel", 
+    "setuptools-scm"
+]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = 'MVJupyterPluginManager'
+authors = [
+    {name = 'Baldur van Lew', email = "b.van_lew@lumc.nl"}
+]
+version = '0.1.0'
+description = 'A kernel manager fro JupyterLab that supports connections to external kernels'
+readme = 'README.md'
+requires-python = '>=3.10'
+keywords = ["JupyterLab", "kernel", "manager"]
+classifiers = [
+    "Framework :: JupyterLab",
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+]
+dependencies = [
+    "jupyter-server"
+]
+
+[project.entry-points."jupyter_client.kernel_provisioners"]
+mvjupyterplugin-existing-provisioner = "MVJupyterPluginManager:ExistingProvisioner"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools-git-versioning]
+enabled = true
+
+
+

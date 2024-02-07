@@ -31,3 +31,5 @@
 *.out
 *.app
 build
+src/MVJupyterPlugin/Manager/MVJupyterPluginManager.egg-info/**/*.*
+src/MVJupyterPluginManager.egg-info/**/*.*

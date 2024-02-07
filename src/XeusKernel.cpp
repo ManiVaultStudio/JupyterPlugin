@@ -35,14 +35,11 @@ void XeusKernel::startKernel()
     std::unique_ptr<XeusInterpreter> interpreter = std::unique_ptr<XeusInterpreter>(new XeusInterpreter());
     std::unique_ptr<xeus::xhistory_manager> hist = xeus::make_in_memory_history_manager();
     m_kernel = new xeus::xkernel(
+        config,
         xeus::get_user_name(),
         std::move(context),
         std::move(interpreter),
         make_XeusServer
-        //std::move(hist),
-        //xeus::make_console_logger(xeus::xlogger::msg_type, xeus::make_file_logger(xeus::xlogger::content, "xeus.log"))
-        //xpyt::make_python_debugger,
-        //debugger_config
     );
     //const auto& config = m_kernel->get_config();
     qInfo() << "Xeus Kernel settings";
