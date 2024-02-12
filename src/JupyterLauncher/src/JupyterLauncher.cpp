@@ -1,36 +1,43 @@
-#include "JupyterPlugin.h"
+#include "JupyterLauncher.h"
+
+#include "GlobalSettingsAction.h"
 
 #include <event/Event.h>
 
 #include <DatasetsMimeData.h>
+#include <PointData/PointData.h>
 
 #include <QDebug>
 #include <QMimeData>
-#include <QProcess>
-#include <QDir>
+#include <QPluginLoader>
+#include <QProcessEnvironment>
 
-Q_PLUGIN_METADATA(IID "nl.BioVault.JupyterPlugin")
+#include <cstdlib>
+#include <sstream>
 
-
-
+#ifdef _WIN32
+#include <windows.h>
+#endif
 
 using namespace mv;
 
-JupyterPlugin::JupyterPlugin(const PluginFactory* factory) :
+Q_PLUGIN_METADATA(IID "nl.BioVault.JupyterLauncher")
+
+using namespace mv;
+
+JupyterLauncher::JupyterLauncher(const PluginFactory* factory) :
     ViewPlugin(factory),
-    _dropWidget(nullptr),
     _points(),
     _currentDatasetName(),
-    _currentDatasetNameLabel(new QLabel())
+    _currentDatasetNameLabel(new QLabel()),
+    _settingsAction(this, "Settings Action")
 {
-    // This line is mandatory if drag and drop behavior is required
-    _currentDatasetNameLabel->setAcceptDrops(true);
-
+    setObjectName("Jupyter kernel plugin launcher");
     // Align text in the center
     _currentDatasetNameLabel->setAlignment(Qt::AlignCenter);
 }
 
-void JupyterPlugin::init()
+void JupyterLauncher::init()
 {
     // Create layout
     auto layout = new QVBoxLayout();
@@ -42,30 +49,19 @@ void JupyterPlugin::init()
     // Apply the layout
     getWidget().setLayout(layout);
 
-    // Respond when the name of the dataset in the dataset reference changes
-    connect(&_points, &Dataset<Points>::guiNameChanged, this, [this]() {
-
-        auto newDatasetName = _points->getGuiName();
-
-        // Update the current dataset name label
-        _currentDatasetNameLabel->setText(QString("Current points dataset: %1").arg(newDatasetName));
-
-    });
+    addDockingAction(&_settingsAction);
 
     // Alternatively, classes which derive from hdsp::EventListener (all plugins do) can also respond to events
     _eventListener.addSupportedEventType(static_cast<std::uint32_t>(EventType::DatasetAdded));
     _eventListener.addSupportedEventType(static_cast<std::uint32_t>(EventType::DatasetDataChanged));
     _eventListener.addSupportedEventType(static_cast<std::uint32_t>(EventType::DatasetRemoved));
     _eventListener.addSupportedEventType(static_cast<std::uint32_t>(EventType::DatasetDataSelectionChanged));
-    _eventListener.registerDataEventByType(PointType, std::bind(&JupyterPlugin::onDataEvent, this, std::placeholders::_1));
+    _eventListener.registerDataEventByType(PointType, std::bind(&JupyterLauncher::onDataEvent, this, std::placeholders::_1));
 
-    auto jupyter_configFilepath = std::string("TODO: Add configfile path here from action");
-    _xeusKernel = std::make_unique<XeusKernel>(jupyter_configFilepath);
-    _xeusKernel->startJupyterLabServer(QDir::current().path());
-    _xeusKernel->startKernel();
+    this->loadPlugin();
 }
 
-void JupyterPlugin::onDataEvent(mv::DatasetEvent* dataEvent)
+void JupyterLauncher::onDataEvent(mv::DatasetEvent* dataEvent)
 {
     // Get smart pointer to dataset that changed
     const auto changedDataSet = dataEvent->getDataset();
@@ -132,12 +128,72 @@ void JupyterPlugin::onDataEvent(mv::DatasetEvent* dataEvent)
     }
 }
 
-ViewPlugin* ExampleViewPluginFactory::produce()
+bool JupyterLauncher::loadPlugin()
 {
-    return new JupyterPlugin(this);
+    auto jupyterPluginPath = QCoreApplication::applicationDirPath() + "/Plugins/JupyterPlugin/JupyterPlugin";
+
+    // suffix might not be needed - test
+#ifdef _WIN32
+    jupyterPluginPath += ".dll";
+#endif
+
+#ifdef __APPLE__
+    jupyterPluginPath += ".dylib";
+#endif
+
+#ifdef __linux__
+    jupyterPluginPath += ".so";
+#endif
+
+    // Load the plugin
+    QPluginLoader jupyLoader(jupyterPluginPath);
+    auto pydir = _settingsAction.getPythonPathAction().getDirectory();
+    qInfo() << "Current path" << getenv("PATH");
+#ifdef _WIN32
+    SetDllDirectoryA(pydir.toUtf8().data());
+#endif
+    // Check if the plugin was loaded successfully
+    if (!jupyLoader.load()) {
+        qWarning() << "Failed to load plugin:" << jupyLoader.errorString();
+        return false;
+    }
+    QString pluginKind = jupyLoader.metaData().value("MetaData").toObject().value("name").toString();
+    QString menuName = jupyLoader.metaData().value("MetaData").toObject().value("menuName").toString();
+    QString version = jupyLoader.metaData().value("MetaData").toObject().value("version").toString();
+    auto pluginFactory = dynamic_cast<PluginFactory*>(jupyLoader.instance());
+
+    // If pluginFactory is a nullptr then loading of the plugin failed for some reason. Print the reason to output.
+    if (!pluginFactory)
+    {
+        qWarning() << "Failed to load plugin: " << jupyterPluginPath << jupyLoader.errorString();
+    }
+
+    // Loading of the plugin succeeded so cast it to its original class
+    _pluginFactories[pluginKind] = pluginFactory;
+    _pluginFactories[pluginKind]->setKind(pluginKind);
+    _pluginFactories[pluginKind]->setVersion(version);
+    _pluginFactories[pluginKind]->initialize();
+
+    auto pluginInstance = pluginFactory->produce();
+    _plugins.push_back(std::move(std::unique_ptr<plugin::Plugin>(pluginInstance)));
+    pluginInstance->init();
+    return true;
 }
 
-mv::DataTypes ExampleViewPluginFactory::supportedDataTypes() const
+ViewPlugin* JupyterLauncherFactory::produce()
+{
+    return new JupyterLauncher(this);
+}
+
+void JupyterLauncherFactory::initialize()
+{
+    ViewPluginFactory::initialize();
+
+    // Create an instance of our GlobalSettingsAction (derived from PluginGlobalSettingsGroupAction) and assign it to the factory
+    setGlobalSettingsGroupAction(new GlobalSettingsAction(this, this));
+}
+
+mv::DataTypes JupyterLauncherFactory::supportedDataTypes() const
 {
     DataTypes supportedTypes;
 
@@ -147,18 +203,18 @@ mv::DataTypes ExampleViewPluginFactory::supportedDataTypes() const
     return supportedTypes;
 }
 
-mv::gui::PluginTriggerActions ExampleViewPluginFactory::getPluginTriggerActions(const mv::Datasets& datasets) const
+mv::gui::PluginTriggerActions JupyterLauncherFactory::getPluginTriggerActions(const mv::Datasets& datasets) const
 {
     PluginTriggerActions pluginTriggerActions;
 
-    const auto getPluginInstance = [this]() -> JupyterPlugin* {
-        return dynamic_cast<JupyterPlugin*>(plugins().requestViewPlugin(getKind()));
+    const auto getPluginInstance = [this]() -> JupyterLauncher* {
+        return dynamic_cast<JupyterLauncher*>(plugins().requestViewPlugin(getKind()));
     };
 
     const auto numberOfDatasets = datasets.count();
 
     if (numberOfDatasets >= 1 && PluginFactory::areAllDatasetsOfTheSameType(datasets, PointType)) {
-        auto pluginTriggerAction = new PluginTriggerAction(const_cast<ExampleViewPluginFactory*>(this), this, "Example", "View example data", getIcon(), [this, getPluginInstance, datasets](PluginTriggerAction& pluginTriggerAction) -> void {
+        auto pluginTriggerAction = new PluginTriggerAction(const_cast<JupyterLauncherFactory*>(this), this, "Example", "View example data", getIcon(), [this, getPluginInstance, datasets](PluginTriggerAction& pluginTriggerAction) -> void {
             for (auto dataset : datasets)
                 getPluginInstance();
         });

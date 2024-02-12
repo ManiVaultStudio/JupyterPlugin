@@ -3,6 +3,8 @@
 // QTs slots clashes with Python.h slots
 #undef slots
 #include "xeus-python/xinterpreter.hpp"
+#include "xeus/xeus.hpp"
+#include "xeus/xcomm.hpp"
 #define slots Q_SLOTS
 #include <pybind11/embed.h>
 
@@ -45,4 +47,5 @@ private:
     void shutdown_request_impl() override;
 
     pybind11::scoped_interpreter* python_interpreter;
+    py::module comm_module;
 };

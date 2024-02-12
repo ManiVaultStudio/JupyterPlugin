@@ -2,6 +2,8 @@
 #include "MVData.h"
 #include <QDebug>
 #include <pybind11/pybind11.h>
+//#include <xcomm.hpp>
+#include <iostream>
 namespace py = pybind11;
 
 XeusInterpreter::XeusInterpreter()
@@ -12,6 +14,15 @@ XeusInterpreter::XeusInterpreter()
 void XeusInterpreter::configure_impl()
 {
     xpyt::interpreter::configure_impl();
+    auto handle_comm_opened = [](xeus::xcomm&& comm, const xeus::xmessage&) {
+        std::cerr << "Comm opened for target: " << comm.target().name() << std::endl;
+    };
+    comm_manager().register_comm_target("echo_target", handle_comm_opened);
+    //	using function_type = std::function<void(xeus::xcomm&&, const xeus::xmessage&)>;
+#ifdef DEBUG
+    std::cerr << "JupyterPlugin configured" << std::endl;
+#endif
+
     py::gil_scoped_acquire acquire;
     py::module sys = py::module::import("sys");
     py::module MVData_module = get_MVData_module();

@@ -1,5 +1,5 @@
 {
-    "name" : "Jupyter Plugin",
+    "name" : "Jupyter Launcher",
     "version" : "0.1",
     "dependencies" : ["Points"]
 }
