@@ -39,19 +39,22 @@ void XeusKernel::startKernel()
         xeus::get_user_name(),
         std::move(context),
         std::move(interpreter),
-        make_XeusServer
+        make_XeusServer,
+        std::move(hist),
+        nullptr
     );
+    auto set_config = m_kernel->get_config();
     //const auto& config = m_kernel->get_config();
     qInfo() << "Xeus Kernel settings";
-    qInfo() << "transport protocol: " << config.m_transport.c_str();
-    qInfo() << "IP address: " << config.m_ip.c_str();
-    qInfo() << "control port: " << config.m_control_port.c_str();
-    qInfo() << "shell port: " << config.m_shell_port.c_str();
-    qInfo() << "stdin port: " << config.m_stdin_port.c_str();
-    qInfo() << "iopub port: " << config.m_iopub_port.c_str();
-    qInfo() << "hb port: " << config.m_hb_port.c_str();
-    qInfo() << "signature scheme: " << config.m_signature_scheme.c_str();
-    qInfo() << "connection key: " << config.m_key.c_str();
+    qInfo() << "transport protocol: " << set_config.m_transport.c_str();
+    qInfo() << "IP address: " << set_config.m_ip.c_str();
+    qInfo() << "control port: " << set_config.m_control_port.c_str();
+    qInfo() << "shell port: " << set_config.m_shell_port.c_str();
+    qInfo() << "stdin port: " << set_config.m_stdin_port.c_str();
+    qInfo() << "iopub port: " << set_config.m_iopub_port.c_str();
+    qInfo() << "hb port: " << set_config.m_hb_port.c_str();
+    qInfo() << "signature scheme: " << set_config.m_signature_scheme.c_str();
+    qInfo() << "connection key: " << set_config.m_key.c_str();
 
     m_kernel->start();
 }

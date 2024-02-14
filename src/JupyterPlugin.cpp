@@ -61,7 +61,8 @@ void JupyterPlugin::init()
 
     auto jupyter_configFilepath = std::string("TODO: Add configfile path here from action");
     _xeusKernel = std::make_unique<XeusKernel>(jupyter_configFilepath);
-    _xeusKernel->startJupyterLabServer(QDir::current().path());
+    // Manual start
+    //_xeusKernel->startJupyterLabServer(QDir::current().path());
     _xeusKernel->startKernel();
 }
 
