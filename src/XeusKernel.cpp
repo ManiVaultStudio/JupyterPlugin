@@ -12,7 +12,9 @@
 #include <xeus-python/xinterpreter.hpp>
 #include <xeus-python/xdebugger.hpp>
 #include <xeus-python/xpaths.hpp>
+#include "nlohmann/json.hpp"
 #include <memory>
+#include <fstream>
 
 
 XeusKernel::XeusKernel(std::string connection_filename) : m_connection_filename(connection_filename)
@@ -30,12 +32,12 @@ void XeusKernel::startKernel()
     debugger_config["python"] = executable;
 
     //// Test without configuration file (default zmq ports)
-    xeus::xconfiguration config = xeus::load_configuration("D:\\TempProj\\DevBundle\\Jupyter\\install\\Debug\\external_kernels\\ManiVault\\connection.json");
+    //xeus::xconfiguration config = xeus::load_configuration("D:\\TempProj\\DevBundle\\Jupyter\\install\\Debug\\external_kernels\\ManiVault\\connection.json");
     auto context = xeus::make_context<zmq::context_t>();
     std::unique_ptr<XeusInterpreter> interpreter = std::unique_ptr<XeusInterpreter>(new XeusInterpreter());
     std::unique_ptr<xeus::xhistory_manager> hist = xeus::make_in_memory_history_manager();
     m_kernel = new xeus::xkernel(
-        config,
+        //config,
         xeus::get_user_name(),
         std::move(context),
         std::move(interpreter),
@@ -43,7 +45,24 @@ void XeusKernel::startKernel()
         std::move(hist),
         nullptr
     );
+
+    // Save the congig that was generated
     auto set_config = m_kernel->get_config();
+    nlohmann::json jsonObj;
+    jsonObj["transport"] = set_config.m_transport.c_str();
+    jsonObj["ip"] = set_config.m_ip.c_str();
+    jsonObj["control_port"] = std::stoi(set_config.m_control_port);
+    jsonObj["shell_port"] = std::stoi(set_config.m_shell_port);
+    jsonObj["stdin_port"] = std::stoi(set_config.m_stdin_port);
+    jsonObj["iopub_port"] = std::stoi(set_config.m_iopub_port);
+    jsonObj["hb_port"] = std::stoi(set_config.m_hb_port);
+    jsonObj["signature_scheme"] = set_config.m_signature_scheme.c_str();
+    jsonObj["key"] = set_config.m_key.c_str();
+    jsonObj["kernel_name"] = "ManiVault Studio";
+    std::ofstream confFile("D:\\TempProj\\DevBundle\\Jupyter\\install\\Debug\\external_kernels\\ManiVault\\connection.json");
+    confFile << jsonObj;
+
+
     //const auto& config = m_kernel->get_config();
     qInfo() << "Xeus Kernel settings";
     qInfo() << "transport protocol: " << set_config.m_transport.c_str();

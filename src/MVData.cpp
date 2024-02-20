@@ -105,17 +105,33 @@ py::array get_data_for_item(const std::string& itemName)
     return py::array_t<float>(0);
 }
 
+// when conversion is needed
+template<typename T, typename U>
+void conv_points_from_numpy_array(const void* data_in, size_t size, size_t dims, mv::Dataset<Points> points)
+{
+    auto indata = static_cast<const U *>(data_in);
+    auto data_out = std::vector<T>();
+    data_out.resize(size);
+    for (auto i = 0; i < size; ++i) {
+        data_out[i] = static_cast<const T>(indata[i]);
+    }
+    points->setData(std::move(data_out), dims);
+}
+
+// when types are the same
 template<class T>
 void set_points_from_numpy_array(const void* data_in, size_t size, size_t dims, mv::Dataset<Points> points)
 {
     auto data_out = std::vector<T>();
     data_out.resize(size);
-    std::memcpy(data_out.data(), static_cast<const T*>(data_in), size);
-    points->setData(data_out.data(), size, dims);
+    std::memcpy(data_out.data(), static_cast<const T*>(data_in), size * sizeof(T));
+    points->setData(std::move(data_out), dims);
 }
 
 bool add_new_mvdata(const py::array& data, std::string dataSetName)
 {
+    py::buffer_info buf_info = data.request();
+    void* ptr = buf_info.ptr;
     size_t ndim = data.ndim();
     mv::Dataset<Points> points = mv::data().createDataset<Points>("Points", dataSetName.c_str(), nullptr);
     auto dtype = data.dtype();
@@ -126,15 +142,15 @@ bool add_new_mvdata(const py::array& data, std::string dataSetName)
         (dtype.is(pybind11::dtype::of<std::uint16_t>())) ? set_points_from_numpy_array<std::uint16_t> :
         (dtype.is(pybind11::dtype::of<std::int16_t>())) ? set_points_from_numpy_array<std::int16_t> :
         // 32 int are cast to float
-        (dtype.is(pybind11::dtype::of<std::uint32_t>())) ? set_points_from_numpy_array<float> :
-        (dtype.is(pybind11::dtype::of<std::int32_t>())) ? set_points_from_numpy_array<float> :
+        (dtype.is(pybind11::dtype::of<std::uint32_t>())) ? conv_points_from_numpy_array<float, std::uint32_t> :
+        (dtype.is(pybind11::dtype::of<std::int32_t>())) ? conv_points_from_numpy_array<float, std::int32_t> :
         //(dtype.is(pybind11::dtype::of<std::uint64_t>())) ? set_points_from_numpy_array<std::uint64_t> :
         //(dtype.is(pybind11::dtype::of<std::int64_t>())) ? set_points_from_numpy_array<std::int64_t> :
         (dtype.is(pybind11::dtype::of<float>())) ? set_points_from_numpy_array<float> :
         //(dtype.is(pybind11::dtype::of<double>())) ? set_points_from_numpy_array<double> :
         nullptr)
     ) {
-        point_setter(data.data(), data.size(), data.ndim(), points);
+        point_setter(ptr, data.size(), data.ndim(), points);
         return true;
     }
     return false;
