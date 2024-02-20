@@ -6,6 +6,7 @@
 #include <PointData/PointData.h>
 #include <ClusterData/ClusterData.h>
 #include <QString>
+#include <ImageData/Images.h>
 
 
 namespace py = pybind11;
@@ -109,6 +110,11 @@ py::array get_data_for_item(const std::string& itemName)
 template<typename T, typename U>
 void conv_points_from_numpy_array(const void* data_in, size_t size, size_t dims, mv::Dataset<Points> points)
 {
+    auto warnings = pybind11::module::import("warnings");
+    auto builtins = pybind11::module::import("builtins");
+    warnings.attr("warn")(
+        "This numpy dtype was converted to float to match the ManiVault data model.",
+        builtins.attr("UserWarning"));    
     auto indata = static_cast<const U *>(data_in);
     auto data_out = std::vector<T>();
     data_out.resize(size);
@@ -156,6 +162,64 @@ bool add_new_mvdata(const py::array& data, std::string dataSetName)
     return false;
 }
 
+bool add_mvimage(const py::array& data, std::string dataSetName) 
+{
+    py::buffer_info buf_info = data.request();
+    void* ptr = buf_info.ptr;
+    size_t ndim = data.ndim();
+    auto shape = buf_info.shape;
+    int components = 1;
+    switch (shape.size()) {
+    case 2:
+        break;
+    case 3:
+        components = shape[2];
+        if (!(components == 1 || components == 2 || components == 3)) {
+            throw std::runtime_error("Image components nust me 1, 3 or 4 corresponding to grayscale, RGB, RGBA");
+        }
+        break;
+    default:
+        throw std::runtime_error("This function only supports a single 2d image with optional components");
+    }
+    int width = shape[0];
+    int height = shape[1];
+    mv::Dataset<Points> points = mv::data().createDataset<Points>("Points", dataSetName.c_str(), nullptr);
+    auto dtype = data.dtype();
+    // PointData is limited in its type support - hopefully the commented types wil be added soon
+    if (auto point_setter = (
+        (dtype.is(pybind11::dtype::of<std::uint8_t>())) ? conv_points_from_numpy_array<std::uint16_t, std::uint8_t> :
+        //(dtype.is(pybind11::dtype::of<std::int8_t>())) ? conv_points_from_numpy_array<std::uint16_t, std::int8_t> :
+        (dtype.is(pybind11::dtype::of<std::uint16_t>())) ? conv_points_from_numpy_array<float, std::uint16_t> :
+        //(dtype.is(pybind11::dtype::of<std::int16_t>())) ? conv_points_from_numpy_array<float, std::int16_t> :
+        // 32 int are cast to float
+        //(dtype.is(pybind11::dtype::of<std::uint32_t>())) ? conv_points_from_numpy_array<float, std::uint32_t> :
+        //(dtype.is(pybind11::dtype::of<std::int32_t>())) ? conv_points_from_numpy_array<float, std::int32_t> :
+        //(dtype.is(pybind11::dtype::of<std::uint64_t>())) ? set_points_from_numpy_array<std::uint64_t> :
+        //(dtype.is(pybind11::dtype::of<std::int64_t>())) ? set_points_from_numpy_array<std::int64_t> :
+        //(dtype.is(pybind11::dtype::of<float>())) ? set_points_from_numpy_array<float> :
+        //(dtype.is(pybind11::dtype::of<double>())) ? set_points_from_numpy_array<double> :
+        nullptr)
+        ) {
+        point_setter(ptr, data.size(), data.ndim(), points);
+        auto imageDataset = mv::data().createDataset<Images>("Images", "numpy image", Dataset<DatasetImpl>(*points));
+        imageDataset->setText(QString("Images (%2x%3)").arg(QString::number(shape[0]), QString::number(shape[1])));
+        imageDataset->setType(ImageData::Type::Stack);
+        imageDataset->setNumberOfImages(1);
+        imageDataset->setImageSize(QSize(width, height));
+        imageDataset->setNumberOfComponentsPerPixel(components);
+        QStringList filePaths = { QString("Source is numpy array %1 via JupyterPlugin").arg(dataSetName.c_str()) };
+        imageDataset->setImageFilePaths(filePaths);
+        events().notifyDatasetDataChanged(imageDataset);
+        return true;
+    }
+    return false;
+}
+
+bool add_mvimage_stack(const py::list& data, std::string dataSetName ) 
+{
+    return true;
+}
+
 py::module get_MVData_module()
 {
     py::module MVData_module = py::module_::create_extension_module("MVData", nullptr, new py::module_::module_def);
@@ -168,6 +232,13 @@ py::module get_MVData_module()
         py::arg("data") = py::array(),
         py::arg("dataSetName") = py::str()
     );
+    MVData_module.def(
+        "add_new_image",
+        add_mvimage,
+        py::arg("data") = py::array(),
+        py::arg("dataSetName") = py::str()
+    );
+
 
     return MVData_module;
 }
