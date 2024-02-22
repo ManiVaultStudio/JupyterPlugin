@@ -106,10 +106,48 @@ py::array get_data_for_item(const std::string& itemName)
     return py::array_t<float>(0);
 }
 
+// numpy default for 3d (2D+RGB) images in C format is BIP 
+// so we dont do anything 
+// Assumes input data is arranged contiguously in memory
+// Each 2D band is complete before the next begins
+// The data_out is is Band Interleaved by Pixel
+template<typename T, typename U>
+void orient_multiband_imagedata_as_bip(const U* data_in, std::vector<size_t> shape, std::vector<T>& data_out, bool flip)
+{
+    if (flip) {
+        // C order with flip 
+
+        auto row_size = shape[1] * shape[2];
+        auto num_rows = shape[0];
+        auto total = row_size * num_rows;
+        // Copy starting at the last row of the data_in
+        // to the first row of the data_out
+        // and so flip up/down
+        for (auto i = 1; i <= num_rows; ++i) {
+            auto source_offset = (num_rows - i) * row_size;
+            for (auto j = 0; j < row_size; ++j) {
+                data_out[((i-1) * row_size) + j] = static_cast<T>(data_in[source_offset + j]);
+            }
+        }
+    }
+    else {
+        // Copy as is, numpy image is BIP 
+        auto total = shape[0] * shape[1] * shape[2];
+        // C order 
+        for (auto i = 0; i < total; ++i) {
+            data_out[i] = static_cast<T>(data_in[i]);
+        }
+    }
+
+
+}
+
 // when conversion is needed
 template<typename T, typename U>
-void conv_points_from_numpy_array(const void* data_in, size_t size, size_t dims, mv::Dataset<Points> points)
+void conv_points_from_numpy_array(const void* data_in, std::vector<size_t> shape, mv::Dataset<Points> points, bool flip = false)
 {
+    auto band_size = shape[0] * shape[1];
+    auto num_bands = shape.size() == 3 ? shape[2] : 1;
     auto warnings = pybind11::module::import("warnings");
     auto builtins = pybind11::module::import("builtins");
     warnings.attr("warn")(
@@ -117,27 +155,41 @@ void conv_points_from_numpy_array(const void* data_in, size_t size, size_t dims,
         builtins.attr("UserWarning"));    
     auto indata = static_cast<const U *>(data_in);
     auto data_out = std::vector<T>();
-    data_out.resize(size);
-    for (auto i = 0; i < size; ++i) {
-        data_out[i] = static_cast<const T>(indata[i]);
+    data_out.resize(band_size * num_bands);
+    if (num_bands == 1 && !flip) {
+        for (auto i = 0; i < band_size; ++i) {
+            data_out[i] = static_cast<const T>(indata[i]);
+        }
     }
-    points->setData(std::move(data_out), dims);
+    else {
+        orient_multiband_imagedata_as_bip<T,U>(static_cast<const U*>(data_in), shape, data_out, flip);
+    }
+    points->setData(std::move(data_out), num_bands);
 }
 
 // when types are the same
 template<class T>
-void set_points_from_numpy_array(const void* data_in, size_t size, size_t dims, mv::Dataset<Points> points)
+void set_points_from_numpy_array(const void* data_in, std::vector<size_t> shape, mv::Dataset<Points> points, bool flip=false)
 {
+    auto band_size = shape[0] * shape[1];
+    auto num_bands = shape.size() == 3 ? shape[2] : 1;
     auto data_out = std::vector<T>();
-    data_out.resize(size);
-    std::memcpy(data_out.data(), static_cast<const T*>(data_in), size * sizeof(T));
-    points->setData(std::move(data_out), dims);
+    data_out.resize(band_size * num_bands);
+    if (num_bands = 1 && !flip) {
+        std::memcpy(data_out.data(), static_cast<const T*>(data_in), band_size * sizeof(T));
+        points->setData(std::move(data_out), num_bands);
+    }
+    else {
+        orient_multiband_imagedata_as_bip<T,T>(static_cast<const T*>(data_in), shape, data_out, flip);
+        points->setData(std::move(data_out), num_bands);
+    }
 }
 
 bool add_new_mvdata(const py::array& data, std::string dataSetName)
 {
     py::buffer_info buf_info = data.request();
     void* ptr = buf_info.ptr;
+    std::vector<size_t> shape(buf_info.shape.begin(), buf_info.shape.end());
     size_t ndim = data.ndim();
     mv::Dataset<Points> points = mv::data().createDataset<Points>("Points", dataSetName.c_str(), nullptr);
     auto dtype = data.dtype();
@@ -156,7 +208,7 @@ bool add_new_mvdata(const py::array& data, std::string dataSetName)
         //(dtype.is(pybind11::dtype::of<double>())) ? set_points_from_numpy_array<double> :
         nullptr)
     ) {
-        point_setter(ptr, data.size(), data.ndim(), points);
+        point_setter(ptr, shape, points, false);
         return true;
     }
     return false;
@@ -164,49 +216,56 @@ bool add_new_mvdata(const py::array& data, std::string dataSetName)
 
 bool add_mvimage(const py::array& data, std::string dataSetName) 
 {
+    // The MV Datamodel is Band Interlaced by Pixel.
+    // This means that an image stack (which might be hyperspectral or simply RGB/RGBA)
+    // is counted as having size(stack) bands called dimensions in the MV Image.
+    // This function is meant to deal only with the 
+    // single image case however multiple RGB or RGBA bands may be present
+    // as given by the number of components
     py::buffer_info buf_info = data.request();
     void* ptr = buf_info.ptr;
     size_t ndim = data.ndim();
-    auto shape = buf_info.shape;
-    int components = 1;
+    std::vector<size_t> shape(buf_info.shape.begin(), buf_info.shape.end());
+    if (shape.size() == 2) {
+        shape.push_back(1);
+    }
+    int num_bands = 1;
     switch (shape.size()) {
-    case 2:
-        break;
     case 3:
-        components = shape[2];
-        if (!(components == 1 || components == 2 || components == 3)) {
+        num_bands = shape[2];
+        if (!(num_bands == 1 || num_bands == 2 || num_bands == 3)) {
             throw std::runtime_error("Image components nust me 1, 3 or 4 corresponding to grayscale, RGB, RGBA");
         }
         break;
     default:
         throw std::runtime_error("This function only supports a single 2d image with optional components");
     }
-    int width = shape[0];
-    int height = shape[1];
+    int height = shape[0];
+    int width = shape[1];
     mv::Dataset<Points> points = mv::data().createDataset<Points>("Points", dataSetName.c_str(), nullptr);
     auto dtype = data.dtype();
     // PointData is limited in its type support - hopefully the commented types wil be added soon
     if (auto point_setter = (
-        (dtype.is(pybind11::dtype::of<std::uint8_t>())) ? conv_points_from_numpy_array<std::uint16_t, std::uint8_t> :
-        //(dtype.is(pybind11::dtype::of<std::int8_t>())) ? conv_points_from_numpy_array<std::uint16_t, std::int8_t> :
+        (dtype.is(pybind11::dtype::of<std::uint8_t>())) ? conv_points_from_numpy_array<float, std::uint8_t> :
+        (dtype.is(pybind11::dtype::of<std::int8_t>())) ? conv_points_from_numpy_array<float, std::int8_t> :
         (dtype.is(pybind11::dtype::of<std::uint16_t>())) ? conv_points_from_numpy_array<float, std::uint16_t> :
-        //(dtype.is(pybind11::dtype::of<std::int16_t>())) ? conv_points_from_numpy_array<float, std::int16_t> :
+        (dtype.is(pybind11::dtype::of<std::int16_t>())) ? conv_points_from_numpy_array<float, std::int16_t> :
         // 32 int are cast to float
-        //(dtype.is(pybind11::dtype::of<std::uint32_t>())) ? conv_points_from_numpy_array<float, std::uint32_t> :
-        //(dtype.is(pybind11::dtype::of<std::int32_t>())) ? conv_points_from_numpy_array<float, std::int32_t> :
+        (dtype.is(pybind11::dtype::of<std::uint32_t>())) ? conv_points_from_numpy_array<float, std::uint32_t> :
+        (dtype.is(pybind11::dtype::of<std::int32_t>())) ? conv_points_from_numpy_array<float, std::int32_t> :
         //(dtype.is(pybind11::dtype::of<std::uint64_t>())) ? set_points_from_numpy_array<std::uint64_t> :
         //(dtype.is(pybind11::dtype::of<std::int64_t>())) ? set_points_from_numpy_array<std::int64_t> :
-        //(dtype.is(pybind11::dtype::of<float>())) ? set_points_from_numpy_array<float> :
+        (dtype.is(pybind11::dtype::of<float>())) ? set_points_from_numpy_array<float> :
         //(dtype.is(pybind11::dtype::of<double>())) ? set_points_from_numpy_array<double> :
         nullptr)
         ) {
-        point_setter(ptr, data.size(), data.ndim(), points);
+        point_setter(ptr, shape, points, true);
         auto imageDataset = mv::data().createDataset<Images>("Images", "numpy image", Dataset<DatasetImpl>(*points));
         imageDataset->setText(QString("Images (%2x%3)").arg(QString::number(shape[0]), QString::number(shape[1])));
         imageDataset->setType(ImageData::Type::Stack);
         imageDataset->setNumberOfImages(1);
         imageDataset->setImageSize(QSize(width, height));
-        imageDataset->setNumberOfComponentsPerPixel(components);
+        imageDataset->setNumberOfComponentsPerPixel(num_bands);
         QStringList filePaths = { QString("Source is numpy array %1 via JupyterPlugin").arg(dataSetName.c_str()) };
         imageDataset->setImageFilePaths(filePaths);
         events().notifyDatasetDataChanged(imageDataset);
