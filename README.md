@@ -31,7 +31,7 @@ Jupyter comprises a webserver that can ve viewed using a standard HTTP and JavaS
 ---
     title: Jupyter Architecture
 ---
-
+%%{init: {'theme': 'dark' } }%%
 flowchart LR
 
     User["<ins>User</ins><span style='min-width: 60px; display: block; color:white'><img src='https://symbols.getvecta.com/stencil_253/0_actor.d8114c3f96.svg' width='60' height='60' /><span>"]
@@ -64,6 +64,7 @@ Possible servers are :
 #### Startup/Shutdown sequence diagram
 
 ```mermaid
+%%{init: {'theme': 'dark' } }%%
 %%{init: {'sequence': {'mirrorActors': false}}}%%
 sequenceDiagram
     participant MS as ManiVaultStudio
@@ -110,6 +111,7 @@ This diagram only shows the interaction of messages that execute Python code in 
 #### Interacting with JupyterXeusKernel: sequence diagram
 
 ```mermaid
+%%{init: {'theme': 'dark' } }%%
 %%{init: {'sequence': {'mirrorActors': false, 'boxMargin': 20 }}}%%
 sequenceDiagram
     %% autonumber

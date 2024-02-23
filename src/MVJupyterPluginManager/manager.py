@@ -1,5 +1,6 @@
 from jupyter_server.services.kernels.kernelmanager import MappingKernelManager, MultiKernelManager
 from pathlib import Path
+import os
 
 import logging
 logging.basicConfig(level=logging.DEBUG)
@@ -23,7 +24,8 @@ class ExternalMappingKernelManager(MappingKernelManager):
 
         #Connect to kernel started by ManiVault JupyterPlugin.
         # retrieve from environment or arg
-        connection_file = Path('D:/TempProj/DevBundle/Jupyter/install/Debug/external_kernels/ManiVault/connection.json')
+        #connection_file = Path('D:/TempProj/DevBundle/Jupyter/install/Debug/external_kernels/ManiVault/connection.json')
+        connection_file = Path(os.environ["MANIVAULT_JUPYTERPLUGIN_CONNECTION_FILE"])
 
         if not connection_file.exists():
             _log.warning(f"Jupyter connection file '{connection_file}' does not exist.")

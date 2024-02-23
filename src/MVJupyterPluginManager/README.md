@@ -4,11 +4,29 @@ A kernel manager that allows JupyterLab to connect to an externally started kern
 
 The code is largely copied from the examples in https://github.com/pyxll/pyxll-jupyter/tree/master/pyxll_jupyter/kernel_managers, https://github.com/SciQLop/SciQLop/tree/main/SciQLop/Jupyter and https://github.com/ebanner/pynt/tree/master/codebook
 
-JupyterLab can be started with the [ServerApp.kernel_manager_class](https://jupyterlab-server.readthedocs.io/en/stable/api/app-config.html) option. In this case this is 
+JupyterLab can be started with the [ServerApp.kernel_manager_class](https://jupyterlab-server.readthedocs.io/en/stable/api/app-config.html) and KernelProviderFactory options. Read the piece on the [kernel provisioner relationship in the client doc](https://jupyter-client.readthedocs.io/en/stable/provisioning.html) for more details of this system. 
+
+```mermaid
+---
+title: Client - KernelManager - Provisioner
+---
+%%{init: {'theme': 'dark' } }%%
+classDiagram
+jupyter_client *-- ExternalMappingKernelManager
+ExternalMappingKernelManager *-- ExistingProvisioner 
 
 ```
-jupyterlab --ServerApp.kernel_manager_class=MVJupyterPluginManager.ExternalMappingKernelManager
+### Starting the server with the MV KernelManager and Provisioner
+
+The complexity of setting the KernelManage and PRovisioner is handled by the `__main__` entry point in MVJupyterPluginManager. The only thing that needs to be provided is the path to the connection.json that is output by the JupyterPlugin. 
 ```
+python -m MVJupyterPluginManager D:\TempProj\DevBundle\Jupyter\install\Debug\external_kernels\ManiVault\connection.json
+```
+
+
+The provisione rname `mvjupyterplugin-existing-provisioner`is defined in the MVJupyterPluginManager package to map to MV's `ExistingProvisioner` class
+
+Refer to the [jupyterlab-server doc](https://jupyterlab-server.readthedocs.io/en/latest/api/app-config.html) and the [jupyter-client doc](https://jupyter-client.readthedocs.io/en/stable/provisioning.html) for more details on the commandline options.
 
 Baldur van Lew
 2024-02-06
