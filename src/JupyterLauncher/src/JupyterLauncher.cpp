@@ -23,8 +23,6 @@ using namespace mv;
 
 Q_PLUGIN_METADATA(IID "nl.BioVault.JupyterLauncher")
 
-using namespace mv;
-
 JupyterLauncher::JupyterLauncher(const PluginFactory* factory) :
     ViewPlugin(factory),
     _points(),
@@ -176,6 +174,17 @@ bool JupyterLauncher::loadPlugin()
 
     auto pluginInstance = pluginFactory->produce();
     _plugins.push_back(std::move(std::unique_ptr<plugin::Plugin>(pluginInstance)));
+
+    // Communicate the connection file path via the child action in the JupyterPlugin
+    auto connectionPath = _settingsAction.getConnectionFilePathAction().getFilePath();
+    _settingsAction.getConnectionFilePathAction().getFilePath();
+    auto jpActions = pluginInstance->getChildren();
+    for(auto action: jpActions) {
+        qDebug() << action->text() << ": " << action->data();
+        if (action->text() == QString("Connection file path")) {
+            action->setData(connectionPath);
+        }
+    }
     pluginInstance->init();
     return true;
 }

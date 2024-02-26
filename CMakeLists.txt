@@ -81,9 +81,12 @@ set(JUPYTERPLUGIN_SOURCES
     src/XeusServer.cpp
     src/XeusInterpreter.h
     src/XeusInterpreter.cpp
+    src/SettingsAction.h
+    src/SettingsAction.cpp
     src/MVData.cpp
     src/MVData.h
     src/JupyterPlugin.json
+    ${CMAKE_CURRENT_BINARY_DIR}/jupyterplugin_export.h
 )
 
 set(PLUGIN_MOC_HEADERS
@@ -125,6 +128,14 @@ target_include_directories(${JUPYTERPLUGIN} PRIVATE
 # Request C++17
 target_compile_features(${JUPYTERPLUGIN} PRIVATE cxx_std_17)
 
+include(GenerateExportHeader)
+generate_export_header(${JUPYTERPLUGIN})
+
+# Retrieve the file name of the generated export header.
+file(GLOB EXPORT_HEADER_FILE_NAME 
+    RELATIVE ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_BINARY_DIR}/*_export.h)
+list(APPEND IMAGE_DATA_HEADERS ${CMAKE_CURRENT_BINARY_DIR}/${EXPORT_HEADER_FILE_NAME})
+
 # -----------------------------------------------------------------------------
 # Target library linking
 # -----------------------------------------------------------------------------
@@ -142,12 +153,14 @@ set(MV_LINK_SUFFIX $<IF:$<CXX_COMPILER_ID:MSVC>,${CMAKE_LINK_LIBRARY_SUFFIX},${C
 
 set(MV_LINK_LIBRARY "${MV_LINK_PATH}/${CMAKE_SHARED_LIBRARY_PREFIX}MV_Public${MV_LINK_SUFFIX}")
 set(POINTDATA_LINK_LIBRARY "${PLUGIN_LINK_PATH}/${CMAKE_SHARED_LIBRARY_PREFIX}PointData${MV_LINK_SUFFIX}") 
+set(IMAGEDATA_LINK_LIBRARY "${PLUGIN_LINK_PATH}/${CMAKE_SHARED_LIBRARY_PREFIX}ImageData${MV_LINK_SUFFIX}") 
 if (MSVC)
     set(zeromq_LIBS_DEBUG "libzmq-v142-mt-4_3_5") # not the libzmq-v142-mt-gd-4_3_5 version
 endif()
 
 target_link_libraries(${JUPYTERPLUGIN} PRIVATE "${MV_LINK_LIBRARY}")
 target_link_libraries(${JUPYTERPLUGIN} PRIVATE "${POINTDATA_LINK_LIBRARY}")
+target_link_libraries(${JUPYTERPLUGIN} PRIVATE "${IMAGEDATA_LINK_LIBRARY}")
 target_link_libraries(${JUPYTERPLUGIN} PRIVATE xeus)
 target_link_libraries(${JUPYTERPLUGIN} PRIVATE xeus-zmq)
 target_link_libraries(${JUPYTERPLUGIN} PRIVATE xeus-python)
@@ -167,6 +180,7 @@ target_compile_features(${JUPYTERPLUGIN} PRIVATE cxx_std_14)
 install(TARGETS ${JUPYTERPLUGIN}
     RUNTIME DESTINATION Plugins COMPONENT PLUGINS # Windows .dll
     LIBRARY DESTINATION Plugins COMPONENT PLUGINS # Linux/Mac .so
+    ARCHIVE DESTINATION lib     COMPONENT LINKLIB # Windows .lib
 )
 
 add_custom_command(TARGET ${JUPYTERPLUGIN} POST_BUILD

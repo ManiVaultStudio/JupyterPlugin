@@ -1,12 +1,11 @@
 #pragma once
 
 #include <actions/GroupAction.h>
-#include <actions/DirectoryPickerAction.h>
 #include <actions/FilePickerAction.h>
 
 using namespace mv::gui;
 
-class JupyterLauncher;
+class JupyterPlugin;
 
 /**
  * Settings action class
@@ -26,11 +25,9 @@ public:
 
 public: // Action getters
     
-    DirectoryPickerAction& getPythonPathAction() { return _pythonPath; }
     FilePickerAction& getConnectionFilePathAction() { return _connectionFilePath; }
 
 private:
-    JupyterLauncher*    _jupyterLauncher;       /** Pointer to Example OpenGL Viewer Plugin */
-    DirectoryPickerAction _pythonPath;
+    JupyterPlugin*    _jupyterPlugin;       /** Pointer to Example OpenGL Viewer Plugin */
     FilePickerAction _connectionFilePath;
 };

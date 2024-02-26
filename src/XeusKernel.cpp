@@ -17,13 +17,13 @@
 #include <fstream>
 
 
-XeusKernel::XeusKernel(std::string connection_filename) : m_connection_filename(connection_filename)
+XeusKernel::XeusKernel()
 {
     connect(&m_jupyterLabServer_process, &QProcess::readyReadStandardOutput, this, &XeusKernel::onReadyStandardOutput);
     connect(&m_jupyterLabServer_process, &QProcess::readyReadStandardError, this, &XeusKernel::onReadyStandardError);
 }
 
-void XeusKernel::startKernel()
+void XeusKernel::startKernel(const QString& connection_path)
 {
     auto searchPath = QStringList(QCoreApplication::applicationDirPath() + "/python");
     QString pythonExecutable = QStandardPaths::findExecutable("python", searchPath);
@@ -59,7 +59,7 @@ void XeusKernel::startKernel()
     jsonObj["signature_scheme"] = set_config.m_signature_scheme.c_str();
     jsonObj["key"] = set_config.m_key.c_str();
     jsonObj["kernel_name"] = "ManiVault Studio";
-    std::ofstream confFile("D:\\TempProj\\DevBundle\\Jupyter\\install\\Debug\\external_kernels\\ManiVault\\connection.json");
+    std::ofstream confFile(connection_path.toUtf8()); // "D:\\TempProj\\DevBundle\\Jupyter\\install\\Debug\\external_kernels\\ManiVault\\connection.json");
     confFile << jsonObj;
 
 

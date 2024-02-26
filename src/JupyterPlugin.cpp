@@ -9,25 +9,52 @@
 #include <QProcess>
 #include <QDir>
 
+#include "XeusKernel.h"
+#include "jupyterplugin_export.h"
+
 Q_PLUGIN_METADATA(IID "nl.BioVault.JupyterPlugin")
 
 
-
-
 using namespace mv;
+
+
+class JupyterPlugin::PrivateKernel {
+public:
+    PrivateKernel() 
+    {
+        _xeusKernel = std::make_unique<XeusKernel>();
+    }
+
+    void startKernel(const QString& connection_path) 
+    {
+        _xeusKernel->startKernel(connection_path);
+    }
+
+public:
+    std::unique_ptr<XeusKernel> _xeusKernel;  /** the xeus kernel that manages the jupyter comms and the python interpreter*/
+};
 
 JupyterPlugin::JupyterPlugin(const PluginFactory* factory) :
     ViewPlugin(factory),
     _dropWidget(nullptr),
     _points(),
     _currentDatasetName(),
-    _currentDatasetNameLabel(new QLabel())
+    _currentDatasetNameLabel(new QLabel()),
+    _settingsAction(this, "JupyterPlugin Settings"),
+    pKernel(new PrivateKernel())
 {
     // This line is mandatory if drag and drop behavior is required
     _currentDatasetNameLabel->setAcceptDrops(true);
 
     // Align text in the center
     _currentDatasetNameLabel->setAlignment(Qt::AlignCenter);
+}
+
+JupyterPlugin::~JupyterPlugin() = default;
+
+void JupyterPlugin::setConnectionPath(const QString& connection_path)
+{
+    this->_connectionPath = connection_path;
 }
 
 void JupyterPlugin::init()
@@ -60,10 +87,9 @@ void JupyterPlugin::init()
     _eventListener.registerDataEventByType(PointType, std::bind(&JupyterPlugin::onDataEvent, this, std::placeholders::_1));
 
     auto jupyter_configFilepath = std::string("TODO: Add configfile path here from action");
-    _xeusKernel = std::make_unique<XeusKernel>(jupyter_configFilepath);
+    
     // Manual start
-    //_xeusKernel->startJupyterLabServer(QDir::current().path());
-    _xeusKernel->startKernel();
+    pKernel->startKernel(_settingsAction.getConnectionFilePathAction().getFilePath());
 }
 
 void JupyterPlugin::onDataEvent(mv::DatasetEvent* dataEvent)
@@ -133,12 +159,12 @@ void JupyterPlugin::onDataEvent(mv::DatasetEvent* dataEvent)
     }
 }
 
-ViewPlugin* ExampleViewPluginFactory::produce()
+ViewPlugin* JupyterPluginFactory::produce()
 {
     return new JupyterPlugin(this);
 }
 
-mv::DataTypes ExampleViewPluginFactory::supportedDataTypes() const
+mv::DataTypes JupyterPluginFactory::supportedDataTypes() const
 {
     DataTypes supportedTypes;
 
@@ -148,7 +174,7 @@ mv::DataTypes ExampleViewPluginFactory::supportedDataTypes() const
     return supportedTypes;
 }
 
-mv::gui::PluginTriggerActions ExampleViewPluginFactory::getPluginTriggerActions(const mv::Datasets& datasets) const
+mv::gui::PluginTriggerActions JupyterPluginFactory::getPluginTriggerActions(const mv::Datasets& datasets) const
 {
     PluginTriggerActions pluginTriggerActions;
 
@@ -159,7 +185,7 @@ mv::gui::PluginTriggerActions ExampleViewPluginFactory::getPluginTriggerActions(
     const auto numberOfDatasets = datasets.count();
 
     if (numberOfDatasets >= 1 && PluginFactory::areAllDatasetsOfTheSameType(datasets, PointType)) {
-        auto pluginTriggerAction = new PluginTriggerAction(const_cast<ExampleViewPluginFactory*>(this), this, "Example", "View example data", getIcon(), [this, getPluginInstance, datasets](PluginTriggerAction& pluginTriggerAction) -> void {
+        auto pluginTriggerAction = new PluginTriggerAction(const_cast<JupyterPluginFactory*>(this), this, "Example", "View example data", getIcon(), [this, getPluginInstance, datasets](PluginTriggerAction& pluginTriggerAction) -> void {
             for (auto dataset : datasets)
                 getPluginInstance();
         });

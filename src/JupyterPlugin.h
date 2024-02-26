@@ -6,10 +6,12 @@
 #include <widgets/DropWidget.h>
 
 #include <PointData/PointData.h>
-
+#include "SettingsAction.h"
 #include <QWidget>
 
-#include "XeusKernel.h"
+#include <memory>
+
+#include "jupyterplugin_export.h"
 
 /** All plugin related classes are in the HDPS plugin namespace */
 using namespace mv::plugin;
@@ -35,7 +37,9 @@ class QLabel;
  *
  * @authors B. van Lew
  */
-class JupyterPlugin : public ViewPlugin
+
+
+class JUPYTERPLUGIN_EXPORT JupyterPlugin : public ViewPlugin
 {
     Q_OBJECT
 
@@ -48,8 +52,9 @@ public:
     JupyterPlugin(const PluginFactory* factory);
 
     /** Destructor */
-    ~JupyterPlugin() override = default;
-    
+    ~JupyterPlugin();
+
+   
     /** This function is called by the core after the view plugin has been created */
     void init() override;
 
@@ -59,12 +64,20 @@ public:
      */
     void onDataEvent(mv::DatasetEvent* dataEvent);
 
+    void setConnectionPath(const QString& connection_path);
+
 protected:
     DropWidget*             _dropWidget;                /** Widget for drag and drop behavior */
-    mv::Dataset<Points>   _points;                    /** Points smart pointer */
+    SettingsAction          _settingsAction;            /** Settings action */
+    mv::Dataset<Points>     _points;                    /** Points smart pointer */
     QString                 _currentDatasetName;        /** Name of the current dataset */
     QLabel*                 _currentDatasetNameLabel;   /** Label that show the current dataset name */
-    std::unique_ptr<XeusKernel> _xeusKernel;  /** the xeus kernel that manages the jupyter comms and the python interpreter*/
+    QString                 _connectionPath;            /** absolute path to the connection file*/
+
+private:
+    // shield the implementation dependencies
+    class PrivateKernel;
+    std::unique_ptr<PrivateKernel> pKernel;
 };
 
 /**
@@ -72,7 +85,7 @@ protected:
  *
  * Note: Factory does not need to be altered (merely responsible for generating new plugins when requested)
  */
-class ExampleViewPluginFactory : public ViewPluginFactory
+class JupyterPluginFactory : public ViewPluginFactory
 {
     Q_INTERFACES(mv::plugin::ViewPluginFactory mv::plugin::PluginFactory)
     Q_OBJECT
@@ -82,10 +95,10 @@ class ExampleViewPluginFactory : public ViewPluginFactory
 public:
 
     /** Default constructor */
-    ExampleViewPluginFactory() {}
+    JupyterPluginFactory() {}
 
     /** Destructor */
-    ~ExampleViewPluginFactory() override {}
+    ~JupyterPluginFactory() override {}
     
     /** Creates an instance of the example view plugin */
     ViewPlugin* produce() override;

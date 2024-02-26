@@ -53,12 +53,18 @@ target_sources(${JUPYTERLAUNCHER} PRIVATE ${JUPYTERLAUNCHER_MOC})
 # -----------------------------------------------------------------------------
 # Target include directories
 # -----------------------------------------------------------------------------
-target_include_directories(${JUPYTERLAUNCHER} PRIVATE "${MV_INSTALL_DIR}/$<CONFIGURATION>/include/")
+target_include_directories(${JUPYTERLAUNCHER} PRIVATE 
+    "${MV_INSTALL_DIR}/$<CONFIGURATION>/include/"
+)
 
 # -----------------------------------------------------------------------------
 # Target properties
 # -----------------------------------------------------------------------------
 target_compile_features(${JUPYTERLAUNCHER} PRIVATE cxx_std_17)
+
+
+include(GenerateExportHeader)
+generate_export_header(${JUPYTERLAUNCHER})
 
 # -----------------------------------------------------------------------------
 # Target library linking
@@ -81,6 +87,7 @@ target_link_libraries(${JUPYTERLAUNCHER} PRIVATE "${POINTDATA_LINK_LIBRARY}")
 install(TARGETS ${JUPYTERLAUNCHER}
     RUNTIME DESTINATION Plugins COMPONENT PLUGINS # Windows .dll
     LIBRARY DESTINATION Plugins COMPONENT PLUGINS # Linux/Mac .so
+    ARCHIVE DESTINATION lib     COMPONENT LINKLIB # Windows .lib
 )
 
 add_custom_command(TARGET ${JUPYTERLAUNCHER} POST_BUILD

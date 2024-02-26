@@ -27,11 +27,11 @@ class XeusKernel : public QObject
     Q_OBJECT
 
 public: 
-    XeusKernel(std::string connection_filename);
+    XeusKernel();
     virtual ~XeusKernel()=default;
 
     bool startJupyterLabServer(QString noteBookDirectory);
-    void startKernel();
+    void startKernel(const QString& connection_path);
     void stopKernel();
 
 private:
@@ -41,6 +41,4 @@ private:
 private:
     xeus::xkernel *m_kernel;
     QProcess m_jupyterLabServer_process;
-    std::string m_connection_filename;
-
 };

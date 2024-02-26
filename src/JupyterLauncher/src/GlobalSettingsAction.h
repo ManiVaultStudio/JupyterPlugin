@@ -3,6 +3,7 @@
 #include <PluginGlobalSettingsGroupAction.h>
 
 #include <actions/DirectoryPickerAction.h>
+#include <actions/FilePickerAction.h>
 
 namespace mv {
     namespace plugin {
@@ -32,8 +33,10 @@ public:
 
 public: // Action getters
 
+    mv::gui::FilePickerAction& getDefaultConnectionPathAction() { return _defaultConnectionPathAction; }
     mv::gui::DirectoryPickerAction& getDefaultPythonPathAction() { return _defaultPythonPathAction; }
 
 private:
-    mv::gui::DirectoryPickerAction   _defaultPythonPathAction;       /** Default point size action */
+    mv::gui::FilePickerAction   _defaultConnectionPathAction;       /** Default connection file path */
+    mv::gui::DirectoryPickerAction   _defaultPythonPathAction;       /** Default pathon path */
 };
