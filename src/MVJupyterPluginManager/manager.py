@@ -1,6 +1,8 @@
 from jupyter_server.services.kernels.kernelmanager import MappingKernelManager, MultiKernelManager
 from pathlib import Path
 import os
+import warnings
+import builtins
 
 import logging
 logging.basicConfig(level=logging.DEBUG)
@@ -45,19 +47,19 @@ class ExternaMultiKernelManager(MultiKernelManager):
     """Subclass of MultiKernelManager to prevent restarting of the ManiVault JupyterPlugin kernel"""    
 
     def restart_kernel(self, *args, **kwargs):
-        raise NotImplementedError("Restarting a kernel running in ManiVault JupyterPlugin is not supported.")
+        warnings.warn("Restarting a kernel running in ManiVault JupyterPlugin is not supported.", RuntimeWarning)
     
     async def _async_restart_kernel(self, *args, **kwargs):
-        raise NotImplementedError("Restarting a kernel running in ManiVault JupyterPlugin is not supported.")
+        warnings.warn("Restarting a kernel running in ManiVault JupyterPlugin is not supported.", RuntimeWarning)
 
     def shutdown_kernel(self, *args, **kwargs):
-        raise NotImplementedError("Shutting down a kernel running in ManiVault JupyterPlugin is not supported.")
+        warnings.warn("Shutting down a kernel running in ManiVault JupyterPlugin is not supported.", RuntimeWarning)
 
     async def _async_shutdown_kernel(self, *args, **kwargs):
-        raise NotImplementedError("Shutting down a kernel running in ManiVault JupyterPlugin is not supported.")
+        warnings.warn("Shutting down a kernel running in ManiVault JupyterPlugin is not supported.", RuntimeWarning)
 
     def shutdown_all(self, *args, **kwargs):
-        raise NotImplementedError("Shutting down a kernel running in ManiVault JupyterPlugin is not supported.")
+        warnings.warn("Shutting down a kernel running in ManiVault JupyterPlugin is not supported.", RuntimeWarning)
 
     async def _async_shutdown_all(self, *args, **kwargs):
-        raise NotImplementedError("Shutting down a kernel running in ManiVault JupyterPlugin is not supported.")
+        warnings.warn("Shutting down a kernel running in ManiVault JupyterPlugin is not supported.", RuntimeWarning)

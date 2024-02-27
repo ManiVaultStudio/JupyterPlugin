@@ -33,10 +33,14 @@ public:
 
 public: // Action getters
 
-    mv::gui::FilePickerAction& getDefaultConnectionPathAction() { return _defaultConnectionPathAction; }
+    //mv::gui::FilePickerAction& getDefaultConnectionPathAction() { return _defaultConnectionPathAction; }
+    mv::gui::StringAction& getDefaultConnectionPathAction() { return _defaultConnectionPathAction; }
+
     mv::gui::DirectoryPickerAction& getDefaultPythonPathAction() { return _defaultPythonPathAction; }
 
 private:
-    mv::gui::FilePickerAction   _defaultConnectionPathAction;       /** Default connection file path */
+    // due to some file picker bugs use string for now
+    //mv::gui::FilePickerAction   _defaultConnectionPathAction;       /** Default connection file path */
+    mv::gui::StringAction   _defaultConnectionPathAction;       /** Default connection file path */
     mv::gui::DirectoryPickerAction   _defaultPythonPathAction;       /** Default pathon path */
 };

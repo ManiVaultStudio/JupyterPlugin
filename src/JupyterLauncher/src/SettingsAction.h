@@ -27,10 +27,13 @@ public:
 public: // Action getters
     
     DirectoryPickerAction& getPythonPathAction() { return _pythonPath; }
-    FilePickerAction& getConnectionFilePathAction() { return _connectionFilePath; }
+    //FilePickerAction& getConnectionFilePathAction() { return _connectionFilePath; }
+    StringAction& getConnectionFilePathAction() { return _connectionFilePath; }
 
 private:
-    JupyterLauncher*    _jupyterLauncher;       /** Pointer to Example OpenGL Viewer Plugin */
+    JupyterLauncher*    _jupyterLauncher;   
     DirectoryPickerAction _pythonPath;
-    FilePickerAction _connectionFilePath;
+    // due to issue with FilePickerAction use string for now
+    //FilePickerAction _connectionFilePath;
+    StringAction _connectionFilePath;
 };

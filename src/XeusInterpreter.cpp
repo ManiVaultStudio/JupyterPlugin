@@ -2,6 +2,7 @@
 #include "MVData.h"
 #include <QDebug>
 #include <pybind11/pybind11.h>
+#include <xeus/xhelper.hpp>
 //#include <xcomm.hpp>
 #include <iostream>
 namespace py = pybind11;
@@ -75,7 +76,40 @@ nl::json XeusInterpreter::is_complete_request_impl(const std::string& code)
 
 nl::json XeusInterpreter::kernel_info_request_impl()
 {
-    return xpyt::interpreter::kernel_info_request_impl();
+    std::string banner = ""
+        "#     #                 #     #                                #####                              \n"                             
+        "##   ##   ##   #    # # #     #   ##   #    # #      #####    #     # ##### #    # #####  #  #### \n"
+        "# # # #  #  #  ##   # # #     #  #  #  #    # #        #      #         #   #    # #    # # #    #\n"
+        "#  #  # #    # # #  # # #     # #    # #    # #        #       #####    #   #    # #    # # #    #\n"
+        "#     # ###### #  # # #  #   #  ###### #    # #        #            #   #   #    # #    # # #    #\n"
+        "#     # #    # #   ## #   # #   #    # #    # #        #      #     #   #   #    # #    # # #    #\n"
+        "#     # #    # #    # #    #    #    #  ####  ######   #       #####    #    ####  #####  #  #### \n"
+        "                                                                                                  \n"                                                                              
+        "            #                                         ######                                      \n"
+        "            # #    # #####  #   # ##### ###### #####  #     # #      #    #  ####  # #    #       \n"
+        "            # #    # #    #  # #    #   #      #    # #     # #      #    # #    # # ##   #       \n"
+        "            # #    # #    #   #     #   #####  #    # ######  #      #    # #      # # #  #       \n"
+        "      #     # #    # #####    #     #   #      #####  #       #      #    # #  ### # #  # #       \n"
+        "      #     # #    # #        #     #   #      #   #  #       #      #    # #    # # #   ##       \n"
+        "       #####   ####  #        #     #   ###### #    # #       ######  ####   ####  # #    #       \n"
+        "\n"
+        "\n"
+        " ManiVault Studio JupyterPlugin\n"
+        " A python kernel with access to the ManiVault Studio";
+
+    return xeus::create_info_reply(xeus::get_protocol_version(),
+        "ManiVault JupyterPlugin",
+        JUPYTERPLUGIN_VERSION,
+        "python",
+        "3.11",
+        "text/x-python",
+        "py",
+        "",
+        "",
+        "",
+        banner);
+
+    //return xpyt::interpreter::kernel_info_request_impl();
 }
 
 void XeusInterpreter::shutdown_request_impl()

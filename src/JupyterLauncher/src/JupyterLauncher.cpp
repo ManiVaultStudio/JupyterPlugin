@@ -176,8 +176,8 @@ bool JupyterLauncher::loadPlugin()
     _plugins.push_back(std::move(std::unique_ptr<plugin::Plugin>(pluginInstance)));
 
     // Communicate the connection file path via the child action in the JupyterPlugin
-    auto connectionPath = _settingsAction.getConnectionFilePathAction().getFilePath();
-    _settingsAction.getConnectionFilePathAction().getFilePath();
+    //auto connectionPath = _settingsAction.getConnectionFilePathAction().getFilePath();
+    auto connectionPath = _settingsAction.getConnectionFilePathAction().getString();
     auto jpActions = pluginInstance->getChildren();
     for(auto action: jpActions) {
         qDebug() << action->text() << ": " << action->data();

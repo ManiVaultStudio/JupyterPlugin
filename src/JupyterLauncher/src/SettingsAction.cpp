@@ -25,6 +25,7 @@ SettingsAction::SettingsAction(QObject* parent, const QString& title) :
     _connectionFilePath.setEnabled(true);
 
     _pythonPath.setDirectory(mv::settings().getPluginGlobalSettingsGroupAction<GlobalSettingsAction>(_jupyterLauncher)->getDefaultPythonPathAction().getDirectory());
-    _connectionFilePath.setFilePath(mv::settings().getPluginGlobalSettingsGroupAction<GlobalSettingsAction>(_jupyterLauncher)->getDefaultConnectionPathAction().getFilePath());
+    //_connectionFilePath.setFilePath(mv::settings().getPluginGlobalSettingsGroupAction<GlobalSettingsAction>(_jupyterLauncher)->getDefaultConnectionPathAction().getFilePath());
+    _connectionFilePath.setString(mv::settings().getPluginGlobalSettingsGroupAction<GlobalSettingsAction>(_jupyterLauncher)->getDefaultConnectionPathAction().getString());
  
 }
