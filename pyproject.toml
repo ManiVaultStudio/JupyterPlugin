@@ -11,7 +11,7 @@ name = 'MVJupyterPluginManager'
 authors = [
     {name = 'Baldur van Lew', email = "b.van_lew@lumc.nl"}
 ]
-version = '0.2.3'
+version = '0.2.11'
 description = 'A kernel manager fro JupyterLab that supports connections to external kernels'
 readme = 'README.md'
 requires-python = '>=3.10'
@@ -34,5 +34,7 @@ where = ["src"]
 [tool.setuptools-git-versioning]
 enabled = true
 
+[tools.setuptools.package-data]
+MVJupyterPluginManager.config = ["jupyter_notebook_config.py"]
 
 
