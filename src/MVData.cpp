@@ -1,7 +1,6 @@
-#include "MVData.h"
-
 #include "pybind11/pybind11.h"
 #include "pybind11/numpy.h"
+#include "MVData.h"
 #include "xeus-python/xinterpreter.hpp"
 #include <PointData/PointData.h>
 #include <ClusterData/ClusterData.h>
@@ -274,6 +273,43 @@ bool add_mvimage(const py::array& data, std::string dataSetName)
     return false;
 }
 
+// All images are float.
+py::array get_mv_image(const std::string& itemName)
+{
+    PointData::ElementTypeSpecifier dataSpec;
+    unsigned int numDimensions;
+    unsigned int numPoints;
+    for (const auto topLevelDataHierarchyItem : Application::core()->getDataHierarchyManager().getTopLevelItems()) {
+        if (topLevelDataHierarchyItem->getDataset()->getGuiName() == QString(itemName.c_str())) {
+            auto dataType = topLevelDataHierarchyItem->getDataType();
+            auto inputPoints = topLevelDataHierarchyItem->getDataset<Points>();
+            numDimensions = inputPoints->getNumDimensions();
+            numPoints = inputPoints->isFull() ? inputPoints->getNumPoints() : inputPoints->indices.size();
+            auto size = numPoints * numDimensions;
+
+            // extract the source type 
+            inputPoints->visitSourceData([&dataSpec](auto pointData) {
+                for (auto pointView : pointData) {
+                    for (auto value : pointView) {
+                        qInfo() << "checking point data";
+                        dataSpec = getTypeSpecifier<decltype(value)>();
+                        break;
+                    }
+                    break;
+                }
+                });
+
+            qInfo() << "PointData::ElementTypeSpecifier is " << static_cast<int>(dataSpec);
+            if (auto populate =
+                (dataSpec == PointData::ElementTypeSpecifier::float32) ? populate_pyarray<float> :
+                nullptr) {
+                return populate(inputPoints, numPoints, numDimensions);
+            }
+        }
+    }
+    return py::array_t<float>(0);
+}
+
 bool add_mvimage_stack(const py::list& data, std::string dataSetName ) 
 {
     return true;
@@ -285,6 +321,7 @@ py::module get_MVData_module()
     MVData_module.def("get_info", get_info);
     MVData_module.def("get_top_level_items", get_top_level_items);
     MVData_module.def("get_data_for_item", get_data_for_item, py::arg("itemName") = py::str());
+    MVData_module.def("get_image_item", get_data_for_item, py::arg("itemName") = py::str());
     MVData_module.def(
         "add_new_data",
         add_new_mvdata,

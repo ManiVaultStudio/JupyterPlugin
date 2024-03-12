@@ -38,6 +38,8 @@ class JupyterPluginConan(ConanFile):
     # Other requirements (xeus, xeus-zmq, zeromq, cppzmq etc.) 
     # are transitively depended from xeus-python 
     requires = [("xeus-python/0.15.12@lkeb/stable"),
+                ("xeus-zmq/1.1.1@lkeb/stable"),
+                ("xeus/3.1.4@lkeb/stable"),
                 ("xtl/0.7.5@")]
 
     # Options may need to change depending on the packaged library
@@ -142,9 +144,9 @@ class JupyterPluginConan(ConanFile):
         xpython_root = pathlib.Path(self.deps_cpp_info["xeus-python"].rootpath).as_posix()
         tc.variables["xeus-python_ROOT"] = f"{xpython_root}"
 
-        tc.variables["nlohmann_json_ROOT"] = pathlib.Path(self.deps_cpp_info["nlohmann_json"].rootpath).as_posix()
+        # tc.variables["nlohmann_json_ROOT"] = pathlib.Path(self.deps_cpp_info["nlohmann_json"].rootpath).as_posix()
 
-        tc.variables["ZeroMQ_ROOT"] = pathlib.Path(self.deps_cpp_info["zeromq"].rootpath).as_posix()
+        # tc.variables["ZeroMQ_ROOT"] = pathlib.Path(self.deps_cpp_info["zeromq"].rootpath).as_posix()
 
         
         tc.generate()

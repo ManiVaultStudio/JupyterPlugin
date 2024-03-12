@@ -6,6 +6,23 @@ The plugin supplies a module containing methods that can be accessed from a Jupy
 
 Although the articture is a view plugin the actual view should be access via a web browser. The plugin it's shows no more than c aconfiguration widget. In addition the URL (along with token) to be used to access this kernel through
 
+## Building
+
+Using conan you can install the required xeus dependencies following from our lkeb artifactory 
+
+Artifactory | URL
+--- | ---
+lkeb-artifactory | https://lkeb-artifactory.lumc.nl/artifactory/api/conan/conan-local
+
+And define the following variables
+
+Dependency (conan format) | Required CMAKE variable
+--- | ---
+xeus/3.1.4@lkeb/stable | xeus_ROOT
+xeus-zmq/1.1.1@lkeb/stable | xeus-zmq_ROOT
+xeus-python/0.15.12@lkeb/stable | xeus-python_ROOT
+
+
 ### Kernel architecture
 
 The kernel relies on Jupyter-Xeus components to expose a python 3.11 environment. 
@@ -67,11 +84,16 @@ Possible servers are :
 %%{init: {'theme': 'dark' } }%%
 %%{init: {'sequence': {'mirrorActors': false}}}%%
 sequenceDiagram
+    box DarkGreen ManiVault Process
     participant MS as ManiVaultStudio
     participant JP as JupyterPlugin
+    end
+    box DarkBlue JupyterServer Process
     participant JS as JupyterServer
+    end
 
     note over JP: JupyterXeusKernel <br> hosted Python <br> context
+
 
 
 
@@ -104,11 +126,11 @@ sequenceDiagram
 
 The main class in the *PythonJupyterPlugin* is the *JupyterXeusKernel* that is created on startup. Details of this class and its subcomponents are illustrated here for reference.
  
-#### The JupyterXeusKernel
+#### The XeusKernel
 
-This diagram only shows the interaction of messages that execute Python code in the kernel without calling back to ManiVault.
+This diagram only shows the interaction of messages that execute Python code in the kernel without calling back to ManiVault. The XeusKernel is a C++ implementation of a Jupyter Kernel that is in the JupyterPlugin.
 
-#### Interacting with JupyterXeusKernel: sequence diagram
+#### Interacting with XeusKernel: sequence diagram
 
 ```mermaid
 %%{init: {'theme': 'dark' } }%%
@@ -116,11 +138,10 @@ This diagram only shows the interaction of messages that execute Python code in 
 sequenceDiagram
     %% autonumber
     actor BR as WebBrowser
-    actor JHS as JupyterHTMLServer
+    actor JHS as JupyterServer
 
-    box transparent JupyterXeusKernel
+    box DarkGreen ManiVault hosted XeusKernel
     participant 0PS as 0MQPollerServer
-
     participant XK as XeusKernel
     participant XI as XeusInterpreter
     end
@@ -152,7 +173,7 @@ sequenceDiagram
 
 ```
 
-The main points here are the 3 architectural subcomponents of the JupyterXeusKernel: 
+The main points here are the 3 architectural subcomponents of the XeusKernel: 
 
 1. 0MGPollerServer: Handles the logical level Jupyter protocol in a QT event loop compliant manner (events to an from WorkerThread)
 2. XeusKernel: Handle the application level Jupyter protocol. In particular it dispatches execution related functions to the interpreter 

@@ -20,10 +20,9 @@ add_subdirectory(external/json)
 add_subdirectory(external/xtl)
 add_subdirectory(external/libzmq)
 add_subdirectory(external/cppzmq)
+# python before pybind11
 find_package(Python 3.11 COMPONENTS Development Interpreter REQUIRED)
 add_subdirectory(external/pybind11)
-set(pybind11_ROOT "C:/Users/bvanlew/.conan/data/pybind11/2.11.1/_/_/package/5ab84d6acfe1f23c4fae0ab88f26e3a396351ac9")
-
 
 if(MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /DWIN32 /EHsc /MP /permissive- /Zc:__cplusplus")
@@ -42,19 +41,21 @@ if(NOT DEFINED MV_INSTALL_DIR)
 endif()
 file(TO_CMAKE_PATH ${MV_INSTALL_DIR} MV_INSTALL_DIR)
 
-set(xtl_DIR "${CMAKE_BINARY_DIR}/external/xtl" CACHE PATH "")
-set(nlohmann_json_DIR "${CMAKE_BINARY_DIR}/external/json" CACHE PATH "")
-set(cppzmq_DIR "${CMAKE_BINARY_DIR}/external/cppzmq" CACHE PATH "")
-set(ZeroMQ_DIR ${CMAKE_BINARY_DIR}/external/libzmq CACHE PATH "")
+set(xtl_DIR "${PROJECT_SOURCE_DIR}/external/xtl" CACHE PATH "")
+set(nlohmann_json_DIR "${PROJECT_SOURCE_DIR}/external/json" CACHE PATH "")
+set(cppzmq_DIR "${PROJECT_SOURCE_DIR}/external/cppzmq" CACHE PATH "")
+set(ZeroMQ_DIR "${PROJECT_SOURCE_DIR}/external/libzmq" CACHE PATH "")
+set(PYBIND11_DIR "${PROJECT_SOURCE_DIR}/external/pybind11")
+set(PYBIND11_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/external/pybind11/include" CACHE PATH "Path to root of pybind11 include")
+set(xeus_ROOT "" CACHE PATH "path to the xeus dependency root")
+set(xeus-zmq_ROOT "" CACHE PATH "path to the xeus-zmq dependency root")
+set(xeus-python_ROOT "" CACHE PATH "path to the xeus-python dependency root")
+
+message("Pybind11 include: ${PYBIND11_INCLUDE_DIR}")
 
 find_package(Qt6 COMPONENTS Widgets WebEngineWidgets REQUIRED)
-set(pybind11_INCLUDE_DIR "./external/pybind11/install")
-set(xeus_ROOT "" CACHE PATH "path to the xeus dependency root")
 find_package(xeus REQUIRED)
-set(xeus-zmq_ROOT "" CACHE PATH "path to the xeus-zmq dependency root")
 find_package(xeus-zmq REQUIRED)
-
-set(xeus-python_ROOT "" CACHE PATH "path to the xeus-python dependency root")
 find_package(xeus-python REQUIRED)
 
 
@@ -118,7 +119,7 @@ target_include_directories(${JUPYTERPLUGIN} PRIVATE
     "${ZeroMQ_INCLUDE_DIR}" 
     "${cppzmq_INCLUDE_DIR}" 
     "${nlohmann_json_INCLUDE_DIR}"
-    "${pybind11_INCLUDE_DIR}"
+    "${PYBIND11_INCLUDE_DIR}"
     "${PYTHON_INCLUDE_DIR}"
 )
 

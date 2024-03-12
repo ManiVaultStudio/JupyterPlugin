@@ -1,7 +1,7 @@
 [submodule "external/pybind11"]
 	path = external/pybind11
 	url = git@github.com:pybind/pybind11.git
-	branch = v2.11
+	branch = v2.11.1
 [submodule "external/pybind11_json"]
 	path = external/pybind11_json
 	url = git@github.com:pybind/pybind11_json.git
