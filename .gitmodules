@@ -16,4 +16,4 @@
 	url = git@github.com:xtensor-stack/xtl.git
 [submodule "external/libzmq"]
 	path = external/libzmq
-	url = https://github.com/zeromq/libzmq.git
+	url = git@github.com:zeromq/libzmq.git
