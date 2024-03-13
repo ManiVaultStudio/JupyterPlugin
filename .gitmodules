@@ -17,3 +17,6 @@
 [submodule "external/libzmq"]
 	path = external/libzmq
 	url = git@github.com:zeromq/libzmq.git
+[submodule "external/conan-recipes"]
+	path = external/conan-recipes
+	url = git@github.com:biovault/conan-recipes.git
