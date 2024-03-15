@@ -8,6 +8,10 @@ PROJECT(${JUPYTERPLUGIN})
 
 add_subdirectory(src/JupyterLauncher)
 
+# python before pybind11
+message("Locate python 3.11 for the build")
+find_package(Python 3.11 COMPONENTS Development Interpreter REQUIRED)
+
 # -----------------------------------------------------------------------------
 # CMake Options
 # -----------------------------------------------------------------------------
@@ -20,8 +24,6 @@ add_subdirectory(external/json)
 add_subdirectory(external/xtl)
 add_subdirectory(external/libzmq)
 add_subdirectory(external/cppzmq)
-# python before pybind11
-find_package(Python 3.11 COMPONENTS Development Interpreter REQUIRED)
 add_subdirectory(external/pybind11)
 
 if(MSVC)
