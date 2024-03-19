@@ -1,8 +1,8 @@
-from conans import ConanFile
+from conans import ConanFile, tools
 from conan.tools.cmake import CMakeDeps, CMake, CMakeToolchain
 from conans.tools import save, load
 from conans.tools import os_info, SystemPackageTool
-#from conan.tools.system.package_manager import Brew
+
 import os
 import shutil
 import pathlib
@@ -60,6 +60,10 @@ class JupyterPluginConan(ConanFile):
         )
         print(f"git info from {path}")
         return path
+
+    def source(self):
+        cppzmqcmake = pathlib.Path(self.source_folder, "ManiVaultStudio", "JupyterPlugin", "external", "cppzmq", "CMakeLists.txt")
+        tools.replace_in_file(cppzmqcmake, "cmake_minimum_required(VERSION 3.11)", "cmake_minimum_required(VERSION 3.12)")
 
     def export(self):
         print("In export")
@@ -140,14 +144,12 @@ class JupyterPluginConan(ConanFile):
 
         xzmq_root = pathlib.Path(self.deps_cpp_info["xeus-zmq"].rootpath).as_posix()
         tc.variables["xeus-zmq_ROOT"] = f"{xzmq_root}"
+        tc.variables["ZeroMQ_ROOT"] = f"{xzmq_root}" # libzmq is packaged with xeus-zmq
 
         xpython_root = pathlib.Path(self.deps_cpp_info["xeus-python"].rootpath).as_posix()
         tc.variables["xeus-python_ROOT"] = f"{xpython_root}"
 
-        # tc.variables["nlohmann_json_ROOT"] = pathlib.Path(self.deps_cpp_info["nlohmann_json"].rootpath).as_posix()
-
-        # tc.variables["ZeroMQ_ROOT"] = pathlib.Path(self.deps_cpp_info["zeromq"].rootpath).as_posix()
-
+        # tc.variables["nlohmann_json_ROOT"] = "${PROJECT_SOURCE_DIR}/external/json"
         
         tc.generate()
 

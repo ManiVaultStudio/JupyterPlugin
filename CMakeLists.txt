@@ -20,11 +20,10 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_AUTOMOC ON)
 
 set(QTVERSION 6)
-add_subdirectory(external/json)
-add_subdirectory(external/xtl)
-add_subdirectory(external/libzmq)
+set(CPPZMQ_BUILD_TESTS OFF) # cppzmq
+
+cmake_policy(SET CMP0074 NEW)
 add_subdirectory(external/cppzmq)
-add_subdirectory(external/pybind11)
 
 if(MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /DWIN32 /EHsc /MP /permissive- /Zc:__cplusplus")
@@ -46,31 +45,17 @@ file(TO_CMAKE_PATH ${MV_INSTALL_DIR} MV_INSTALL_DIR)
 set(xtl_DIR "${PROJECT_SOURCE_DIR}/external/xtl" CACHE PATH "")
 set(nlohmann_json_DIR "${PROJECT_SOURCE_DIR}/external/json" CACHE PATH "")
 set(cppzmq_DIR "${PROJECT_SOURCE_DIR}/external/cppzmq" CACHE PATH "")
-set(ZeroMQ_DIR "${PROJECT_SOURCE_DIR}/external/libzmq" CACHE PATH "")
 set(PYBIND11_DIR "${PROJECT_SOURCE_DIR}/external/pybind11")
 set(PYBIND11_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/external/pybind11/include" CACHE PATH "Path to root of pybind11 include")
 set(xeus_ROOT "" CACHE PATH "path to the xeus dependency root")
 set(xeus-zmq_ROOT "" CACHE PATH "path to the xeus-zmq dependency root")
 set(xeus-python_ROOT "" CACHE PATH "path to the xeus-python dependency root")
 
-message("Pybind11 include: ${PYBIND11_INCLUDE_DIR}")
-
 find_package(Qt6 COMPONENTS Widgets WebEngineWidgets REQUIRED)
 find_package(xeus REQUIRED)
 find_package(xeus-zmq REQUIRED)
 find_package(xeus-python REQUIRED)
 
-
-macro(print_all_variables)
-    message(STATUS "print_all_variables------------------------------------------{")
-    get_cmake_property(_variableNames VARIABLES)
-    foreach (_variableName ${_variableNames})
-        message(STATUS "${_variableName}=${${_variableName}}")
-    endforeach()
-    message(STATUS "print_all_variables------------------------------------------}")
-endmacro()
-
-print_all_variables()
 # -----------------------------------------------------------------------------
 # Source files
 # -----------------------------------------------------------------------------
@@ -104,6 +89,8 @@ source_group( Plugin FILES ${JUPYTERPLUGIN_SOURCES})
 # -----------------------------------------------------------------------------
 # Create dynamic library for the plugin
 add_library(${JUPYTERPLUGIN} SHARED ${JUPYTERPLUGIN_SOURCES})
+
+add_dependencies(${JUPYTERPLUGIN} libzmq)
 
 qt_wrap_cpp(JUPYTERPLUGIN_MOC ${PLUGIN_MOC_HEADERS} TARGET ${JUPYTERPLUGIN})
 target_sources(${JUPYTERPLUGIN} PRIVATE ${JUPYTERPLUGIN_MOC})
