@@ -23,6 +23,9 @@ set(QTVERSION 6)
 set(CPPZMQ_BUILD_TESTS OFF) # cppzmq
 
 cmake_policy(SET CMP0074 NEW)
+# gcc visibility setting
+set(CMAKE_CXX_VISIBILITY_PRESET hidden)
+set(CMAKE_VISIBILITY_INLINES_HIDDEN 1)
 add_subdirectory(external/cppzmq)
 
 if(MSVC)
@@ -188,3 +191,4 @@ if(MSVC)
     set_property(TARGET ${JUPYTERPLUGIN} PROPERTY VS_DEBUGGER_WORKING_DIRECTORY $<IF:$<CONFIG:DEBUG>,${MV_INSTALL_DIR}/debug,${MV_INSTALL_DIR}/release>)
     set_property(TARGET ${JUPYTERPLUGIN} PROPERTY VS_DEBUGGER_COMMAND $<IF:$<CONFIG:DEBUG>,"${MV_INSTALL_DIR}/debug/ManiVault Studio.exe","${MV_INSTALL_DIR}/release/ManiVault Studio.exe">)
 endif()
+
