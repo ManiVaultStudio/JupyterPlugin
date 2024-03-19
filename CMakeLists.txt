@@ -90,7 +90,7 @@ source_group( Plugin FILES ${JUPYTERPLUGIN_SOURCES})
 # Create dynamic library for the plugin
 add_library(${JUPYTERPLUGIN} SHARED ${JUPYTERPLUGIN_SOURCES})
 
-add_dependencies(${JUPYTERPLUGIN} libzmq)
+add_dependencies(${JUPYTERPLUGIN} libzmq JupyterLauncher)
 
 qt_wrap_cpp(JUPYTERPLUGIN_MOC ${PLUGIN_MOC_HEADERS} TARGET ${JUPYTERPLUGIN})
 target_sources(${JUPYTERPLUGIN} PRIVATE ${JUPYTERPLUGIN_MOC})
