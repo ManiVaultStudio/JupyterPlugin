@@ -35,13 +35,6 @@ class JupyterPluginConan(ConanFile):
     # generators = "cmake"
     generators = "CMakeDeps"
 
-    # Other requirements (xeus, xeus-zmq, zeromq, cppzmq etc.) 
-    # are transitively depended from xeus-python 
-    requires = [("xeus-python/0.15.12@lkeb/stable"),
-                ("xeus-zmq/1.1.1@lkeb/stable"),
-                ("xeus/3.1.4@lkeb/stable"),
-                ("xtl/0.7.5@")]
-
     # Options may need to change depending on the packaged library
     settings = {"os": None, "build_type": None, "compiler": None, "arch": None}
     options = {"shared": [True, False], "fPIC": [True, False]}
@@ -138,18 +131,6 @@ class JupyterPluginConan(ConanFile):
         qtpath = pathlib.Path(self.deps_cpp_info["qt"].rootpath)
         qt_root = str(list(qtpath.glob("**/Qt6Config.cmake"))[0].parents[3].as_posix())
         tc.variables["Qt6_ROOT"] = f"{qt_root}"
-
-        xeus_root = pathlib.Path(self.deps_cpp_info["xeus"].rootpath).as_posix()
-        tc.variables["xeus_ROOT"] = f"{xeus_root}"
-
-        xzmq_root = pathlib.Path(self.deps_cpp_info["xeus-zmq"].rootpath).as_posix()
-        tc.variables["xeus-zmq_ROOT"] = f"{xzmq_root}"
-        tc.variables["ZeroMQ_ROOT"] = f"{xzmq_root}" # libzmq is packaged with xeus-zmq
-
-        xpython_root = pathlib.Path(self.deps_cpp_info["xeus-python"].rootpath).as_posix()
-        tc.variables["xeus-python_ROOT"] = f"{xpython_root}"
-
-        # tc.variables["nlohmann_json_ROOT"] = "${PROJECT_SOURCE_DIR}/external/json"
         
         tc.generate()
 
