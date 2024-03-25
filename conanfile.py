@@ -54,10 +54,6 @@ class JupyterPluginConan(ConanFile):
         print(f"git info from {path}")
         return path
 
-    def source(self):
-        cppzmqcmake = pathlib.Path(self.source_folder, "ManiVaultStudio", "JupyterPlugin", "external", "cppzmq", "CMakeLists.txt")
-        tools.replace_in_file(cppzmqcmake, "cmake_minimum_required(VERSION 3.11)", "cmake_minimum_required(VERSION 3.12)")
-
     def export(self):
         print("In export")
         # save the original source path to the directory used to build the package
