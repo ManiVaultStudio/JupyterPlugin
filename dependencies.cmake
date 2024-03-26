@@ -164,7 +164,8 @@ CPMAddPackage(
     EXCLUDE_FROM_ALL YES
 #    PATCH_COMMAND git apply --reject --whitespace=fix ${CMAKE_SOURCE_DIR}/xeus.patch
     OPTIONS "XPYT_BUILD_TESTS OFF"
-            "BUILD_SHARED_LIBS ON"
+            "XPYT_BUILD_SHARED ON"
+            "XPYT_BUILD_STATIC ON"
             "XPYT_BUILD_XPYTHON_EXECUTABLE OFF"
             "EMSCRIPTEN OFF")
 
