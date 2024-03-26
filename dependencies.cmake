@@ -54,6 +54,7 @@ CPMAddPackage(
     VERSION ${xeus_VERSION}
     GIT_TAG ${xeus_VERSION}
     EXCLUDE_FROM_ALL YES
+    PATCH_COMMAND git apply --ignore-space-change --ignore-whitespace --whitespace=nowarn ${CMAKE_SOURCE_DIR}/cmake/uuidopt.patch
 #    PATCH_COMMAND git apply --reject --whitespace=fix ${CMAKE_SOURCE_DIR}/xeus.patch
     OPTIONS "BUILD_EXAMPLES OFF"
             "XEUS_BUILD_SHARED_LIBS ON"
