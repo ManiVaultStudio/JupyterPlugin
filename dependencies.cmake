@@ -120,11 +120,12 @@ CPMAddPackage(
     VERSION ${xeus-zmq_VERSION}
     GIT_TAG ${xeus-zmq_VERSION}
     EXCLUDE_FROM_ALL YES
-#    PATCH_COMMAND patch -N -u CMakeLists.txt --ignore-whitespace -b ${CMAKE_SOURCE_DIR}/xeus.patch || true
+    PATCH_COMMAND git apply --ignore-space-change --ignore-whitespace --whitespace=nowarn ${CMAKE_SOURCE_DIR}/cmake/libsodiumopt.patch
     OPTIONS "XEUS_ZMQ_BUILD_TESTS OFF"
             "XEUS_ZMQ_BUILD_SHARED_LIBS ON"
             "XEUS_ZMQ_BUILD_STATIC_LIBS ON"
             "XEUS_ZMQ_STATIC_DEPENDENCIES ON"
+            "XEUS_ZMQ_USE_LIBSODIUM OFF"
             "CMAKE_POSITION_INDEPENDENT_CODE ON")
 
 if (xeus-zmq_ADDED)
