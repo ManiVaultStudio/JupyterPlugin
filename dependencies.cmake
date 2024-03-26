@@ -130,7 +130,7 @@ CPMAddPackage(
             "CMAKE_POSITION_INDEPENDENT_CODE ON")
 
 if (xeus-zmq_ADDED)
-    add_dependencies(xeus-zmq xeus)
+    add_dependencies(xeus-zmq libzmq xeus)
     # install(TARGETS cppzmq EXPORT xeus-zmq-targets)
 endif()
 
