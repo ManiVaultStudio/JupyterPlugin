@@ -57,7 +57,7 @@ CPMAddPackage(
     PATCH_COMMAND git apply --ignore-space-change --ignore-whitespace --whitespace=nowarn ${CMAKE_SOURCE_DIR}/cmake/uuidopt.patch
 #    PATCH_COMMAND git apply --reject --whitespace=fix ${CMAKE_SOURCE_DIR}/xeus.patch
     OPTIONS "BUILD_EXAMPLES OFF"
-            "XEUS_BUILD_SHARED_LIBS ON"
+            "XEUS_BUILD_SHARED_LIBS OFF"
             "XEUS_BUILD_STATIC_LIBS ON"
             "XEUS_STATIC_DEPENDENCIES ON"
             "CMAKE_POSITION_INDEPENDENT_CODE ON"
@@ -69,18 +69,19 @@ if (xeus_ADDED)
     include("${xeus_BINARY_DIR}/xeusConfig.cmake")
 endif()
 
-# produces libzmq and libzmq-static
+# produces libzmq and libzmq-static depending on settings
 CPMAddPackage(
   NAME libzmq
   VERSION ${libzmq_VERSION}
   URL ${libzmq_PATH}
   EXCLUDE_FROM_ALL YES
   OPTIONS "WITH_PERF_TOOL OFF"
-          "ZMQ_BUILD_TESTS OFF"
+          "BUILD_TESTS OFF"
           "ENABLE_CPACK OFF"
-          "BUILD_SHARED ON"
+          "BUILD_SHARED OFF"
           "BUILD_STATIC ON"
           "WITH_LIBSODIUM OFF"
+          "ENABLE_CURVE OFF"
           "WITH_TLS OFF"
           "WITH_DOC OFF")
 
@@ -123,14 +124,14 @@ CPMAddPackage(
     EXCLUDE_FROM_ALL YES
     PATCH_COMMAND git apply --ignore-space-change --ignore-whitespace --whitespace=nowarn ${CMAKE_SOURCE_DIR}/cmake/libsodiumopt.patch
     OPTIONS "XEUS_ZMQ_BUILD_TESTS OFF"
-            "XEUS_ZMQ_BUILD_SHARED_LIBS ON"
+            "XEUS_ZMQ_BUILD_SHARED_LIBS OFF"
             "XEUS_ZMQ_BUILD_STATIC_LIBS ON"
             "XEUS_ZMQ_STATIC_DEPENDENCIES ON"
             "XEUS_ZMQ_WITH_LIBSODIUM OFF"
             "CMAKE_POSITION_INDEPENDENT_CODE ON")
 
 if (xeus-zmq_ADDED)
-    add_dependencies(xeus-zmq libzmq xeus)
+    add_dependencies(xeus-zmq-static libzmq-static xeus-static)
     # install(TARGETS cppzmq EXPORT xeus-zmq-targets)
 endif()
 
@@ -155,7 +156,6 @@ CPMAddPackage(
 
 CPMAddPackage("gh:pybind/pybind11_json#${pybind11_json_VERSION}")
 
-
 CPMAddPackage(
     NAME xeus-python
     GITHUB_REPOSITORY "jupyter-xeus/xeus-python"
@@ -164,15 +164,12 @@ CPMAddPackage(
     EXCLUDE_FROM_ALL YES
 #    PATCH_COMMAND git apply --reject --whitespace=fix ${CMAKE_SOURCE_DIR}/xeus.patch
     OPTIONS "XPYT_BUILD_TESTS OFF"
-            "XPYT_BUILD_SHARED ON"
+            "XPYT_BUILD_SHARED OFF"
             "XPYT_BUILD_STATIC ON"
             "XPYT_BUILD_XPYTHON_EXECUTABLE OFF"
+            "XPYT_USE_SHARED_XEUS_PYTHON OFF"
+            "XPYT_USE_SHARED_XEUS OFF"
             "EMSCRIPTEN OFF")
 
-target_link_libraries(xeus-python
-    PUBLIC 
-    cppzmq
-    nlohmann_json
-    xeus)
-add_dependencies(xeus-python xeus-zmq)
+add_dependencies(xeus-python-static xeus-zmq-static xeus-static)
 

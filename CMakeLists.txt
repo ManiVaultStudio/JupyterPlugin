@@ -39,23 +39,18 @@ if(NOT DEFINED MV_INSTALL_DIR)
     message(FATAL_ERROR "Please set MV_INSTALL_DIR to the directory where ManiVault is installed")
 endif()
 file(TO_CMAKE_PATH ${MV_INSTALL_DIR} MV_INSTALL_DIR)
-include(dependencies.cmake)
+
 
 set(xtl_DIR "${xtl_SOURCE_DIR}" CACHE PATH "")
 set(PYBIND11_DIR "${pybind_SOURCE_DIR}")
 set(PYBIND11_INCLUDE_DIR "${pybind_SOURCE_DIR}/include" CACHE PATH "Path to root of pybind11 include")
-set(xeus_ROOT "" CACHE PATH "path to the xeus dependency root")
-set(xeus-zmq_ROOT "" CACHE PATH "path to the xeus-zmq dependency root")
-set(xeus-python_ROOT "" CACHE PATH "path to the xeus-python dependency root")
 # These header only libraries are packages with xeus-zmq for convenience
 set(nlohmann_json_INCLUDE_DIR ${nlohmann_SOURCE_DIR}/include)
 set(cppzmq_INCLUDE_DIR ${xeus-zmq_ROOT}/include)
 
 
 find_package(Qt6 COMPONENTS Widgets WebEngineWidgets REQUIRED)
-#find_package(xeus REQUIRED)
-#find_package(xeus-zmq REQUIRED)
-#find_package(xeus-python REQUIRED)
+include(dependencies.cmake)
 
 # -----------------------------------------------------------------------------
 # Source files
@@ -91,7 +86,7 @@ source_group( Plugin FILES ${JUPYTERPLUGIN_SOURCES})
 # Create dynamic library for the plugin
 add_library(${JUPYTERPLUGIN} SHARED ${JUPYTERPLUGIN_SOURCES})
 
-add_dependencies(${JUPYTERPLUGIN} xeus-python JupyterLauncher)
+add_dependencies(${JUPYTERPLUGIN} xeus-python-static JupyterLauncher)
 
 qt_wrap_cpp(JUPYTERPLUGIN_MOC ${PLUGIN_MOC_HEADERS} TARGET ${JUPYTERPLUGIN})
 target_sources(${JUPYTERPLUGIN} PRIVATE ${JUPYTERPLUGIN_MOC})
@@ -106,8 +101,6 @@ target_include_directories(${JUPYTERPLUGIN} PRIVATE
     "${xeus-zmq_INCLUDE_DIR}" 
     "${xeus-python_INCLUDE_DIR}" 
     "${xtl_INCLUDE_DIRS}"
-    "${ZeroMQ_INCLUDE_DIR}" 
-    "${cppzmq_INCLUDE_DIR}" 
     "${nlohmann_json_INCLUDE_DIR}"
     "${PYBIND11_INCLUDE_DIR}"
     "${PYTHON_INCLUDE_DIR}"
@@ -131,8 +124,8 @@ list(APPEND IMAGE_DATA_HEADERS ${CMAKE_CURRENT_BINARY_DIR}/${EXPORT_HEADER_FILE_
 # Target library linking
 # -----------------------------------------------------------------------------
 # Link to Qt libraries
-target_link_libraries(${JUPYTERPLUGIN} PRIVATE Qt6::Widgets)
-target_link_libraries(${JUPYTERPLUGIN} PRIVATE Qt6::WebEngineWidgets)
+target_link_libraries(${JUPYTERPLUGIN} PUBLIC Qt6::Widgets)
+target_link_libraries(${JUPYTERPLUGIN} PUBLIC Qt6::WebEngineWidgets)
 
 # Link to HDPS and data plugins
 # The link path in this repo assumes that the ManiVault core was built locally
@@ -145,24 +138,22 @@ set(MV_LINK_SUFFIX $<IF:$<CXX_COMPILER_ID:MSVC>,${CMAKE_LINK_LIBRARY_SUFFIX},${C
 set(MV_LINK_LIBRARY "${MV_LINK_PATH}/${CMAKE_SHARED_LIBRARY_PREFIX}MV_Public${MV_LINK_SUFFIX}")
 set(POINTDATA_LINK_LIBRARY "${PLUGIN_LINK_PATH}/${CMAKE_SHARED_LIBRARY_PREFIX}PointData${MV_LINK_SUFFIX}") 
 set(IMAGEDATA_LINK_LIBRARY "${PLUGIN_LINK_PATH}/${CMAKE_SHARED_LIBRARY_PREFIX}ImageData${MV_LINK_SUFFIX}") 
-if (MSVC)
-    set(zeromq_LIBS_DEBUG "libzmq-v142-mt-4_3_5") # not the libzmq-v142-mt-gd-4_3_5 version
-endif()
 
-target_link_libraries(${JUPYTERPLUGIN} PRIVATE "${MV_LINK_LIBRARY}")
-target_link_libraries(${JUPYTERPLUGIN} PRIVATE "${POINTDATA_LINK_LIBRARY}")
-target_link_libraries(${JUPYTERPLUGIN} PRIVATE "${IMAGEDATA_LINK_LIBRARY}")
-target_link_libraries(${JUPYTERPLUGIN} PRIVATE xeus-static)
-target_link_libraries(${JUPYTERPLUGIN} PRIVATE xeus-zmq-static)
-target_link_libraries(${JUPYTERPLUGIN} PRIVATE xeus-python-static)
-target_link_libraries(${JUPYTERPLUGIN} PRIVATE "${PYTHON_LIBRARY}")
-target_link_libraries(${JUPYTERPLUGIN} PRIVATE pybind11::embed)
+target_link_libraries(${JUPYTERPLUGIN} PUBLIC "${MV_LINK_LIBRARY}")
+target_link_libraries(${JUPYTERPLUGIN} PUBLIC "${POINTDATA_LINK_LIBRARY}")
+target_link_libraries(${JUPYTERPLUGIN} PUBLIC "${IMAGEDATA_LINK_LIBRARY}")
+target_link_libraries(${JUPYTERPLUGIN} PUBLIC xeus-static)
+target_link_libraries(${JUPYTERPLUGIN} PUBLIC xeus-zmq-static)
+target_link_libraries(${JUPYTERPLUGIN} PUBLIC xeus-python-static)
+target_link_libraries(${JUPYTERPLUGIN} PUBLIC libzmq-static cppzmq-static)
+target_link_libraries(${JUPYTERPLUGIN} PUBLIC "${PYTHON_LIBRARY}")
+target_link_libraries(${JUPYTERPLUGIN} PUBLIC pybind11::embed)
 
 if (MSVC)
     target_compile_options(${JUPYTERPLUGIN} PUBLIC /wd4251 /wd4141)
     target_compile_options(${JUPYTERPLUGIN} PUBLIC /wd4018 /wd4267 /wd4715 /wd4146 /wd4129)
 endif()
-target_compile_features(${JUPYTERPLUGIN} PRIVATE cxx_std_14)
+target_compile_features(${JUPYTERPLUGIN} PUBLIC cxx_std_14)
 
 # -----------------------------------------------------------------------------
 # Target installation
