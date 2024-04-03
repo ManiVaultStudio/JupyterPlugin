@@ -189,6 +189,15 @@ bool JupyterLauncher::loadPlugin()
     return true;
 }
 
+JupyterLauncherFactory::JupyterLauncherFactory() :
+    ViewPluginFactory(),
+    _statusBarAction(nullptr),
+    _statusBarPopupGroupAction(this, "Popup Group"),
+    _statusBarPopupAction(this, "Popup")
+{
+
+}
+
 ViewPlugin* JupyterLauncherFactory::produce()
 {
     return new JupyterLauncher(this);
@@ -200,6 +209,48 @@ void JupyterLauncherFactory::initialize()
 
     // Create an instance of our GlobalSettingsAction (derived from PluginGlobalSettingsGroupAction) and assign it to the factory
     setGlobalSettingsGroupAction(new GlobalSettingsAction(this, this));
+
+    // Configure the status bar popup action
+    _statusBarPopupAction.setDefaultWidgetFlags(StringAction::Label);
+    _statusBarPopupAction.setString(
+        "<p><b>Launch Jupyter Python Kernel</b></p>"
+        "<p>This launches a python 3.11 Jupyter kernel that can be used to access ManiVaultStudio data.</p>"
+        "<p>The kernel provides users with a path to process ManiVault data "
+        "in python or use standard libraries. "
+        "Using python it may be possible to load or save data from unsupported or non-standard file formats.</p>"
+        "<p>For more details see the documentation for the MVData python module and the "
+        "example Jupyter notebook MVDataExample.ipynb</p>");
+    _statusBarPopupAction.setPopupSizeHint(QSize(200, 10));
+
+    _statusBarPopupGroupAction.setShowLabels(false);
+    _statusBarPopupGroupAction.setConfigurationFlag(WidgetAction::ConfigurationFlag::NoGroupBoxInPopupLayout);
+    _statusBarPopupGroupAction.addAction(&_statusBarPopupAction);
+    _statusBarPopupGroupAction.setWidgetConfigurationFunction([](WidgetAction* action, QWidget* widget) -> void {
+        auto label = widget->findChild<QLabel*>("Label");
+
+        Q_ASSERT(label != nullptr);
+
+        if (label == nullptr)
+            return;
+
+        label->setOpenExternalLinks(true);
+    });
+
+    _statusBarAction = new PluginStatusBarAction(this, "Status Bar", getKind());
+
+    // Sets the action that is shown when the status bar is clicked
+    _statusBarAction->setPopupAction(&_statusBarPopupGroupAction);
+
+    // Position to the right of the status bar action
+    _statusBarAction->setIndex(-1);
+
+    // Assign the status bar action so that it will appear on the main window status bar
+    setStatusBarAction(_statusBarAction);
+}
+
+QIcon JupyterLauncherFactory::getIcon(const QColor& color /*= Qt::black*/) const
+{
+    return QIcon(":/images/logo.svg");
 }
 
 mv::DataTypes JupyterLauncherFactory::supportedDataTypes() const

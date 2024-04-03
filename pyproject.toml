@@ -1,40 +1,23 @@
-[build-system]
-requires = [
-    "setuptools>=61",
-    "wheel", 
-    "setuptools-scm"
-]
-build-backend = "setuptools.build_meta"
-
-[project]
-name = 'MVJupyterPluginManager'
+[tool.poetry]
+name = 'MVJupyterPlugin'
+version = '0.2.0'
+description = 'Jupyter yntegration for the ManiVaultStudio JupyterPlugin hosted kernel'
 authors = [
-    {name = 'Baldur van Lew', email = "b.van_lew@lumc.nl"}
+    "Baldur van Lew <b.van_lew@lumc.nl>"
 ]
-version = '0.2.11'
-description = 'A kernel manager fro JupyterLab that supports connections to external kernels'
 readme = 'README.md'
-requires-python = '>=3.10'
+license = "MIT"
+repository = "https://github.com/ManiVaultStudio/JupyterPlugin"
 keywords = ["JupyterLab", "kernel", "manager"]
 classifiers = [
-    "Framework :: JupyterLab",
-    "Programming Language :: Python :: 3",
+    "Framework :: Jupyter :: JupyterLab",
+    "Programming Language :: Python :: 3.11",
     "License :: OSI Approved :: MIT License",
+    "Topic :: Scientific/Engineering"
 ]
-dependencies = [
-    "jupyter-server"
-]
+packages = [{include = "MVJupyterPluginManager", from = 'src'}] 
 
-[project.entry-points."jupyter_client.kernel_provisioners"]
-mvjupyterplugin-existing-provisioner = "MVJupyterPluginManager:ExistingProvisioner"
-
-[tool.setuptools.packages.find]
-where = ["src"]
-
-[tool.setuptools-git-versioning]
-enabled = true
-
-[tools.setuptools.package-data]
-MVJupyterPluginManager.config = ["jupyter_notebook_config.py"]
-
-
+[tool.poetry.dependencies]
+python = '>=3.10'
+jupyterlab_server = "^2.25.2"
+jupyter-server = "^=2.12.5"

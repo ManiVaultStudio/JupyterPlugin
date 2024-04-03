@@ -26,6 +26,9 @@ find_package(Qt6 COMPONENTS Widgets WebEngineWidgets REQUIRED)
 # -----------------------------------------------------------------------------
 # Source files
 # -----------------------------------------------------------------------------
+
+qt6_add_resources(RESOURCE_FILES res/jupyter_launcher_resources.qrc)
+
 set(SOURCES
     src/JupyterLauncher.h
     src/JupyterLauncher.cpp
@@ -40,12 +43,18 @@ set(PLUGIN_MOC_HEADERS
     src/JupyterLauncher.h
 )
 
+set (RESOURCES
+    res/jupyter_launcher_resources.qrc
+)
+
 source_group( Plugin FILES ${SOURCES})
+source_group( ResourceFiles FILES ${RESOURCES})
+source_group( ResourceFiles\\generated FILES ${CMAKE_CURRENT_BINARY_DIR}/qrc_jupyter_launcher_resources.cpp)
 
 # -----------------------------------------------------------------------------
 # CMake Target
 # -----------------------------------------------------------------------------
-add_library(${JUPYTERLAUNCHER} SHARED ${SOURCES})
+add_library(${JUPYTERLAUNCHER} SHARED ${SOURCES} ${RESOURCES} ${RESOURCE_FILES})
 
 qt_wrap_cpp(JUPYTERLAUNCHER_MOC ${PLUGIN_MOC_HEADERS} TARGET ${JUPYTERLAUNCHER})
 target_sources(${JUPYTERLAUNCHER} PRIVATE ${JUPYTERLAUNCHER_MOC})

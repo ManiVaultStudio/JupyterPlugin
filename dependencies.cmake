@@ -45,6 +45,26 @@ target_include_directories(nlohmann_json INTERFACE
     "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>"
 )
 
+set(CPM_DEPS_DIR ${CMAKE_BINARY_DIR}/_deps)
+message("xeus src : ${CPM_DEPS_DIR}/xeus-src")
+# Delete the previous _deps to allow the patch to work (TBD find more efficient approach)
+if(EXISTS ${CPM_DEPS_DIR}/xeus-src)
+    exec_program(
+        ${CMAKE_COMMAND} ARGS "-E remove_directory ${CPM_DEPS_DIR}/xeus-src"
+    )
+endif()
+if(EXISTS ${CPM_DEPS_DIR}/xeus-subbuild)
+    exec_program(
+        ${CMAKE_COMMAND} ARGS "-E remove_directory ${CPM_DEPS_DIR}/xeus-subbuild"
+    )
+endif()
+if(EXISTS ${CPM_DEPS_DIR}/xeus-build)
+    exec_program(
+        ${CMAKE_COMMAND} ARGS "-E remove_directory ${CPM_DEPS_DIR}/xeus-build"
+    )
+endif()
+
+set(CPM_DOWNLOAD_xeus YES)
 # produces xeus and xeus-static
 # Check if the patch (used in codon) is still needed
 # appears to be releated to libuuid
@@ -54,8 +74,7 @@ CPMAddPackage(
     VERSION ${xeus_VERSION}
     GIT_TAG ${xeus_VERSION}
     EXCLUDE_FROM_ALL YES
-    PATCH_COMMAND git apply --ignore-space-change --ignore-whitespace --whitespace=nowarn ${CMAKE_SOURCE_DIR}/cmake/uuidopt.patch
-#    PATCH_COMMAND git apply --reject --whitespace=fix ${CMAKE_SOURCE_DIR}/xeus.patch
+    PATCH_COMMAND git apply --ignore-space-change --ignore-whitespace --whitespace=nowarn ${CMAKE_CURRENT_SOURCE_DIR}/cmake/uuidopt.patch
     OPTIONS "BUILD_EXAMPLES OFF"
             "XEUS_BUILD_SHARED_LIBS OFF"
             "XEUS_BUILD_STATIC_LIBS ON"
@@ -116,13 +135,30 @@ message("*** Python libraries : ${Python_LIBRARIES}")
 message("*** Python include dirs ${Python_INCLUDE_DIRS}")
 set(PYTHON_LIBRARIES ${Python_LIBRARIES})  # for xeus-python linking
 
+# Delete an existing xeus-zmq to allow the patch to work (TBD find more efficient solution)
+if(EXISTS ${CPM_DEPS_DIR}/xeus-zmq-src)
+    exec_program(
+        ${CMAKE_COMMAND} ARGS "-E remove_directory ${CPM_DEPS_DIR}/xeus-zmq-src"
+    )
+endif()
+if(EXISTS ${CPM_DEPS_DIR}/xeus-zmq-subbuild)
+    exec_program(
+        ${CMAKE_COMMAND} ARGS "-E remove_directory ${CPM_DEPS_DIR}/xeus-zmq-subbuild"
+    )
+endif()
+if(EXISTS ${CPM_DEPS_DIR}/xeus-zmq-build)
+    exec_program(
+        ${CMAKE_COMMAND} ARGS "-E remove_directory ${CPM_DEPS_DIR}/xeus-zmq-build"
+    )
+endif()
+set(CPM_DOWNLOAD_xeus-zmq YES)
 CPMAddPackage(
     NAME xeus-zmq
     GITHUB_REPOSITORY "jupyter-xeus/xeus-zmq"
     VERSION ${xeus-zmq_VERSION}
     GIT_TAG ${xeus-zmq_VERSION}
     EXCLUDE_FROM_ALL YES
-    PATCH_COMMAND git apply --ignore-space-change --ignore-whitespace --whitespace=nowarn ${CMAKE_SOURCE_DIR}/cmake/libsodiumopt.patch
+    PATCH_COMMAND git apply --ignore-space-change --ignore-whitespace --whitespace=nowarn ${CMAKE_CURRENT_SOURCE_DIR}/cmake/libsodiumopt.patch
     OPTIONS "XEUS_ZMQ_BUILD_TESTS OFF"
             "XEUS_ZMQ_BUILD_SHARED_LIBS OFF"
             "XEUS_ZMQ_BUILD_STATIC_LIBS ON"
@@ -162,7 +198,6 @@ CPMAddPackage(
     GIT_TAG ${xeus-python_VERSION}
     VERSION ${xeus-python_VERSION}
     EXCLUDE_FROM_ALL YES
-#    PATCH_COMMAND git apply --reject --whitespace=fix ${CMAKE_SOURCE_DIR}/xeus.patch
     OPTIONS "XPYT_BUILD_TESTS OFF"
             "XPYT_BUILD_SHARED OFF"
             "XPYT_BUILD_STATIC ON"

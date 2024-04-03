@@ -8,6 +8,9 @@
 #include <PluginFactory.h>
 #include <QWidget>
 
+#include <actions/PluginStatusBarAction.h>
+#include <actions/HorizontalGroupAction.h>
+
 /** All plugin related classes are in the ManiVault plugin namespace */
 using namespace mv::plugin;
 
@@ -82,13 +85,16 @@ class JupyterLauncherFactory : public ViewPluginFactory
 public:
 
     /** Default constructor */
-    JupyterLauncherFactory() {}
+    JupyterLauncherFactory();
 
     /** Destructor */
     ~JupyterLauncherFactory() override {}
 
     /** Perform post-construction initialization */
     void initialize() override;
+
+    /** Get plugin icon */
+    QIcon getIcon(const QColor& color = Qt::black) const override;
     
     /** Creates an instance of the example view plugin */
     ViewPlugin* produce() override;
@@ -102,4 +108,9 @@ public:
      * @return Vector of plugin trigger actions
      */
     PluginTriggerActions getPluginTriggerActions(const mv::Datasets& datasets) const override;
+
+private:
+    PluginStatusBarAction*  _statusBarAction;               /** For global action in a status bar */
+    HorizontalGroupAction   _statusBarPopupGroupAction;     /** Popup group action for status bar action */
+    StringAction            _statusBarPopupAction;          /** Popup action for the status bar */
 };
