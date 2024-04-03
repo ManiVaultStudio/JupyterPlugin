@@ -246,6 +246,7 @@ void JupyterLauncherFactory::initialize()
 
     // Assign the status bar action so that it will appear on the main window status bar
     setStatusBarAction(_statusBarAction);
+    _statusBarAction->getConditionallyVisibleAction().setChecked(false);
 }
 
 QIcon JupyterLauncherFactory::getIcon(const QColor& color /*= Qt::black*/) const
