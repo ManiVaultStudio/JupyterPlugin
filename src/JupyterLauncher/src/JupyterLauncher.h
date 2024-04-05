@@ -59,6 +59,8 @@ public:
 
     bool loadPlugin();
 
+    bool validatePythonEnvironment();
+
 protected:
     mv::Dataset<Points>   _points;                    /** Points smart pointer */
     SettingsAction              _settingsAction;        /** Settings action */

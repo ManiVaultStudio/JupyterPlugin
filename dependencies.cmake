@@ -17,6 +17,17 @@ set(xeus-zmq_VERSION "1.1.1")
 set(pybind11_VERSION "2.11.1")
 set(pybind11_json_VERSION "0.2.11")
 set(xeus-python_VERSION "0.15.12")
+set(ARTIFACTORY-DOWNLOAD-TOKEN "cmVmdGtuOjAxOjAwMDAwMDAwMDA6OGV4QnVZcmR0S2piU0RSWTJTbjRRQTMxYkRh")
+
+if (WIN32)
+    find_package (OpenSSL)
+    if (NOT OpenSSL_FOUND)
+        message("Unpacking OpenSSL 1.1.1w static binary")
+        file(DOWNLOAD https://lkeb-artifactory.lumc.nl:443/artifactory/miscbinaries/openssl111w_windows_static.zip ${CMAKE_CURRENT_BINARY_DIR}/openssl111w_windows_static.zip HTTPHEADER "X-JFrog-Art-Api:${ARTIFACTORY-DOWNLOAD-TOKEN}") 
+        file(ARCHIVE_EXTRACT INPUT ${CMAKE_CURRENT_BINARY_DIR}/openssl111w_windows_static.zip DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+        set(OPENSSL_ROOT_DIR ${CMAKE_CURRENT_BINARY_DIR}/openssl111w CACHE PATH "OpenSSL root side loaded")
+    endif()
+endif()
 
 include(CPM)
 

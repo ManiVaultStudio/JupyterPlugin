@@ -126,6 +126,12 @@ void JupyterLauncher::onDataEvent(mv::DatasetEvent* dataEvent)
     }
 }
 
+bool JupyterLauncher::validatePythonEnvironment() 
+{
+    auto pydir = _settingsAction.getPythonPathAction().getDirectory();
+    return true;
+}
+
 bool JupyterLauncher::loadPlugin()
 {
     auto jupyterPluginPath = QCoreApplication::applicationDirPath() + "/Plugins/JupyterPlugin/JupyterPlugin";
@@ -143,9 +149,43 @@ bool JupyterLauncher::loadPlugin()
     jupyterPluginPath += ".so";
 #endif
 
+/*
+    T.B.D. 
+    QString text = "exit(1)";
+    // check the path to see if MVJupyterPluginManager is installed
+    auto checkScript =  QFile(":/text/check_env.py");
+    if (checkScript.open(QFile::ReadOnly)) {
+        text = checkScript.readAll();
+        checkScript.close();
+    } else {
+        qDebug() << "Unable to get the environment test script for the JupyterLauncher";
+    }
+#ifdef _WIN32
+    QString sep(";"); // path separator
+#else
+    QString sep(":");
+#endif
+
+    auto pydir = _settingsAction.getPythonPathAction().getDirectory();
+
+    QProcess pythonCheckProcess;
+    auto runEnvironment = QProcessEnvironment::systemEnvironment();
+    // set the desired python interpreter path first in the PATH environment variable
+    runEnvironment.insert("PATH", pydir + sep + runEnvironment.value("PATH"));
+    // execute the python check and examine the result
+    pythonCheckProcess.setProcessEnvironment(runEnvironment);
+    pythonCheckProcess.start("python", {"-c", text.toStdString().c_str()});
+    QObject::connect(pythonCheckProcess, &QProcess::finished, pythonCheckProcess, [pythonCheckProcess](int exitCode, QProcess::ExitStatus exitStatus){
+        if (exitStatus != QProcess::ExitStatus::NormalExit || exitCode != EXIT_SUCCESS){
+            WARN << "Paste failed. xdotool installed?";
+            QMessageBox::warning(nullptr, "Error", "Paste failed. xdotool installed?");
+        }
+        pythonCheckProcess.deleteLater();
+    });
+*/
     // Load the plugin
     QPluginLoader jupyLoader(jupyterPluginPath);
-    auto pydir = _settingsAction.getPythonPathAction().getDirectory();
+
     qInfo() << "Current path" << getenv("PATH");
 #ifdef _WIN32
     SetDllDirectoryA(pydir.toUtf8().data());
