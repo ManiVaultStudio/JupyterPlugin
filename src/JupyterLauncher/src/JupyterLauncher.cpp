@@ -166,7 +166,7 @@ bool JupyterLauncher::loadPlugin()
     QString sep(":");
 #endif
 
-    auto pydir = _settingsAction.getPythonPathAction().getDirectory();
+
 
     QProcess pythonCheckProcess;
     auto runEnvironment = QProcessEnvironment::systemEnvironment();
@@ -183,6 +183,7 @@ bool JupyterLauncher::loadPlugin()
         pythonCheckProcess.deleteLater();
     });
 */
+    auto pydir = _settingsAction.getPythonPathAction().getDirectory();
     // Load the plugin
     QPluginLoader jupyLoader(jupyterPluginPath);
 
