@@ -1,6 +1,6 @@
 [tool.poetry]
-name = 'MVJupyterPlugin'
-version = '0.3.0'
+name = 'MVJupyterPluginManager'
+version = '0.4.5'
 description = 'Jupyter integration for the ManiVaultStudio JupyterPlugin hosted kernel'
 authors = [
     "Baldur van Lew <b.van_lew@lumc.nl>"
@@ -22,6 +22,7 @@ python = '~=3.11'
 jupyterlab_server = "~=2.25.2"
 jupyter_server = "~=2.12.5"
 jupyter_client = "~=8.6.0"
+xeus-python-shell = "~0.6.1"
 
 
 [build-system]
@@ -32,3 +33,6 @@ line-length = 120
 
 [project.scripts]
 MVLaunchJupyter = "MVJupyterPluginManager.__main__:main"
+
+[tool.poetry.plugins."jupyter_client.kernel_provisioners"]
+mvjupyterplugin-existing-provisioner = "MVJupyterPluginManager:ExistingProvisioner"

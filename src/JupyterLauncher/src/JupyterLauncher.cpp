@@ -11,9 +11,11 @@
 #include <QMimeData>
 #include <QPluginLoader>
 #include <QProcessEnvironment>
+#include <QTemporaryFile>
 
 #include <cstdlib>
 #include <sstream>
+#include <stdexcept>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -126,6 +128,148 @@ void JupyterLauncher::onDataEvent(mv::DatasetEvent* dataEvent)
     }
 }
 
+void JupyterLauncher::preparePythonProcess(QProcess &process)
+{
+    // 1. Configure a process to run python on the user selected python interpreter
+    auto pydir = _settingsAction.getPythonPathAction().getDirectory();
+#ifdef _WIN32
+    QString sep(";"); // path separator
+#else
+    QString sep(":");
+#endif
+    auto runEnvironment = QProcessEnvironment::systemEnvironment();
+    // set the desired python interpreter path first in the PATH environment variable
+    runEnvironment.insert("PATH", pydir + sep + runEnvironment.value("PATH"));
+    // execute the python check and examine the result
+    process.setProcessEnvironment(runEnvironment);
+}
+
+// TBD merge the two runScript signatures
+
+int JupyterLauncher::runPythonScript(const QString scriptName, QString& sout, QString& serr)
+{
+    // 1. Prepare a python process with the python path
+    QProcess pythonScriptProcess;
+    this->preparePythonProcess(pythonScriptProcess);
+    auto scriptFile =  QFile(scriptName);
+    // 2. Place the script in a temporary file
+    QByteArray scriptContent;
+    if (scriptFile.open(QFile::ReadOnly)) {
+        scriptContent = scriptFile.readAll();
+        scriptFile.close();
+    }
+
+    QTemporaryFile tempFile;
+    if (tempFile.open()) {
+        tempFile.write(scriptContent);
+        tempFile.close();
+    }
+
+    // 3. Run the script synchronously
+    auto result = 0;
+    auto pydir = _settingsAction.getPythonPathAction().getDirectory(); 
+    pythonScriptProcess.start(pydir + QString("/python"), QStringList({ tempFile.fileName() }));
+    if (!pythonScriptProcess.waitForStarted()) {
+        result = 2;
+        serr = QString("Could not run python interpreter %1 ").arg(pydir + QString("/python"));
+        return result;   
+    }
+    if (!pythonScriptProcess.waitForFinished()) {
+        result = 2;
+        serr = QString("Running python interpreter %1 timed out").arg(pydir + QString("/python"));
+        return result;       
+    }
+    
+    serr = QString::fromUtf8(pythonScriptProcess.readAllStandardError());
+    sout = QString::fromUtf8(pythonScriptProcess.readAllStandardOutput());
+    result = pythonScriptProcess.exitCode();
+    pythonScriptProcess.deleteLater();
+    return result;
+}
+
+bool JupyterLauncher::runPythonScript(const QStringList params)
+{
+    auto pydir = _settingsAction.getPythonPathAction().getDirectory();
+    QProcess mvInstallProcess;
+    this->preparePythonProcess(mvInstallProcess);
+    mvInstallProcess.start(pydir + QString("/python"), params);
+    try {
+        if (!mvInstallProcess.waitForStarted()) {
+            throw std::runtime_error("failed start");
+        }
+        if (!mvInstallProcess.waitForFinished()) {
+            throw std::runtime_error("run timeout");
+        }
+        if (mvInstallProcess.exitStatus() != QProcess::NormalExit) {
+            throw std::runtime_error("failed run");
+        }
+        if (mvInstallProcess.exitCode() == 1) {
+            throw std::runtime_error("operation error");
+        }
+    }
+    catch (const std::exception& e) {
+        auto serr = QString::fromUtf8(mvInstallProcess.readAllStandardError());
+        auto sout = QString::fromUtf8(mvInstallProcess.readAllStandardOutput());
+        qWarning() << "Script failed running " << params.join(" ") << "giving: " << "\n stdout : " << sout << "\n stderr : " << serr;
+        return false;
+    }
+    mvInstallProcess.deleteLater();
+    return true;
+}
+
+bool JupyterLauncher::installKernel()
+{
+    // 1. Create a marshalling directory with the correct kernel name "ManiVaultStudio"
+    QTemporaryDir tdir;
+    auto kernelDir = QDir(tdir.path());
+    kernelDir.mkdir("ManiVaultStudio");
+    // 2. Unpack the kernel files from the resources into the marshalling directory 
+    QDir directory(":/kernel-files/");
+    QStringList kernelList = directory.entryList(QStringList({ "*.*" }));
+    for (auto a : kernelList) {
+        QByteArray scriptContent;
+        auto kernFile = QFile(QString(":/kernel-files/") + a);
+        if (kernFile.open(QFile::ReadOnly)) {
+            scriptContent = kernFile.readAll();
+            kernFile.close();
+        }
+
+        QFile file(kernelDir.absolutePath() + QDir::separator() + QString("ManiVaultStudio") + QDir::separator() + a);
+        qDebug() << "Kernel file: " << QFileInfo(file).absoluteFilePath();
+        auto c_str = QFileInfo(file).absoluteFilePath().toStdString();
+        if (file.open(QIODevice::WriteOnly)) {
+            file.write(scriptContent);
+            file.close();
+        }
+    }
+    // 3. Install the ManiVaultStudio kernel for the current user 
+    return runPythonScript(QStringList({ "-m", "jupyter", "kernelspec", "install",  kernelDir.absolutePath() + QDir::separator() + QString("ManiVaultStudio"), "--user" }));
+}
+
+bool JupyterLauncher::optionallyInstallMVWheel()
+{
+    QMessageBox::StandardButton reply = QMessageBox::question(
+        nullptr, 
+        "MVJupyterPluginManager missing", 
+        "MVJupyterPluginManager 0.4.5 is needed in the python environment.\n Do you wish to install it now?",
+        QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes);
+    if (reply == QMessageBox::Yes) {
+        auto MVWheelPath = QCoreApplication::applicationDirPath() + "/Plugins/JupyterPlugin/mvjupyterpluginmanager-0.4.5-py3-none-any.whl";
+        auto pydir = _settingsAction.getPythonPathAction().getDirectory();
+        if (!runPythonScript(QStringList({ "-m", "pip", "install", MVWheelPath.toStdString().c_str() }))) {
+            qWarning() << "Installing the MVJupyterPluginManager failed. See logging for more information";
+            return false;
+        }
+        if (!this->installKernel()) {
+            qWarning() << "Installing the ManiVaultStudion Jupyter kernel failed. See logging for more information";
+            return false;
+        }
+    } else {
+        return false;
+    }
+    return true;
+}
+
 bool JupyterLauncher::validatePythonEnvironment() 
 {
     auto pydir = _settingsAction.getPythonPathAction().getDirectory();
@@ -135,6 +279,7 @@ bool JupyterLauncher::validatePythonEnvironment()
 bool JupyterLauncher::loadPlugin()
 {
     auto jupyterPluginPath = QCoreApplication::applicationDirPath() + "/Plugins/JupyterPlugin/JupyterPlugin";
+
 
     // suffix might not be needed - test
 #ifdef _WIN32
@@ -149,47 +294,46 @@ bool JupyterLauncher::loadPlugin()
     jupyterPluginPath += ".so";
 #endif
 
-/*
-    T.B.D. 
-    QString text = "exit(1)";
-    // check the path to see if MVJupyterPluginManager is installed
-    auto checkScript =  QFile(":/text/check_env.py");
-    if (checkScript.open(QFile::ReadOnly)) {
-        text = checkScript.readAll();
-        checkScript.close();
-    } else {
-        qDebug() << "Unable to get the environment test script for the JupyterLauncher";
-    }
 #ifdef _WIN32
     QString sep(";"); // path separator
 #else
     QString sep(":");
 #endif
 
-
-
-    QProcess pythonCheckProcess;
-    auto runEnvironment = QProcessEnvironment::systemEnvironment();
-    // set the desired python interpreter path first in the PATH environment variable
-    runEnvironment.insert("PATH", pydir + sep + runEnvironment.value("PATH"));
-    // execute the python check and examine the result
-    pythonCheckProcess.setProcessEnvironment(runEnvironment);
-    pythonCheckProcess.start("python", {"-c", text.toStdString().c_str()});
-    QObject::connect(pythonCheckProcess, &QProcess::finished, pythonCheckProcess, [pythonCheckProcess](int exitCode, QProcess::ExitStatus exitStatus){
-        if (exitStatus != QProcess::ExitStatus::NormalExit || exitCode != EXIT_SUCCESS){
-            WARN << "Paste failed. xdotool installed?";
-            QMessageBox::warning(nullptr, "Error", "Paste failed. xdotool installed?");
+    QString serr;
+    QString sout;
+    // 1. Check the path to see if MVJupyterPluginManager is installed
+    auto exitCode = runPythonScript(":/text/check_env.py", sout, serr); 
+    if (exitCode == 2) {
+        qDebug() << serr << sout;
+        // TODO display error message box
+        return false;
+    }
+    if (exitCode == 1) {
+        if (!this->optionallyInstallMVWheel()) {
+            return false;
         }
-        pythonCheckProcess.deleteLater();
-    });
-*/
-    auto pydir = _settingsAction.getPythonPathAction().getDirectory();
+    }
+    else {
+        qDebug() << "MVJupyterPluginManager is already installed";
+    }
+
+    // 2. Determine the path to the python library
+    exitCode = runPythonScript(":/text/find_libpython.py", sout, serr); 
+    if (exitCode != 0) {
+        qDebug() << serr << sout;
+        // TODO display error message box
+        return false;
+    }
+    auto sharedLib = QFileInfo(sout);
+    auto sharedLibDir = sharedLib.dir();
+    qDebug() << "Using python shared library at: " << sharedLibDir.absolutePath();
+
     // Load the plugin
     QPluginLoader jupyLoader(jupyterPluginPath);
 
-    qInfo() << "Current path" << getenv("PATH");
 #ifdef _WIN32
-    SetDllDirectoryA(pydir.toUtf8().data());
+    SetDllDirectoryA(sharedLibDir.absolutePath().toUtf8().data());
 #endif
     // Check if the plugin was loaded successfully
     if (!jupyLoader.load()) {
@@ -253,20 +397,12 @@ void JupyterLauncherFactory::initialize()
 
     // Configure the status bar popup action
     _statusBarPopupAction.setDefaultWidgetFlags(StringAction::Label);
-    _statusBarPopupAction.setString(
-        "<p><b>Launch Jupyter Python Kernel</b></p>"
-        "<p>This launches a python 3.11 Jupyter kernel that can be used to access ManiVaultStudio data.</p>"
-        "<p>The kernel provides users with a path to process ManiVault data "
-        "in python or use standard libraries. "
-        "Using python it may be possible to load or save data from unsupported or non-standard file formats.</p>"
-        "<p>For more details see the documentation for the MVData python module and the "
-        "example Jupyter notebook MVDataExample.ipynb</p>");
-    _statusBarPopupAction.setPopupSizeHint(QSize(200, 10));
+    _statusBarPopupAction.setString("<b>Launch Jupyter Python Kernel for Python 3.11</b>");
 
     _statusBarPopupGroupAction.setShowLabels(false);
     _statusBarPopupGroupAction.setConfigurationFlag(WidgetAction::ConfigurationFlag::NoGroupBoxInPopupLayout);
     _statusBarPopupGroupAction.addAction(&_statusBarPopupAction);
-    _statusBarPopupGroupAction.setWidgetConfigurationFunction([](WidgetAction* action, QWidget* widget) -> void {
+    /*_statusBarPopupGroupAction.setWidgetConfigurationFunction([](WidgetAction* action, QWidget* widget) -> void {
         auto label = widget->findChild<QLabel*>("Label");
 
         Q_ASSERT(label != nullptr);
@@ -275,7 +411,9 @@ void JupyterLauncherFactory::initialize()
             return;
 
         label->setOpenExternalLinks(true);
-    });
+    });*/
+
+    // 
 
     _statusBarAction = new PluginStatusBarAction(this, "Status Bar", getKind());
 

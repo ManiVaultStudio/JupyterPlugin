@@ -7,6 +7,7 @@
 #include "SettingsAction.h"
 #include <PluginFactory.h>
 #include <QWidget>
+#include <QProcess>
 
 #include <actions/PluginStatusBarAction.h>
 #include <actions/HorizontalGroupAction.h>
@@ -61,6 +62,8 @@ public:
 
     bool validatePythonEnvironment();
 
+    QString& getPythonLibPath();
+
 protected:
     mv::Dataset<Points>   _points;                    /** Points smart pointer */
     SettingsAction              _settingsAction;        /** Settings action */
@@ -70,6 +73,13 @@ protected:
 private:
     QHash<QString, PluginFactory*>                  _pluginFactories;   /** All loaded plugin factories */
     std::vector<std::unique_ptr<mv::plugin::Plugin>>    _plugins;           /** Vector of plugin instances */
+    // TBD merge the two runPythonScript signatures
+    int runPythonScript(const QString scriptName, QString& sout, QString& serr); /** Run a python script from the resources return the exit code and stderr and stdout */
+    bool runPythonScript(const QStringList params);
+
+    void preparePythonProcess(QProcess &process);
+    bool installKernel();
+    bool optionallyInstallMVWheel();
 };
 
 /**
