@@ -270,6 +270,62 @@ bool JupyterLauncher::optionallyInstallMVWheel()
     return true;
 }
 
+bool JupyterLauncher::startJupyterServerProcess()
+{
+#ifdef _WIN32
+    QString sep(";"); // path separator
+#else
+    QString sep(":");
+#endif
+    auto pydir = _settingsAction.getPythonPathAction().getDirectory();
+    _serverProcess.setProcessChannelMode(QProcess::MergedChannels);
+    auto connectionPath = _settingsAction.getConnectionFilePathAction().getString();
+    // In order to run python -m jupyter lab and access the MANIVAULT_JUPYTERPLUGIN_CONNECTION_FILE 
+    // the env variable this must be set in the current process.
+    // Setting it in the child QProcess does not work for reasons that are unclear.
+    qputenv("MANIVAULT_JUPYTERPLUGIN_CONNECTION_FILE", QDir::toNativeSeparators(connectionPath).toUtf8());
+    auto runEnvironment = QProcessEnvironment::systemEnvironment();
+    // runEnvironment.insert("MANIVAULT_JUPYTERPLUGIN_CONNECTION_FILE", QDir::toNativeSeparators(connectionPath));
+    runEnvironment.insert("PATH", pydir + sep + runEnvironment.value("PATH"));
+    _serverProcess.setProcessEnvironment(runEnvironment);
+    auto started = _serverProcess.startDetached(pydir + QString("/python"), { "-m", "jupyter", "lab"});
+    if (!started) {
+        qWarning() << "Failed to start the JupyterLab Server";
+        return false;
+    }
+    _serverPollTimer = new QTimer();
+    _serverPollTimer->setInterval(20); // poll every 20ms
+    _serverBackgroundTask = new BackgroundTask(nullptr, "JupyterLab Server");
+    _serverBackgroundTask->setProgressMode(Task::ProgressMode::Manual);
+    _serverBackgroundTask->setProgress(0);
+    QObject::connect(_serverPollTimer, &QTimer::timeout, [=]() { reportProcessState(); });
+    _serverPollTimer->start();
+    return true;
+}
+
+void JupyterLauncher::reportProcessState()
+{
+    switch (_serverProcess.state()) {
+        case QProcess::NotRunning:
+            //this->_serverBackgroundTask->setFinished();
+            break;
+        case QProcess::Starting:
+            this->_serverBackgroundTask->setIdle();
+            break;
+        case QProcess::Running:
+            this->_serverBackgroundTask->setRunning();
+            this->_serverBackgroundTask->setProgress(0.1f);
+            break;
+        default:
+            this->_serverBackgroundTask->setUndefined();
+    }
+    if (_serverProcess.canReadLine()) {
+        auto output = _serverProcess.readAll();
+        _serverBackgroundTask->setProgressDescription(output);
+    }
+
+}
+
 bool JupyterLauncher::validatePythonEnvironment() 
 {
     auto pydir = _settingsAction.getPythonPathAction().getDirectory();
@@ -371,6 +427,7 @@ bool JupyterLauncher::loadPlugin()
         }
     }
     pluginInstance->init();
+    startJupyterServerProcess();
     return true;
 }
 

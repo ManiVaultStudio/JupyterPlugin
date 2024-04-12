@@ -8,6 +8,7 @@
 #include <PluginFactory.h>
 #include <QWidget>
 #include <QProcess>
+#include "BackgroundTask.h"
 
 #include <actions/PluginStatusBarAction.h>
 #include <actions/HorizontalGroupAction.h>
@@ -65,10 +66,13 @@ public:
     QString& getPythonLibPath();
 
 protected:
-    mv::Dataset<Points>   _points;                    /** Points smart pointer */
-    SettingsAction              _settingsAction;        /** Settings action */
+    mv::Dataset<Points>     _points;                    /** Points smart pointer */
+    SettingsAction          _settingsAction;            /** Settings action */
     QString                 _currentDatasetName;        /** Name of the current dataset */
     QLabel*                 _currentDatasetNameLabel;   /** Label that show the current dataset name */
+    mv::BackgroundTask*          _serverBackgroundTask;      /** The background task monitoring the Jupyter Server */
+    QProcess                _serverProcess;             /** A detached process for tunning the Jupyter server */
+    QTimer*                 _serverPollTimer;           /** Poll the server process output at a regular interval */
 
 private:
     QHash<QString, PluginFactory*>                  _pluginFactories;   /** All loaded plugin factories */
@@ -80,6 +84,10 @@ private:
     void preparePythonProcess(QProcess &process);
     bool installKernel();
     bool optionallyInstallMVWheel();
+
+    bool startJupyterServerProcess();
+
+    void reportProcessState();
 };
 
 /**

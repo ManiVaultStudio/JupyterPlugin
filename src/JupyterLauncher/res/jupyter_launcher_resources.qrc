@@ -1,5 +1,10 @@
 <RCC>
     <qresource prefix="/">
         <file>images/logo.svg</file>
+        <file>text/check_env.py</file>
+        <file>text/find_libpython.py</file>
+        <file>kernel-files/kernel.json</file>
+        <file>kernel-files/logo-32x32.png</file>
+        <file>kernel-files/logo-64x64.png</file>
     </qresource>
 </RCC>
