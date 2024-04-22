@@ -18,6 +18,7 @@ classifiers = [
 packages = [{include = "MVJupyterPluginManager", from = 'src'}] 
 
 [tool.poetry.dependencies]
+comm ='~=0.2.2'
 python = '~=3.11'
 jupyterlab_server = "~=2.25.2"
 jupyter_server = "~=2.12.5"
@@ -27,6 +28,9 @@ xeus-python-shell = "~0.6.1"
 
 [build-system]
 requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+
 
 [tool.black]
 line-length = 120

@@ -128,18 +128,8 @@ target_include_directories(cppzmq INTERFACE
     "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>"
 )
 
-set(PythonVERSION 3.11)
+find_package (Python ${PythonVERSION} COMPONENTS Development Interpreter REQUIRED)
 
-if(${CMAKE_VERSION} VERSION_LESS "3.12.0") 
-	include(FindPythonInterp)
-    message("CMAKE VERSION less than 3.12.0")
-	# Set variables as they would be set by module FindPython,
-	# which is available from CMake 3.12.
-	set(Python_Interpreter_FOUND ${PYTHONINTERP_FOUND})
-	set(Python_EXECUTABLE ${PYTHON_EXECUTABLE})
-else()
-    find_package (Python COMPONENTS Development Interpreter REQUIRED)
-endif()
 
 message("Python root dir: ${Python_ROOT_DIR}")
 message("*** Python libraries : ${Python_LIBRARIES}")

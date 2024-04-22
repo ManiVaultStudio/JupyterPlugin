@@ -50,7 +50,9 @@ set(cppzmq_INCLUDE_DIR ${xeus-zmq_ROOT}/include)
 
 
 find_package(Qt6 COMPONENTS Widgets WebEngineWidgets REQUIRED)
+set(PythonVERSION 3.11)
 include(dependencies.cmake)
+include(FeatureSummary)
 
 # -----------------------------------------------------------------------------
 # Source files
@@ -156,20 +158,68 @@ endif()
 target_compile_features(${JUPYTERPLUGIN} PUBLIC cxx_std_14)
 
 # -----------------------------------------------------------------------------
+# Python MVJupyterPluginManager package
+# -----------------------------------------------------------------------------
+option(MVJUPYTERPLUGIN_MANAGER_ENABLE_PYTHON_BUILD
+       "Build JupyterPlugin support package (requires poetry)" ON)
+add_feature_info("MVJUPYTERPLUGIN_MANAGER_ENABLE_PYTHON_BUILD" MVJUPYTERPLUGIN_MANAGER_ENABLE_PYTHON_BUILD
+    "build Python bindings (requires poetry).")
+if (MVJUPYTERPLUGIN_MANAGER_ENABLE_PYTHON_BUILD)
+    execute_process(
+            COMMAND ${Python_EXECUTABLE} -m pip show poetry
+            RESULT_VARIABLE EXIT_CODE
+            OUTPUT_QUIET)
+    if (NOT ${EXIT_CODE} EQUAL 0)        
+        message(WARNING
+            "Cannot find 'poetry' in.
+            'poetry' is required for building the JupyterPlugin support package")
+        # If not a vritual environment install only for user
+        if (DEFINED ENV{VIRTUL_ENV} OR DEFINED ENV{CONDA_PREFIX})
+            set(_pip_args)
+        else()
+            set(_pip_args "--user")
+        endif()
+        message(STATUS "Attempting to to install python poetry package...")
+        execute_process(
+            COMMAND ${Python_EXECUTABLE} -m pip install ${_pip_args} --no-warn-script-location poetry 
+            RESULT_VARIABLE POETRY_INSTALL_RESULT
+            OUTPUT_QUIET)
+        if (POETRY_INSTALL_RESULT)
+            message(
+            FATAL_ERROR
+                "Install poetry failed 
+                Either 'pip install poetry' or 'MVJUPYTERPLUGIN_MANAGER_ENABLE_PYTHON_BUILD' to 'OFF'"
+            )
+        else()
+            message(STATUS "'poetry' succesfully installed")
+        endif()
+    endif()
+    message(STATUS "Building the MVJupyterPluginManager python package in ${CMAKE_CURRENT_SOURCE_DIR}")
+    execute_process(
+        COMMAND ${Python_EXECUTABLE} -m poetry build --no-interaction --format=wheel
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        COMMAND_ERROR_IS_FATAL ANY)
+endif ()
+
+
+# -----------------------------------------------------------------------------
 # Target installation
 # -----------------------------------------------------------------------------
 # Install the shared plugin libary to the "Plugins" folder in the ManiVault install directory
 install(TARGETS ${JUPYTERPLUGIN}
-    RUNTIME DESTINATION Plugins COMPONENT PLUGINS # Windows .dll
-    LIBRARY DESTINATION Plugins COMPONENT PLUGINS # Linux/Mac .so
-    ARCHIVE DESTINATION lib     COMPONENT LINKLIB # Windows .lib
+    RUNTIME DESTINATION Plugins/JupyterPlugin COMPONENT PLUGINS # Windows .dll
+    LIBRARY DESTINATION Plugins/JupyterPlugin COMPONENT PLUGINS # Linux/Mac .so
+    ARCHIVE DESTINATION lib     COMPONENT LINKLIB # Windows .lib 
 )
+
+install(FILES jupyter_server_config.py dist/mvjupyterpluginmanager-0.4.5-py3-none-any.whl
+DESTINATION Plugins/JupyterPlugin COMPONENT PLUGINS)
 
 add_custom_command(TARGET ${JUPYTERPLUGIN} POST_BUILD
     COMMAND "${CMAKE_COMMAND}"
         --install ${CMAKE_CURRENT_BINARY_DIR}
         --config $<CONFIGURATION>
-        --prefix ${MV_INSTALL_DIR}/$<CONFIGURATION>
+        --prefix ${MV_INSTALL_DIR}/$<CONFIGURATION>/
 )
 
 # -----------------------------------------------------------------------------

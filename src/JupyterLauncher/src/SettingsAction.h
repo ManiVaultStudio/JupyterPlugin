@@ -26,14 +26,32 @@ public:
 
 public: // Action getters
     
-    DirectoryPickerAction& getPythonPathAction() { return _pythonPath; }
-    //FilePickerAction& getConnectionFilePathAction() { return _connectionFilePath; }
-    StringAction& getConnectionFilePathAction() { return _connectionFilePath; }
+    FilePickerAction& getPythonPathAction(const QString& pyversion) {
+        if (pyversion == "3.11") {
+            return _python311Path;
+        }
+        if (pyversion == "3.12") {
+            return _python312Path;
+        }
+    }
+    FilePickerAction& getConnectionFilePathAction(const QString& pyversion) {
+        if (pyversion == "3.11") {
+            return _connection311FilePath;
+        }
+        if (pyversion == "3.12") {
+            return _connection312FilePath;
+        }
+    }
+
+    void enableVersion(const QString& pyversion);
 
 private:
     JupyterLauncher*    _jupyterLauncher;   
-    DirectoryPickerAction _pythonPath;
+    FilePickerAction _python311Path;
+    FilePickerAction _connection311FilePath;
+    FilePickerAction _python312Path;
+    FilePickerAction _connection312FilePath;
     // due to issue with FilePickerAction use string for now
     //FilePickerAction _connectionFilePath;
-    StringAction _connectionFilePath;
+
 };

@@ -48,7 +48,7 @@ public:
     JupyterLauncher(const PluginFactory* factory);
 
     /** Destructor */
-    ~JupyterLauncher() override = default;
+    ~JupyterLauncher();
     
     /** This function is called by the core after the view plugin has been created */
     void init() override;
@@ -59,35 +59,44 @@ public:
      */
     void onDataEvent(mv::DatasetEvent* dataEvent);
 
-    bool loadPlugin();
-
-    bool validatePythonEnvironment();
+     bool validatePythonEnvironment();
 
     QString& getPythonLibPath();
+
+    void loadJupyterPythonKernel(const QString version);
 
 protected:
     mv::Dataset<Points>     _points;                    /** Points smart pointer */
     SettingsAction          _settingsAction;            /** Settings action */
     QString                 _currentDatasetName;        /** Name of the current dataset */
     QLabel*                 _currentDatasetNameLabel;   /** Label that show the current dataset name */
-    mv::BackgroundTask*          _serverBackgroundTask;      /** The background task monitoring the Jupyter Server */
+    mv::BackgroundTask*     _serverBackgroundTask;      /** The background task monitoring the Jupyter Server */
     QProcess                _serverProcess;             /** A detached process for tunning the Jupyter server */
     QTimer*                 _serverPollTimer;           /** Poll the server process output at a regular interval */
 
+public slots:
+    void jupyterServerError(QProcess::ProcessError error);
+    void jupyterServerFinished(int exitCode, QProcess::ExitStatus exitStatus);
+    void jupyterServerStateChanged(QProcess::ProcessState newState);
+    void jupyterServerStarted();
+
 private:
-    QHash<QString, PluginFactory*>                  _pluginFactories;   /** All loaded plugin factories */
+    QHash<QString, PluginFactory*>                      _pluginFactories;   /** All loaded plugin factories */
     std::vector<std::unique_ptr<mv::plugin::Plugin>>    _plugins;           /** Vector of plugin instances */
     // TBD merge the two runPythonScript signatures
-    int runPythonScript(const QString scriptName, QString& sout, QString& serr); /** Run a python script from the resources return the exit code and stderr and stdout */
-    bool runPythonScript(const QStringList params);
+    int runPythonScript(const QString scriptName, QString& sout, QString& serr, const QString version); /** Run a python script from the resources return the exit code and stderr and stdout */
+    bool runPythonScript(const QStringList params, const QString version);
 
-    void preparePythonProcess(QProcess &process);
-    bool installKernel();
-    bool optionallyInstallMVWheel();
+    void setPythonEnv(const QString version);
+    void preparePythonProcess(QProcess &process, const QString version);
+    bool installKernel(const QString version);
+    bool optionallyInstallMVWheel(const QString version);
 
-    bool startJupyterServerProcess();
+    bool startJupyterServerProcess(const QString version);
 
-    void reportProcessState();
+    void logProcessOutput();
+
+    const QString getVirtDir(const QString);
 };
 
 /**

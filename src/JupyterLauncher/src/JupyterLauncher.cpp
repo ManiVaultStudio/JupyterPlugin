@@ -37,6 +37,15 @@ JupyterLauncher::JupyterLauncher(const PluginFactory* factory) :
     _currentDatasetNameLabel->setAlignment(Qt::AlignCenter);
 }
 
+JupyterLauncher::~JupyterLauncher()
+{
+    switch (_serverProcess.state()) {
+    case QProcess::Starting:
+    case QProcess::Running:
+        _serverProcess.terminate();
+    }
+}
+
 void JupyterLauncher::init()
 {
     // Create layout
@@ -58,7 +67,7 @@ void JupyterLauncher::init()
     _eventListener.addSupportedEventType(static_cast<std::uint32_t>(EventType::DatasetDataSelectionChanged));
     _eventListener.registerDataEventByType(PointType, std::bind(&JupyterLauncher::onDataEvent, this, std::placeholders::_1));
 
-    this->loadPlugin();
+    //this->loadPlugin();
 }
 
 void JupyterLauncher::onDataEvent(mv::DatasetEvent* dataEvent)
@@ -128,10 +137,63 @@ void JupyterLauncher::onDataEvent(mv::DatasetEvent* dataEvent)
     }
 }
 
-void JupyterLauncher::preparePythonProcess(QProcess &process)
+// Distinguish between python in a regular or conda directory
+// and python in a venv
+const QString JupyterLauncher::getVirtDir(const QString pydir)
+{
+    // check if the last 
+    auto pydirInfo = QFileInfo(pydir);
+    //In a venv python sits in a Script or bin dir dependant on os
+#ifdef _WIN32
+    auto venvParent = QString("Scripts");
+#else
+    auto venvParent = QString("bin");
+#endif
+    qDebug() << "Check if this is Script or bin: " << pydirInfo.fileName();
+    // A Script/bin and a pyvenv.cfg in the dir above indicate a venv so take the parent
+    if (pydirInfo.fileName() == venvParent) {
+        auto virtdir = QFileInfo(pydir).absoluteDir();
+        qDebug() << "Check for pyenv.cfg in " << virtdir;
+        if (virtdir.exists("pyvenv.cfg")) {
+            return QFileInfo(pydir).absoluteDir().absolutePath();
+        }
+    }
+    return pydir;
+}
+
+
+// Emulate the environment changes from a venv activate script
+void JupyterLauncher::setPythonEnv(const QString version)
 {
     // 1. Configure a process to run python on the user selected python interpreter
-    auto pydir = _settingsAction.getPythonPathAction().getDirectory();
+    auto pyinterp = QFileInfo(_settingsAction.getPythonPathAction(version).getFilePath());
+    auto pydir = QDir::toNativeSeparators(pyinterp.absolutePath());
+    auto virtdir = getVirtDir(pydir);
+#ifdef _WIN32
+    QString sep(";"); // path separator
+#else
+    QString sep(":");
+#endif
+
+    auto path = QString::fromUtf8(qgetenv("PATH"));
+    qputenv("VIRTUAL_ENV", QDir::toNativeSeparators(virtdir).toUtf8());
+    qputenv("PATH", QString(pydir + sep + path).toUtf8());
+    qputenv("PYTHONHOME", "");
+    // PYTHONPATH is essential to picking up the modules in a venv environment
+    // without it the xeusinterpreter will fail to load as the xeus_python_shell
+    // will not be found.
+#ifdef _WIN32
+    qputenv("PYTHONPATH", QDir::toNativeSeparators(QString(virtdir + "/Lib/site-packages")).toUtf8());
+#else
+    qputenv("PYTHONPATH", QDir::toNativeSeparators(QString(virtdir + "/lib/python" + version + "/site-packages")).toUtf8());
+#endif
+}
+
+void JupyterLauncher::preparePythonProcess(QProcess &process, const QString version)
+{
+    // 1. Configure a process to run python on the user selected python interpreter
+    auto pyinterp = QFileInfo(_settingsAction.getPythonPathAction(version).getFilePath());
+    auto pydir = QDir::toNativeSeparators(pyinterp.absolutePath());
 #ifdef _WIN32
     QString sep(";"); // path separator
 #else
@@ -146,11 +208,11 @@ void JupyterLauncher::preparePythonProcess(QProcess &process)
 
 // TBD merge the two runScript signatures
 
-int JupyterLauncher::runPythonScript(const QString scriptName, QString& sout, QString& serr)
+int JupyterLauncher::runPythonScript(const QString scriptName, QString& sout, QString& serr, const QString version)
 {
     // 1. Prepare a python process with the python path
     QProcess pythonScriptProcess;
-    this->preparePythonProcess(pythonScriptProcess);
+    this->preparePythonProcess(pythonScriptProcess, version);
     auto scriptFile =  QFile(scriptName);
     // 2. Place the script in a temporary file
     QByteArray scriptContent;
@@ -167,7 +229,8 @@ int JupyterLauncher::runPythonScript(const QString scriptName, QString& sout, QS
 
     // 3. Run the script synchronously
     auto result = 0;
-    auto pydir = _settingsAction.getPythonPathAction().getDirectory(); 
+    auto pyinterp = QFileInfo(_settingsAction.getPythonPathAction(version).getFilePath());
+    auto pydir = QDir::toNativeSeparators(pyinterp.absolutePath());
     pythonScriptProcess.start(pydir + QString("/python"), QStringList({ tempFile.fileName() }));
     if (!pythonScriptProcess.waitForStarted()) {
         result = 2;
@@ -187,11 +250,12 @@ int JupyterLauncher::runPythonScript(const QString scriptName, QString& sout, QS
     return result;
 }
 
-bool JupyterLauncher::runPythonScript(const QStringList params)
+bool JupyterLauncher::runPythonScript(const QStringList params, const QString version)
 {
-    auto pydir = _settingsAction.getPythonPathAction().getDirectory();
+    auto pyinterp = QFileInfo(_settingsAction.getPythonPathAction(version).getFilePath());
+    auto pydir = QDir::toNativeSeparators(pyinterp.absolutePath());
     QProcess mvInstallProcess;
-    this->preparePythonProcess(mvInstallProcess);
+    this->preparePythonProcess(mvInstallProcess, version);
     mvInstallProcess.start(pydir + QString("/python"), params);
     try {
         if (!mvInstallProcess.waitForStarted()) {
@@ -217,7 +281,7 @@ bool JupyterLauncher::runPythonScript(const QStringList params)
     return true;
 }
 
-bool JupyterLauncher::installKernel()
+bool JupyterLauncher::installKernel(const QString version)
 {
     // 1. Create a marshalling directory with the correct kernel name "ManiVaultStudio"
     QTemporaryDir tdir;
@@ -243,10 +307,10 @@ bool JupyterLauncher::installKernel()
         }
     }
     // 3. Install the ManiVaultStudio kernel for the current user 
-    return runPythonScript(QStringList({ "-m", "jupyter", "kernelspec", "install",  kernelDir.absolutePath() + QDir::separator() + QString("ManiVaultStudio"), "--user" }));
+    return runPythonScript(QStringList({ "-m", "jupyter", "kernelspec", "install",  kernelDir.absolutePath() + QDir::separator() + QString("ManiVaultStudio"), "--user" }), version);
 }
 
-bool JupyterLauncher::optionallyInstallMVWheel()
+bool JupyterLauncher::optionallyInstallMVWheel(const QString version)
 {
     QMessageBox::StandardButton reply = QMessageBox::question(
         nullptr, 
@@ -255,12 +319,13 @@ bool JupyterLauncher::optionallyInstallMVWheel()
         QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes);
     if (reply == QMessageBox::Yes) {
         auto MVWheelPath = QCoreApplication::applicationDirPath() + "/Plugins/JupyterPlugin/mvjupyterpluginmanager-0.4.5-py3-none-any.whl";
-        auto pydir = _settingsAction.getPythonPathAction().getDirectory();
-        if (!runPythonScript(QStringList({ "-m", "pip", "install", MVWheelPath.toStdString().c_str() }))) {
+        auto pyinterp = QFileInfo(_settingsAction.getPythonPathAction(version).getFilePath());
+        auto pydir = QDir::toNativeSeparators(pyinterp.absolutePath());
+        if (!runPythonScript(QStringList({ "-m", "pip", "install", MVWheelPath.toStdString().c_str() }), version)) {
             qWarning() << "Installing the MVJupyterPluginManager failed. See logging for more information";
             return false;
         }
-        if (!this->installKernel()) {
+        if (!this->installKernel(version)) {
             qWarning() << "Installing the ManiVaultStudion Jupyter kernel failed. See logging for more information";
             return false;
         }
@@ -270,55 +335,113 @@ bool JupyterLauncher::optionallyInstallMVWheel()
     return true;
 }
 
-bool JupyterLauncher::startJupyterServerProcess()
+void JupyterLauncher::jupyterServerError(QProcess::ProcessError error)
+{
+    qWarning() << "Jupyter Server error: " << _serverProcess.errorString();
+    switch (error) {
+    case QProcess::FailedToStart:
+        qWarning() << "Could not start.";
+        break;
+    case QProcess::Crashed:
+        qWarning() << "Crashed";
+        break;
+    case QProcess::Timedout:
+        qWarning() << "Timedout";
+        break;
+    case QProcess::WriteError:
+        qWarning() << "Write error";
+        break;
+    case QProcess::ReadError:
+        qWarning() << "Read error";
+        break;
+    default:
+        qWarning() << "Reason unknown";
+        break;
+    }
+    this->_serverBackgroundTask->setFinished();
+}
+
+void JupyterLauncher::jupyterServerFinished(int exitCode, QProcess::ExitStatus exitStatus)
+{
+    switch (exitStatus) {
+    case QProcess::NormalExit :
+        qDebug() << "Jupyter server exited normally";
+        break;
+    default:
+        qWarning() << "Jupyter server exited abnormally";
+        qWarning() << "With error: " << _serverProcess.errorString();
+    }
+    this->_serverBackgroundTask->setFinished();
+}
+
+void JupyterLauncher::jupyterServerStateChanged(QProcess::ProcessState newState)
+{
+    switch (newState) {
+    case QProcess::NotRunning:
+        _serverBackgroundTask->setUndefined();
+        break;
+    case QProcess::Starting:
+        _serverBackgroundTask->setRunning();
+        _serverBackgroundTask->setProgress(0.1f);
+        break;
+    case QProcess::Running:
+        _serverBackgroundTask->setRunning();
+        _serverBackgroundTask->setProgress(1.0f);
+        break;
+    }
+}
+
+void JupyterLauncher::jupyterServerStarted()
+{
+    _serverBackgroundTask->setProgress(1.0f);
+}
+
+bool JupyterLauncher::startJupyterServerProcess(const QString version)
 {
 #ifdef _WIN32
     QString sep(";"); // path separator
 #else
     QString sep(":");
 #endif
-    auto pydir = _settingsAction.getPythonPathAction().getDirectory();
+
+    auto pyinterp = QFileInfo(_settingsAction.getPythonPathAction(version).getFilePath());
+    auto pydir = QDir::toNativeSeparators(pyinterp.absolutePath());
     _serverProcess.setProcessChannelMode(QProcess::MergedChannels);
-    auto connectionPath = _settingsAction.getConnectionFilePathAction().getString();
+    auto connectionPath = _settingsAction.getConnectionFilePathAction(version).getFilePath();
     // In order to run python -m jupyter lab and access the MANIVAULT_JUPYTERPLUGIN_CONNECTION_FILE 
     // the env variable this must be set in the current process.
     // Setting it in the child QProcess does not work for reasons that are unclear.
     qputenv("MANIVAULT_JUPYTERPLUGIN_CONNECTION_FILE", QDir::toNativeSeparators(connectionPath).toUtf8());
     auto runEnvironment = QProcessEnvironment::systemEnvironment();
-    // runEnvironment.insert("MANIVAULT_JUPYTERPLUGIN_CONNECTION_FILE", QDir::toNativeSeparators(connectionPath));
     runEnvironment.insert("PATH", pydir + sep + runEnvironment.value("PATH"));
-    _serverProcess.setProcessEnvironment(runEnvironment);
-    auto started = _serverProcess.startDetached(pydir + QString("/python"), { "-m", "jupyter", "lab"});
-    if (!started) {
-        qWarning() << "Failed to start the JupyterLab Server";
-        return false;
-    }
-    _serverPollTimer = new QTimer();
-    _serverPollTimer->setInterval(20); // poll every 20ms
+    auto configPath = QCoreApplication::applicationDirPath() + "/Plugins/JupyterPlugin/jupyter_server_config.py";
+
     _serverBackgroundTask = new BackgroundTask(nullptr, "JupyterLab Server");
     _serverBackgroundTask->setProgressMode(Task::ProgressMode::Manual);
-    _serverBackgroundTask->setProgress(0);
-    QObject::connect(_serverPollTimer, &QTimer::timeout, [=]() { reportProcessState(); });
+    _serverBackgroundTask->setIdle();
+
+    _serverProcess.setProcessEnvironment(runEnvironment);
+    _serverProcess.setProgram(pydir + QString("/python"));
+    //_serverProcess.setArguments({ "-m", "MVJupyterPluginManager", "--config", configPath });
+    _serverProcess.setArguments({ "-m", "jupyter", "lab", "--config", configPath});
+
+    connect(&_serverProcess, &QProcess::stateChanged, this, &JupyterLauncher::jupyterServerStateChanged);
+    connect(&_serverProcess, &QProcess::errorOccurred, this, &JupyterLauncher::jupyterServerError);
+
+    connect(&_serverProcess, &QProcess::started, this, &JupyterLauncher::jupyterServerStarted);
+    connect(&_serverProcess, &QProcess::finished, this, &JupyterLauncher::jupyterServerFinished);
+
+    _serverProcess.start();
+    _serverPollTimer = new QTimer();
+    _serverPollTimer->setInterval(20); // poll every 20ms
+
+    QObject::connect(_serverPollTimer, &QTimer::timeout, [=]() { logProcessOutput(); });
     _serverPollTimer->start();
     return true;
 }
 
-void JupyterLauncher::reportProcessState()
+void JupyterLauncher::logProcessOutput()
 {
-    switch (_serverProcess.state()) {
-        case QProcess::NotRunning:
-            //this->_serverBackgroundTask->setFinished();
-            break;
-        case QProcess::Starting:
-            this->_serverBackgroundTask->setIdle();
-            break;
-        case QProcess::Running:
-            this->_serverBackgroundTask->setRunning();
-            this->_serverBackgroundTask->setProgress(0.1f);
-            break;
-        default:
-            this->_serverBackgroundTask->setUndefined();
-    }
     if (_serverProcess.canReadLine()) {
         auto output = _serverProcess.readAll();
         _serverBackgroundTask->setProgressDescription(output);
@@ -328,11 +451,16 @@ void JupyterLauncher::reportProcessState()
 
 bool JupyterLauncher::validatePythonEnvironment() 
 {
-    auto pydir = _settingsAction.getPythonPathAction().getDirectory();
+    // TBD
     return true;
 }
 
-bool JupyterLauncher::loadPlugin()
+// The pyversion should correspond to a python major.minor version
+// e.g.
+// "3.11"
+// "3.12"
+// There  must be a JupyterPlugin (a kernel provider) that matches the python vesion for this to work.
+void JupyterLauncher::loadJupyterPythonKernel(const QString pyversion)
 {
     auto jupyterPluginPath = QCoreApplication::applicationDirPath() + "/Plugins/JupyterPlugin/JupyterPlugin";
 
@@ -359,15 +487,15 @@ bool JupyterLauncher::loadPlugin()
     QString serr;
     QString sout;
     // 1. Check the path to see if MVJupyterPluginManager is installed
-    auto exitCode = runPythonScript(":/text/check_env.py", sout, serr); 
+    auto exitCode = runPythonScript(":/text/check_env.py", sout, serr, pyversion); 
     if (exitCode == 2) {
         qDebug() << serr << sout;
         // TODO display error message box
-        return false;
+        return ;
     }
     if (exitCode == 1) {
-        if (!this->optionallyInstallMVWheel()) {
-            return false;
+        if (!this->optionallyInstallMVWheel(pyversion)) {
+            return;
         }
     }
     else {
@@ -375,26 +503,26 @@ bool JupyterLauncher::loadPlugin()
     }
 
     // 2. Determine the path to the python library
-    exitCode = runPythonScript(":/text/find_libpython.py", sout, serr); 
+    exitCode = runPythonScript(":/text/find_libpython.py", sout, serr, pyversion); 
     if (exitCode != 0) {
         qDebug() << serr << sout;
         // TODO display error message box
-        return false;
+        return;
     }
     auto sharedLib = QFileInfo(sout);
     auto sharedLibDir = sharedLib.dir();
     qDebug() << "Using python shared library at: " << sharedLibDir.absolutePath();
 
-    // Load the plugin
+
     QPluginLoader jupyLoader(jupyterPluginPath);
 
 #ifdef _WIN32
-    SetDllDirectoryA(sharedLibDir.absolutePath().toUtf8().data());
+    SetDllDirectoryA(QString(sharedLibDir.absolutePath() + "/").toUtf8().data());
 #endif
     // Check if the plugin was loaded successfully
     if (!jupyLoader.load()) {
         qWarning() << "Failed to load plugin:" << jupyLoader.errorString();
-        return false;
+        return;
     }
     QString pluginKind = jupyLoader.metaData().value("MetaData").toObject().value("name").toString();
     QString menuName = jupyLoader.metaData().value("MetaData").toObject().value("menuName").toString();
@@ -418,7 +546,7 @@ bool JupyterLauncher::loadPlugin()
 
     // Communicate the connection file path via the child action in the JupyterPlugin
     //auto connectionPath = _settingsAction.getConnectionFilePathAction().getFilePath();
-    auto connectionPath = _settingsAction.getConnectionFilePathAction().getString();
+    auto connectionPath = _settingsAction.getConnectionFilePathAction(pyversion).getFilePath();
     auto jpActions = pluginInstance->getChildren();
     for(auto action: jpActions) {
         qDebug() << action->text() << ": " << action->data();
@@ -426,9 +554,12 @@ bool JupyterLauncher::loadPlugin()
             action->setData(connectionPath);
         }
     }
+    // Load the plugin but first set the environment to get 
+    // the correct python version
+    setPythonEnv(pyversion);
     pluginInstance->init();
-    startJupyterServerProcess();
-    return true;
+    startJupyterServerProcess(pyversion);
+    return;
 }
 
 JupyterLauncherFactory::JupyterLauncherFactory() :
@@ -454,25 +585,21 @@ void JupyterLauncherFactory::initialize()
 
     // Configure the status bar popup action
     _statusBarPopupAction.setDefaultWidgetFlags(StringAction::Label);
-    _statusBarPopupAction.setString("<b>Launch Jupyter Python Kernel for Python 3.11</b>");
+    _statusBarPopupAction.setString("<b>Jupyter Launcher</b>");
 
     _statusBarPopupGroupAction.setShowLabels(false);
     _statusBarPopupGroupAction.setConfigurationFlag(WidgetAction::ConfigurationFlag::NoGroupBoxInPopupLayout);
     _statusBarPopupGroupAction.addAction(&_statusBarPopupAction);
-    /*_statusBarPopupGroupAction.setWidgetConfigurationFunction([](WidgetAction* action, QWidget* widget) -> void {
-        auto label = widget->findChild<QLabel*>("Label");
 
-        Q_ASSERT(label != nullptr);
-
-        if (label == nullptr)
-            return;
-
-        label->setOpenExternalLinks(true);
-    });*/
-
-    // 
 
     _statusBarAction = new PluginStatusBarAction(this, "Status Bar", getKind());
+    auto launchJupyterPython311 = new TriggerAction(this, "py3.11: Kernel and Jupyter Lab");
+    _statusBarAction->addMenuAction(launchJupyterPython311);
+
+    connect(launchJupyterPython311, &TriggerAction::triggered, this, [this]() {
+        auto plugin = mv::plugins().requestPlugin<JupyterLauncher>("Jupyter Launcher");
+        plugin->loadJupyterPythonKernel("3.11");
+    });
 
     // Sets the action that is shown when the status bar is clicked
     _statusBarAction->setPopupAction(&_statusBarPopupGroupAction);
