@@ -27,7 +27,8 @@ void XeusInterpreter::configure_impl()
     py::gil_scoped_acquire acquire;
     py::module sys = py::module::import("sys");
     py::module MVData_module = get_MVData_module();
-    sys.attr("modules")["MVData"] = MVData_module;
+    MVData_module.doc() = "Provides access to low level ManiVaultStudio core functions";
+    sys.attr("modules")["mvstudio_core"] = MVData_module;
 }
 
 // Execute incoming code and publish the result

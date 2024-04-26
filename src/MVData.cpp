@@ -6,6 +6,7 @@
 #include <ClusterData/ClusterData.h>
 #include <QString>
 #include <ImageData/Images.h>
+#include <QDebug>
 
 
 namespace py = pybind11;
@@ -65,43 +66,42 @@ PointData::ElementTypeSpecifier getTypeSpecifier() {
 
 // only works on top level items as test
 // Get the point data associated with the names item and return it as a numpy array to python
-py::array get_data_for_item(const std::string& itemName)
+py::array get_data_for_item(const std::string& itemGuid)
 {
     PointData::ElementTypeSpecifier dataSpec;
     unsigned int numDimensions;
     unsigned int numPoints;
-    for (const auto topLevelDataHierarchyItem : Application::core()->getDataHierarchyManager().getTopLevelItems()) {
-        if (topLevelDataHierarchyItem->getDataset()->getGuiName() == QString(itemName.c_str())) {
-            auto dataType = topLevelDataHierarchyItem->getDataType();
-            auto inputPoints = topLevelDataHierarchyItem->getDataset<Points>();
-            numDimensions = inputPoints->getNumDimensions();
-            numPoints = inputPoints->isFull() ? inputPoints->getNumPoints() : inputPoints->indices.size();
-            auto size = numPoints * numDimensions;
+    auto item = mv::dataHierarchy().getItem(QString(itemGuid.c_str()));
 
-            // extract the source type 
-            inputPoints->visitSourceData([&dataSpec](auto pointData) {
-                for (auto pointView : pointData) {
-                    for (auto value : pointView) {
-                        qInfo() << "checking point data";
-                        dataSpec = getTypeSpecifier<decltype(value)>();
-                        break;
-                    }
-                    break;
-                }  
-            });
+    auto dataType = item->getDataType();
+    auto inputPoints = item->getDataset<Points>();
+    numDimensions = inputPoints->getNumDimensions();
+    numPoints = inputPoints->isFull() ? inputPoints->getNumPoints() : inputPoints->indices.size();
+    auto size = numPoints * numDimensions;
 
-            qInfo() << "PointData::ElementTypeSpecifier is " << static_cast<int>(dataSpec);
-            if (auto populate =
-                (dataSpec == PointData::ElementTypeSpecifier::float32) ? populate_pyarray<float> :
-                (dataSpec == PointData::ElementTypeSpecifier::uint16) ? populate_pyarray<std::uint16_t> :
-                (dataSpec == PointData::ElementTypeSpecifier::int16) ? populate_pyarray<std::int16_t> :
-                (dataSpec == PointData::ElementTypeSpecifier::uint8) ? populate_pyarray<std::uint8_t> :
-                (dataSpec == PointData::ElementTypeSpecifier::int8) ? populate_pyarray<std::int8_t> :
-                nullptr) {
-                return populate(inputPoints, numPoints, numDimensions);
+    // extract the source type 
+    inputPoints->visitSourceData([&dataSpec](auto pointData) {
+        for (auto pointView : pointData) {
+            for (auto value : pointView) {
+                qInfo() << "checking point data";
+                dataSpec = getTypeSpecifier<decltype(value)>();
+                break;
             }
-        }
+            break;
+        }  
+    });
+
+    qInfo() << "PointData::ElementTypeSpecifier is " << static_cast<int>(dataSpec);
+    if (auto populate =
+        (dataSpec == PointData::ElementTypeSpecifier::float32) ? populate_pyarray<float> :
+        (dataSpec == PointData::ElementTypeSpecifier::uint16) ? populate_pyarray<std::uint16_t> :
+        (dataSpec == PointData::ElementTypeSpecifier::int16) ? populate_pyarray<std::int16_t> :
+        (dataSpec == PointData::ElementTypeSpecifier::uint8) ? populate_pyarray<std::uint8_t> :
+        (dataSpec == PointData::ElementTypeSpecifier::int8) ? populate_pyarray<std::int8_t> :
+        nullptr) {
+        return populate(inputPoints, numPoints, numDimensions);
     }
+
     return py::array_t<float>(0);
 }
 
@@ -137,8 +137,6 @@ void orient_multiband_imagedata_as_bip(const U* data_in, std::vector<size_t> sha
             data_out[i] = static_cast<T>(data_in[i]);
         }
     }
-
-
 }
 
 // when conversion is needed
@@ -274,40 +272,117 @@ bool add_mvimage(const py::array& data, std::string dataSetName)
 }
 
 // All images are float.
-py::array get_mv_image(const std::string& itemName)
+py::array get_mv_image(const std::string& itemGuid)
 {
     PointData::ElementTypeSpecifier dataSpec;
     unsigned int numDimensions;
     unsigned int numPoints;
-    for (const auto topLevelDataHierarchyItem : Application::core()->getDataHierarchyManager().getTopLevelItems()) {
-        if (topLevelDataHierarchyItem->getDataset()->getGuiName() == QString(itemName.c_str())) {
-            auto dataType = topLevelDataHierarchyItem->getDataType();
-            auto inputPoints = topLevelDataHierarchyItem->getDataset<Points>();
-            numDimensions = inputPoints->getNumDimensions();
-            numPoints = inputPoints->isFull() ? inputPoints->getNumPoints() : inputPoints->indices.size();
-            auto size = numPoints * numDimensions;
+    auto item = mv::dataHierarchy().getItem(QString(itemGuid.c_str()));
 
-            // extract the source type 
-            inputPoints->visitSourceData([&dataSpec](auto pointData) {
-                for (auto pointView : pointData) {
-                    for (auto value : pointView) {
-                        qInfo() << "checking point data";
-                        dataSpec = getTypeSpecifier<decltype(value)>();
-                        break;
-                    }
-                    break;
-                }
-                });
+    auto dataType = item->getDataType();
+    auto inputPoints = item->getDataset<Points>();
+    numDimensions = inputPoints->getNumDimensions();
+    numPoints = inputPoints->isFull() ? inputPoints->getNumPoints() : inputPoints->indices.size();
+    auto size = numPoints * numDimensions;
 
-            qInfo() << "PointData::ElementTypeSpecifier is " << static_cast<int>(dataSpec);
-            if (auto populate =
-                (dataSpec == PointData::ElementTypeSpecifier::float32) ? populate_pyarray<float> :
-                nullptr) {
-                return populate(inputPoints, numPoints, numDimensions);
+    // extract the source type 
+    inputPoints->visitSourceData([&dataSpec](auto pointData) {
+        for (auto pointView : pointData) {
+            for (auto value : pointView) {
+                qInfo() << "checking point data";
+                dataSpec = getTypeSpecifier<decltype(value)>();
+                break;
             }
+            break;
+        }
+        });
+
+    qInfo() << "PointData::ElementTypeSpecifier is " << static_cast<int>(dataSpec);
+    if (auto populate =
+        (dataSpec == PointData::ElementTypeSpecifier::float32) ? populate_pyarray<float> :
+        nullptr) {
+        return populate(inputPoints, numPoints, numDimensions);
+    }
+
+    return py::array_t<float>(0);
+}
+
+py::list get_top_level_guids() 
+{
+    py::list results;
+    for (const auto topLevelDataHierarchyItem : mv::dataHierarchy().getTopLevelItems()) {
+        results.append(topLevelDataHierarchyItem->getDataset()->getId().toStdString());
+    }
+    return results;
+}
+
+std::uint64_t get_item_numdimensions(const std::string& itemGuid)
+{
+    auto item = mv::dataHierarchy().getItem(QString(itemGuid.c_str()));
+    return item->getDataset<Points>()->getNumDimensions();
+}
+
+std::uint64_t get_item_numpoints(const std::string& itemGuid)
+{
+    auto item = mv::dataHierarchy().getItem(QString(itemGuid.c_str()));
+    return item->getDataset<Points>()->getNumPoints();
+}
+
+std::string get_item_name(const std::string& itemGuid)
+{
+    auto item = mv::dataHierarchy().getItem(QString(itemGuid.c_str()));
+    auto name = item->getDataset()->getGuiName();
+    return name.toStdString();
+}
+
+std::string get_item_type(const std::string& itemGuid)
+{
+    auto item = mv::dataHierarchy().getItem(QString(itemGuid.c_str()));
+    auto type = item->getDataset()->getDataType();
+    return type.getTypeString().toStdString();
+}
+
+std::string get_item_rawname(const std::string& itemGuid)
+{
+    auto item = mv::dataHierarchy().getItem(QString(itemGuid.c_str()));
+    auto name = item->getDataset()->getRawDataName();
+    return name.toStdString();
+}
+
+std::uint64_t get_item_rawsize(const std::string& itemGuid)
+{
+    auto item = mv::dataHierarchy().getItem(QString(itemGuid.c_str()));
+    return item->getDataset()->getRawDataSize();
+}
+
+// Get all Data Hierarcht Item children only
+py::list get_item_children(const std::string& itemGuid)
+{
+    auto item = mv::dataHierarchy().getItem(QString(itemGuid.c_str()));
+
+    auto children = item->getChildren();
+    py::list results;
+    for (auto child : children) {
+        // The child might be a Dataset rather than an Item
+        // however datasets hae 0 children and items have > 0 
+        if (child->getNumberOfChildren() > 0) {
+            results.append(child->getId().toStdString());
         }
     }
-    return py::array_t<float>(0);
+    return results;
+}
+
+mvstudio_core::DataItemType get_data_type(const std::string& itemGuid) {
+    qDebug() << "Get type for id: " << QString(itemGuid.c_str());
+    if (mv::data().getDataset<Points>(QString(itemGuid.c_str())).isValid()) {
+        return mvstudio_core::Points;
+    }
+    if (mv::data().getDataset<Images>(QString(itemGuid.c_str())).isValid()) {
+        return mvstudio_core::Image;
+    }
+    if (mv::data().getDataset<Clusters>(QString(itemGuid.c_str())).isValid()) {
+        return mvstudio_core::Cluster;
+    }
 }
 
 bool add_mvimage_stack(const py::list& data, std::string dataSetName ) 
@@ -317,11 +392,26 @@ bool add_mvimage_stack(const py::list& data, std::string dataSetName )
 
 py::module get_MVData_module()
 {
-    py::module MVData_module = py::module_::create_extension_module("MVData", nullptr, new py::module_::module_def);
+    py::module MVData_module = py::module_::create_extension_module("mvstudio_core", nullptr, new py::module_::module_def);
+    
+    py::enum_<mvstudio_core::DataItemType>(MVData_module, "DataItemType")
+        .value("Image", mvstudio_core::DataItemType::Image)
+        .value("Points", mvstudio_core::DataItemType::Points)
+        .value("Cluster", mvstudio_core::DataItemType::Cluster);
+
     MVData_module.def("get_info", get_info);
     MVData_module.def("get_top_level_items", get_top_level_items);
-    MVData_module.def("get_data_for_item", get_data_for_item, py::arg("itemName") = py::str());
-    MVData_module.def("get_image_item", get_data_for_item, py::arg("itemName") = py::str());
+    MVData_module.def("get_top_level_guids", get_top_level_guids);
+    MVData_module.def("get_data_for_item", get_data_for_item, py::arg("itemGuid") = py::str());
+    MVData_module.def("get_image_item", get_mv_image, py::arg("itemGuid") = py::str());
+    MVData_module.def("get_item_name", get_item_name, py::arg("itemGuid") = py::str());
+    MVData_module.def("get_item_rawsize", get_item_rawsize, py::arg("itemGuid") = py::str());
+    MVData_module.def("get_item_type", get_item_type, py::arg("itemGuid") = py::str());
+    MVData_module.def("get_item_rawname", get_item_rawname, py::arg("itemGuid") = py::str());
+    MVData_module.def("get_item_numdimensions", get_item_numdimensions, py::arg("itemGuid") = py::str());
+    MVData_module.def("get_item_numpoints", get_item_numpoints, py::arg("itemGuid") = py::str());
+    MVData_module.def("get_item_children", get_item_children, py::arg("itemGuid") = py::str());
+    MVData_module.def("get_data_type", get_data_type, py::arg("itemGuid") = py::str());
     MVData_module.def(
         "add_new_data",
         add_new_mvdata,
@@ -334,7 +424,5 @@ py::module get_MVData_module()
         py::arg("data") = py::array(),
         py::arg("dataSetName") = py::str()
     );
-
-
     return MVData_module;
 }

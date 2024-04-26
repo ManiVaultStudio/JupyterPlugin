@@ -314,11 +314,11 @@ bool JupyterLauncher::optionallyInstallMVWheel(const QString version)
 {
     QMessageBox::StandardButton reply = QMessageBox::question(
         nullptr, 
-        "MVJupyterPluginManager missing", 
-        "MVJupyterPluginManager 0.4.5 is needed in the python environment.\n Do you wish to install it now?",
+        "mvstudio.data_hierarchy missing", 
+        "mvstudio.data_hierarchy 0.8 is needed in the python environment.\n Do you wish to install it now?",
         QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes);
     if (reply == QMessageBox::Yes) {
-        auto MVWheelPath = QCoreApplication::applicationDirPath() + "/Plugins/JupyterPlugin/mvjupyterpluginmanager-0.4.5-py3-none-any.whl";
+        auto MVWheelPath = QCoreApplication::applicationDirPath() + "/Plugins/JupyterPlugin/mvstudio-0.8.0-py3-none-any.whl";
         auto pyinterp = QFileInfo(_settingsAction.getPythonPathAction(version).getFilePath());
         auto pydir = QDir::toNativeSeparators(pyinterp.absolutePath());
         if (!runPythonScript(QStringList({ "-m", "pip", "install", MVWheelPath.toStdString().c_str() }), version)) {

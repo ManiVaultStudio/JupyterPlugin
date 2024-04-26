@@ -160,11 +160,11 @@ target_compile_features(${JUPYTERPLUGIN} PUBLIC cxx_std_14)
 # -----------------------------------------------------------------------------
 # Python MVJupyterPluginManager package
 # -----------------------------------------------------------------------------
-option(MVJUPYTERPLUGIN_MANAGER_ENABLE_PYTHON_BUILD
+option(MVSTUDIO_ENABLE_PYTHON_BUILD
        "Build JupyterPlugin support package (requires poetry)" ON)
-add_feature_info("MVJUPYTERPLUGIN_MANAGER_ENABLE_PYTHON_BUILD" MVJUPYTERPLUGIN_MANAGER_ENABLE_PYTHON_BUILD
+add_feature_info("MVSTUDIO_ENABLE_PYTHON_BUILD" MVSTUDIO_ENABLE_PYTHON_BUILD
     "build Python bindings (requires poetry).")
-if (MVJUPYTERPLUGIN_MANAGER_ENABLE_PYTHON_BUILD)
+if (MVSTUDIO_ENABLE_PYTHON_BUILD)
     execute_process(
             COMMAND ${Python_EXECUTABLE} -m pip show poetry
             RESULT_VARIABLE EXIT_CODE
@@ -188,16 +188,16 @@ if (MVJUPYTERPLUGIN_MANAGER_ENABLE_PYTHON_BUILD)
             message(
             FATAL_ERROR
                 "Install poetry failed 
-                Either 'pip install poetry' or 'MVJUPYTERPLUGIN_MANAGER_ENABLE_PYTHON_BUILD' to 'OFF'"
+                Either 'pip install poetry' or 'MVSTUDIO_ENABLE_PYTHON_BUILD' to 'OFF'"
             )
         else()
             message(STATUS "'poetry' succesfully installed")
         endif()
     endif()
-    message(STATUS "Building the MVJupyterPluginManager python package in ${CMAKE_CURRENT_SOURCE_DIR}")
+    message(STATUS "Building the mvstudio python package in ${CMAKE_CURRENT_SOURCE_DIR}")
     execute_process(
         COMMAND ${Python_EXECUTABLE} -m poetry build --no-interaction --format=wheel
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/python
         COMMAND_ERROR_IS_FATAL ANY)
 endif ()
 
@@ -212,7 +212,7 @@ install(TARGETS ${JUPYTERPLUGIN}
     ARCHIVE DESTINATION lib     COMPONENT LINKLIB # Windows .lib 
 )
 
-install(FILES jupyter_server_config.py dist/mvjupyterpluginmanager-0.4.5-py3-none-any.whl
+install(FILES jupyter_server_config.py python/dist/mvstudio-0.8.0-py3-none-any.whl
 DESTINATION Plugins/JupyterPlugin COMPONENT PLUGINS)
 
 add_custom_command(TARGET ${JUPYTERPLUGIN} POST_BUILD
