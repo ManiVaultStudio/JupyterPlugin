@@ -1,12 +1,12 @@
 # mvstudio/__init__.py
 import importlib.util
 __all__ = (
-    "data_hierarchy",
-    "jupyter_kernel"
+    "data",
+    "kernel"
 )
 
-from . import jupyter_kernel
-from . import data_hierarchy
+from . import kernel
+from . import data
 
 # This import only works in the kernel environment 
 # that supplies mvstudio.data

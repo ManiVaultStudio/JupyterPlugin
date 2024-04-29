@@ -18,7 +18,7 @@ class DataHierarchyItem:
     ItemType = Enum('ItemType', ['Image', 'Points', 'Cluster'])
 
     def __init__(self, guid_tuple, name):
-        self._guid_tuple = guid_tuple
+        self._guid_tuple = guid_tuple  # contains the item guid and dataset guid
         self._name = name
         self._datasetid = None
         self._selected = False
@@ -30,14 +30,14 @@ class DataHierarchyItem:
         self._setType()
 
     def _addChildren(self):
-        (dhiGuids, dataGuids) = mvstudio_core.get_item_children(self._guid_tuple[1])
+        (dhiGuids, dataGuids) = mvstudio_core.get_item_children(self.datasetId)
         self._dataGuids = dataGuids
         for child_guid in dhiGuids:
-            item_name = mvstudio_core.get_item_name(self._guid_tuple[1])
+            item_name = mvstudio_core.get_item_name(self.datasetId)
             self._children.append(DataHierarchyItem(child_guid, item_name))
 
     def _setType(self):
-        match mvstudio_core.get_data_type(self._guid_tuple[1]):
+        match mvstudio_core.get_data_type(self.datasetId):
             case mvstudio_core.DataItemType.Image:
                 self._type = DataHierarchyItem.ItemType.Image
             case mvstudio_core.DataItemType.Points:
@@ -47,7 +47,7 @@ class DataHierarchyItem:
         self._setData()
 
     def _setData(self):
-        data = mvstudio_core.get_data_for_item(self._guid_tuple[1])
+        data = mvstudio_core.get_data_for_item(self.datasetId)
         # dependant on the data type 
         # post process to a more pythonic representation
         match self._type:
@@ -95,6 +95,10 @@ class DataHierarchyItem:
             if item is not None:
                 return item
         return None
+    
+    @property
+    def data(self) -> np.ndarray:
+        mvstudio_core.get_data_for_item(self.datasetId)
 
     @property
     def type(self) -> ItemType:
@@ -115,44 +119,48 @@ class DataHierarchyItem:
     @property
     def type(self) -> str:
         """Return the data type"""
-        return mvstudio_core.get_item_type(self._guid_tuple[1])
+        return mvstudio_core.get_item_type(self.datasetId)
 
     @property
     def rawname(self) -> str:
         """Return the raw name"""
-        return mvstudio_core.get_item_rawname(self._guid_tuple[1])
+        return mvstudio_core.get_item_rawname(self.datasetId)
 
     @property
     def rawsize(self) -> int:
         """Return the raw data size in bytes"""
-        return mvstudio_core.get_item_rawsize(self._guid_tuple[1])
+        return mvstudio_core.get_item_rawsize(self.datasetId)
     
     @property
     def numdimensions(self) -> int:
         """Return the number of dimensions"""
-        return mvstudio_core.get_item_numdimensions(self._guid_tuple[1])
+        return mvstudio_core.get_item_numdimensions(self.datasetId)
     
     @property
     def numpoints(self) -> int:
         """Return the numper of points"""
-        return mvstudio_core.get_item_numpoints(self._guid_tuple[1])
+        return mvstudio_core.get_item_numpoints(self.datasetId)
 
-    def getImage(self) -> np.ndarray:
+    @property
+    def image(self) -> np.ndarray:
         """If this is an image return the image data in a numpy array
             otherwise return None
         """
-        return mvstudio_core.get_image_item(self._guid_tuple[1])
+        id = mvstudio_core.find_image_dataset(self.datasetId)
+        if len(id) > 0:
+            return mvstudio_core.get_image_item(self.datasetId)
+        return None
 
 
     def __str__(self) -> str:
-        children_strs = [f'DataHierarchyItem id: {self._guid_tuple[0]}, dataset id: {self._guid_tuple[1]}, display name: {self.name}']
+        children_strs = [f'DataHierarchyItem id: {self.guid}, dataset id: {self.datasetId}, display name: {self.name}']
         for child in self.children():
             children_strs.append(" " + str(child))
 
         return '\n'.join(children_strs)
     
     def __repr__(self) -> str:
-        children_reprs = [f'DataHierarchyItem({self._guid_tuple[0]}, {self._guid_tuple[1]}, {self.name})']
+        children_reprs = [f'DataHierarchyItem({self.guid}, {self.datasetId}, {self.name})']
         for child in self.children():
             children_reprs.append(" " + repr(child))
 

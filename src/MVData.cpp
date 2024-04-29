@@ -400,6 +400,22 @@ bool add_mvimage_stack(const py::list& data, std::string dataSetName )
     return true;
 }
 
+// Return the GUID of the image dataset
+std::string find_image_dataset(const std::string& datasetGuid)
+{
+    auto item = mv::dataHierarchy().getItem(QString(datasetGuid.c_str()));
+    for (auto childHierarchyItem : item->getChildren()) {
+        if (childHierarchyItem->getDataType() == ImageType) {
+            return childHierarchyItem->getDataset()->getId().toStdString();
+        }
+    }
+
+    if (item->hasParent()) {
+        return find_image_dataset(item->getParent()->getDataset()->getId().toStdString());
+    }
+    return "";
+}
+
 py::module get_MVData_module()
 {
     py::module MVData_module = py::module_::create_extension_module("mvstudio_core", nullptr, new py::module_::module_def);
@@ -422,6 +438,7 @@ py::module get_MVData_module()
     MVData_module.def("get_item_numpoints", get_item_numpoints, py::arg("datasetGuid") = py::str());
     MVData_module.def("get_item_children", get_item_children, py::arg("datasetGuid") = py::str());
     MVData_module.def("get_data_type", get_data_type, py::arg("datasetGuid") = py::str());
+    MVData_module.def("find_image_dataset", find_image_dataset, py::arg("datasetGuid") = py::str());
     MVData_module.def(
         "add_new_data",
         add_new_mvdata,
