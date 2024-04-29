@@ -16,7 +16,7 @@ py::object get_info()
     return py::str("ManiVault is cool");
 }
 
-py::object get_top_level_items()
+py::object get_top_level_item_names()
 {
     py::list result;
     for (const auto topLevelDataHierarchyItem : Application::core()->getDataHierarchyManager().getTopLevelItems()) {
@@ -66,12 +66,12 @@ PointData::ElementTypeSpecifier getTypeSpecifier() {
 
 // only works on top level items as test
 // Get the point data associated with the names item and return it as a numpy array to python
-py::array get_data_for_item(const std::string& itemGuid)
+py::array get_data_for_item(const std::string& datasetGuid)
 {
     PointData::ElementTypeSpecifier dataSpec;
     unsigned int numDimensions;
     unsigned int numPoints;
-    auto item = mv::dataHierarchy().getItem(QString(itemGuid.c_str()));
+    auto item = mv::dataHierarchy().getItem(QString(datasetGuid.c_str()));
 
     auto dataType = item->getDataType();
     auto inputPoints = item->getDataset<Points>();
@@ -307,80 +307,90 @@ py::array get_mv_image(const std::string& itemGuid)
     return py::array_t<float>(0);
 }
 
+// return Hierarchy Item and Data set guid in tuple
 py::list get_top_level_guids() 
 {
     py::list results;
     for (const auto topLevelDataHierarchyItem : mv::dataHierarchy().getTopLevelItems()) {
-        results.append(topLevelDataHierarchyItem->getDataset()->getId().toStdString());
+        auto dhiGuid = topLevelDataHierarchyItem->getId().toStdString();
+        auto dsGuid = topLevelDataHierarchyItem->getDataset()->getId().toStdString();
+        results.append(py::make_tuple(dhiGuid, dsGuid));
     }
     return results;
 }
 
-std::uint64_t get_item_numdimensions(const std::string& itemGuid)
+std::uint64_t get_item_numdimensions(const std::string& datasetGuid)
 {
-    auto item = mv::dataHierarchy().getItem(QString(itemGuid.c_str()));
+    auto item = mv::dataHierarchy().getItem(QString(datasetGuid.c_str()));
     return item->getDataset<Points>()->getNumDimensions();
 }
 
-std::uint64_t get_item_numpoints(const std::string& itemGuid)
+std::uint64_t get_item_numpoints(const std::string& datasetGuid)
 {
-    auto item = mv::dataHierarchy().getItem(QString(itemGuid.c_str()));
+    auto item = mv::dataHierarchy().getItem(QString(datasetGuid.c_str()));
     return item->getDataset<Points>()->getNumPoints();
 }
 
-std::string get_item_name(const std::string& itemGuid)
+std::string get_item_name(const std::string& datasetGuid)
 {
-    auto item = mv::dataHierarchy().getItem(QString(itemGuid.c_str()));
+    auto item = mv::dataHierarchy().getItem(QString(datasetGuid.c_str()));
     auto name = item->getDataset()->getGuiName();
     return name.toStdString();
 }
 
-std::string get_item_type(const std::string& itemGuid)
+std::string get_item_type(const std::string& datasetGuid)
 {
-    auto item = mv::dataHierarchy().getItem(QString(itemGuid.c_str()));
+    auto item = mv::dataHierarchy().getItem(QString(datasetGuid.c_str()));
     auto type = item->getDataset()->getDataType();
     return type.getTypeString().toStdString();
 }
 
-std::string get_item_rawname(const std::string& itemGuid)
+std::string get_item_rawname(const std::string& datasetGuid)
 {
-    auto item = mv::dataHierarchy().getItem(QString(itemGuid.c_str()));
+    auto item = mv::dataHierarchy().getItem(QString(datasetGuid.c_str()));
     auto name = item->getDataset()->getRawDataName();
     return name.toStdString();
 }
 
-std::uint64_t get_item_rawsize(const std::string& itemGuid)
+std::uint64_t get_item_rawsize(const std::string& datasetGuid)
 {
-    auto item = mv::dataHierarchy().getItem(QString(itemGuid.c_str()));
+    auto item = mv::dataHierarchy().getItem(QString(datasetGuid.c_str()));
     return item->getDataset()->getRawDataSize();
 }
 
-// Get all Data Hierarcht Item children only
-py::list get_item_children(const std::string& itemGuid)
+// Get all children
+// Returns a tuple of two lists: 
+// Data Hierarcht Item guids
+// Dataset guids
+py::tuple get_item_children(const std::string& datasetGuid)
 {
-    auto item = mv::dataHierarchy().getItem(QString(itemGuid.c_str()));
+    auto item = mv::dataHierarchy().getItem(QString(datasetGuid.c_str()));
 
     auto children = item->getChildren();
-    py::list results;
+    py::list dhiResults;
+    py::list dataResults;
     for (auto child : children) {
         // The child might be a Dataset rather than an Item
         // however datasets hae 0 children and items have > 0 
-        if (child->getNumberOfChildren() > 0) {
-            results.append(child->getId().toStdString());
+        if (child->getNumberOfChildren() == 0) {
+            dataResults.append(child->getId().toStdString());
+        }
+        else {
+            dhiResults.append(child->getId().toStdString());
         }
     }
-    return results;
+    return py::make_tuple(dhiResults, dataResults);
 }
 
-mvstudio_core::DataItemType get_data_type(const std::string& itemGuid) {
-    qDebug() << "Get type for id: " << QString(itemGuid.c_str());
-    if (mv::data().getDataset<Points>(QString(itemGuid.c_str())).isValid()) {
+mvstudio_core::DataItemType get_data_type(const std::string& datasetGuid) {
+    qDebug() << "Get type for id: " << QString(datasetGuid.c_str());
+    if (mv::data().getDataset<Points>(QString(datasetGuid.c_str())).isValid()) {
         return mvstudio_core::Points;
     }
-    if (mv::data().getDataset<Images>(QString(itemGuid.c_str())).isValid()) {
+    if (mv::data().getDataset<Images>(QString(datasetGuid.c_str())).isValid()) {
         return mvstudio_core::Image;
     }
-    if (mv::data().getDataset<Clusters>(QString(itemGuid.c_str())).isValid()) {
+    if (mv::data().getDataset<Clusters>(QString(datasetGuid.c_str())).isValid()) {
         return mvstudio_core::Cluster;
     }
 }
@@ -400,18 +410,18 @@ py::module get_MVData_module()
         .value("Cluster", mvstudio_core::DataItemType::Cluster);
 
     MVData_module.def("get_info", get_info);
-    MVData_module.def("get_top_level_items", get_top_level_items);
+    MVData_module.def("get_top_level_item_names", get_top_level_item_names);
     MVData_module.def("get_top_level_guids", get_top_level_guids);
-    MVData_module.def("get_data_for_item", get_data_for_item, py::arg("itemGuid") = py::str());
-    MVData_module.def("get_image_item", get_mv_image, py::arg("itemGuid") = py::str());
-    MVData_module.def("get_item_name", get_item_name, py::arg("itemGuid") = py::str());
-    MVData_module.def("get_item_rawsize", get_item_rawsize, py::arg("itemGuid") = py::str());
-    MVData_module.def("get_item_type", get_item_type, py::arg("itemGuid") = py::str());
-    MVData_module.def("get_item_rawname", get_item_rawname, py::arg("itemGuid") = py::str());
-    MVData_module.def("get_item_numdimensions", get_item_numdimensions, py::arg("itemGuid") = py::str());
-    MVData_module.def("get_item_numpoints", get_item_numpoints, py::arg("itemGuid") = py::str());
-    MVData_module.def("get_item_children", get_item_children, py::arg("itemGuid") = py::str());
-    MVData_module.def("get_data_type", get_data_type, py::arg("itemGuid") = py::str());
+    MVData_module.def("get_data_for_item", get_data_for_item, py::arg("datasetGuid") = py::str());
+    MVData_module.def("get_image_item", get_mv_image, py::arg("datasetGuid") = py::str());
+    MVData_module.def("get_item_name", get_item_name, py::arg("datasetGuid") = py::str());
+    MVData_module.def("get_item_rawsize", get_item_rawsize, py::arg("datasetGuid") = py::str());
+    MVData_module.def("get_item_type", get_item_type, py::arg("datasetGuid") = py::str());
+    MVData_module.def("get_item_rawname", get_item_rawname, py::arg("datasetGuid") = py::str());
+    MVData_module.def("get_item_numdimensions", get_item_numdimensions, py::arg("datasetGuid") = py::str());
+    MVData_module.def("get_item_numpoints", get_item_numpoints, py::arg("datasetGuid") = py::str());
+    MVData_module.def("get_item_children", get_item_children, py::arg("datasetGuid") = py::str());
+    MVData_module.def("get_data_type", get_data_type, py::arg("datasetGuid") = py::str());
     MVData_module.def(
         "add_new_data",
         add_new_mvdata,

@@ -17,24 +17,27 @@ ClusterItems = list[ClusterItem]
 class DataHierarchyItem:
     ItemType = Enum('ItemType', ['Image', 'Points', 'Cluster'])
 
-    def __init__(self, guid, name):
-        self._guid = guid
+    def __init__(self, guid_tuple, name):
+        self._guid_tuple = guid_tuple
         self._name = name
         self._datasetid = None
         self._selected = False
         self._children = []
         self._data = None
+        self._dataGuids = []
         self._type = None
         self._addChildren()
         self._setType()
 
     def _addChildren(self):
-        for child_guid in mvstudio_core.get_item_children(self._guid):
-            item_name = mvstudio_core.get_item_name(self._guid)
+        (dhiGuids, dataGuids) = mvstudio_core.get_item_children(self._guid_tuple[1])
+        self._dataGuids = dataGuids
+        for child_guid in dhiGuids:
+            item_name = mvstudio_core.get_item_name(self._guid_tuple[1])
             self._children.append(DataHierarchyItem(child_guid, item_name))
 
     def _setType(self):
-        match mvstudio_core.get_data_type(self._guid):
+        match mvstudio_core.get_data_type(self._guid_tuple[1]):
             case mvstudio_core.DataItemType.Image:
                 self._type = DataHierarchyItem.ItemType.Image
             case mvstudio_core.DataItemType.Points:
@@ -44,7 +47,7 @@ class DataHierarchyItem:
         self._setData()
 
     def _setData(self):
-        data = mvstudio_core.get_data_for_item(self._guid)
+        data = mvstudio_core.get_data_for_item(self._guid_tuple[1])
         # dependant on the data type 
         # post process to a more pythonic representation
         match self._type:
@@ -99,7 +102,11 @@ class DataHierarchyItem:
 
     @property
     def guid(self) -> str:
-        return self._guid
+        return self._guid_tuple[0]
+    
+    @property
+    def datasetId(self) -> str:
+        return self._guid_tuple[1]
     
     @property
     def name(self) -> str:
@@ -108,44 +115,44 @@ class DataHierarchyItem:
     @property
     def type(self) -> str:
         """Return the data type"""
-        return mvstudio_core.get_item_type(self.guid)
+        return mvstudio_core.get_item_type(self._guid_tuple[1])
 
     @property
     def rawname(self) -> str:
         """Return the raw name"""
-        return mvstudio_core.get_item_rawname(self.guid)
+        return mvstudio_core.get_item_rawname(self._guid_tuple[1])
 
     @property
     def rawsize(self) -> int:
         """Return the raw data size in bytes"""
-        return mvstudio_core.get_item_rawsize(self.guid)
+        return mvstudio_core.get_item_rawsize(self._guid_tuple[1])
     
     @property
     def numdimensions(self) -> int:
         """Return the number of dimensions"""
-        return mvstudio_core.get_item_numdimensions(self.guid)
+        return mvstudio_core.get_item_numdimensions(self._guid_tuple[1])
     
     @property
     def numpoints(self) -> int:
         """Return the numper of points"""
-        return mvstudio_core.get_item_numpoints(self.guid)
+        return mvstudio_core.get_item_numpoints(self._guid_tuple[1])
 
     def getImage(self) -> np.ndarray:
         """If this is an image return the image data in a numpy array
             otherwise return None
         """
-        return mvstudio_core.get_image_item(self.guid)
+        return mvstudio_core.get_image_item(self._guid_tuple[1])
 
 
     def __str__(self) -> str:
-        children_strs = [f'DataHierarchyItem id: {self.guid}, display name: {self.name}']
+        children_strs = [f'DataHierarchyItem id: {self._guid_tuple[0]}, dataset id: {self._guid_tuple[1]}, display name: {self.name}']
         for child in self.children():
             children_strs.append(" " + str(child))
 
         return '\n'.join(children_strs)
     
     def __repr__(self) -> str:
-        children_reprs = [f'DataHierarchyItem({self.guid}, {self.name})']
+        children_reprs = [f'DataHierarchyItem({self._guid_tuple[0]}, {self._guid_tuple[1]}, {self.name})']
         for child in self.children():
             children_reprs.append(" " + repr(child))
 
@@ -174,9 +181,9 @@ class DataHierarchy:
         self._build_hierarchy() 
 
     def _build_hierarchy(self) -> None: 
-        for guid in self._top_level:
-            item_name = mvstudio_core.get_item_name(guid)
-            self._hierarchy.append(DataHierarchyItem(guid, item_name))   
+        for guid_tuple in self._top_level:
+            item_name = mvstudio_core.get_item_name(guid_tuple[1])
+            self._hierarchy.append(DataHierarchyItem(guid_tuple, item_name))   
 
     def refresh(self): 
         """Rebuild the DataHierarchy tree from the MvStudio
