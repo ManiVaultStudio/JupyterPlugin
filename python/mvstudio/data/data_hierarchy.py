@@ -97,8 +97,8 @@ class DataHierarchyItem:
         return None
     
     @property
-    def data(self) -> np.ndarray:
-        mvstudio_core.get_data_for_item(self.datasetId)
+    def points(self) -> np.ndarray:
+        return mvstudio_core.get_data_for_item(self.datasetId)
 
     @property
     def type(self) -> ItemType:
@@ -146,9 +146,12 @@ class DataHierarchyItem:
         """If this is an image return the image data in a numpy array
             otherwise return None
         """
+        # information is in the image metadata
         id = mvstudio_core.find_image_dataset(self.datasetId)
         if len(id) > 0:
-            return mvstudio_core.get_image_item(self.datasetId)
+            size = mvstudio_core.get_image_dimensions(id)
+            array =  mvstudio_core.get_image_item(self.datasetId)
+            return array.reshape(size[0], size[1], -1)
         return None
 
 

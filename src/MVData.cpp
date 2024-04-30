@@ -416,6 +416,14 @@ std::string find_image_dataset(const std::string& datasetGuid)
     return "";
 }
 
+py::tuple  get_image_dimensions(const std::string& datasetGuid)
+{
+    auto item = static_cast<const mv::Dataset<Images>&>(mv::data().getDataset(QString(datasetGuid.c_str())));
+    auto size = item->getImageSize();
+    auto numPixels = item->getNumberOfPixels();
+    return py::make_tuple(size.width(), size.height(), numPixels);
+}
+
 py::module get_MVData_module()
 {
     py::module MVData_module = py::module_::create_extension_module("mvstudio_core", nullptr, new py::module_::module_def);
@@ -439,6 +447,7 @@ py::module get_MVData_module()
     MVData_module.def("get_item_children", get_item_children, py::arg("datasetGuid") = py::str());
     MVData_module.def("get_data_type", get_data_type, py::arg("datasetGuid") = py::str());
     MVData_module.def("find_image_dataset", find_image_dataset, py::arg("datasetGuid") = py::str());
+    MVData_module.def("get_image_dimensions", get_image_dimensions, py::arg("datasetGuid") = py::str());
     MVData_module.def(
         "add_new_data",
         add_new_mvdata,
