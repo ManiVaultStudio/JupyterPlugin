@@ -14,10 +14,13 @@
 #include <QTemporaryFile>
 #include <QThread>
 #include <QByteArray>
+#include <QNetworkAccessManager>
+#include <QNetworkReply>
 
 #include <cstdlib>
 #include <sstream>
 #include <stdexcept>
+#include <iostream>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -340,10 +343,23 @@ void JupyterLauncher::shutdownJupyterServer()
     switch (_serverProcess.state()) {
     case QProcess::Starting:
     case QProcess::Running:
-        QByteArray ctrlC("\x03\x03");
-        _serverProcess.write(ctrlC);
-        QThread::sleep(5);
-        _serverProcess.terminate();
+        // Use the shutdown api with our fixed Authorization token to close the server
+        auto url = QUrl("http://127.0.0.1:8888/api/shutdown");
+        auto request = QNetworkRequest(url);
+        request.setRawHeader("Authorization", "token manivaultstudio_jupyterkerneluser");
+        request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+ 
+        QNetworkAccessManager manager;
+        auto reply = QSharedPointer<QNetworkReply>(manager.post(request, QByteArray("")));
+        
+        std::cerr << "Waiting for Jupyter Server shutdown";
+        int wait = 50; // usually done in 10 seconds
+        while (!reply->isFinished() && wait > 0 ) {
+            QThread::msleep(250);
+            QCoreApplication::processEvents();
+            std::cerr << ".";
+            wait -= 1;
+        }
     }
 }
 
