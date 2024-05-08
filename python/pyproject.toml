@@ -20,6 +20,7 @@ packages = [
 [tool.poetry.dependencies]
 comm ='~=0.2.2'
 python = '~=3.11'
+numpy = '~=1.26'
 jupyterlab_server = "~=2.25.2"
 jupyter_server = "~=2.12.5"
 jupyter_client = "~=8.6.0"

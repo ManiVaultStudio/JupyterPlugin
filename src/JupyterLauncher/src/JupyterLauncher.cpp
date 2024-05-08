@@ -12,6 +12,8 @@
 #include <QPluginLoader>
 #include <QProcessEnvironment>
 #include <QTemporaryFile>
+#include <QThread>
+#include <QByteArray>
 
 #include <cstdlib>
 #include <sstream>
@@ -39,11 +41,9 @@ JupyterLauncher::JupyterLauncher(const PluginFactory* factory) :
 
 JupyterLauncher::~JupyterLauncher()
 {
-    switch (_serverProcess.state()) {
-    case QProcess::Starting:
-    case QProcess::Running:
-        _serverProcess.terminate();
-    }
+    // Just in case this hasn't happened yet 
+    // now would be a good time.
+    this->shutdownJupyterServer();
 }
 
 void JupyterLauncher::init()
@@ -335,6 +335,18 @@ bool JupyterLauncher::optionallyInstallMVWheel(const QString version)
     return true;
 }
 
+void JupyterLauncher::shutdownJupyterServer()
+{
+    switch (_serverProcess.state()) {
+    case QProcess::Starting:
+    case QProcess::Running:
+        QByteArray ctrlC("\x03\x03");
+        _serverProcess.write(ctrlC);
+        QThread::sleep(5);
+        _serverProcess.terminate();
+    }
+}
+
 void JupyterLauncher::jupyterServerError(QProcess::ProcessError error)
 {
     qWarning() << "Jupyter Server error: " << _serverProcess.errorString();
@@ -430,6 +442,9 @@ bool JupyterLauncher::startJupyterServerProcess(const QString version)
 
     connect(&_serverProcess, &QProcess::started, this, &JupyterLauncher::jupyterServerStarted);
     connect(&_serverProcess, &QProcess::finished, this, &JupyterLauncher::jupyterServerFinished);
+
+    auto app = Application::current();
+    connect(app, &QCoreApplication::aboutToQuit, this, &JupyterLauncher::shutdownJupyterServer);
 
     _serverProcess.start();
     _serverPollTimer = new QTimer();

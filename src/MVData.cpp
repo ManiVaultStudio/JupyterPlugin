@@ -272,12 +272,12 @@ bool add_mvimage(const py::array& data, std::string dataSetName)
 }
 
 // All images are float.
-py::array get_mv_image(const std::string& itemGuid)
+py::array get_mv_image(const std::string& imageGuid)
 {
     PointData::ElementTypeSpecifier dataSpec;
     unsigned int numDimensions;
     unsigned int numPoints;
-    auto item = mv::dataHierarchy().getItem(QString(itemGuid.c_str()));
+    auto item = mv::dataHierarchy().getItem(QString(imageGuid.c_str()))->getParent();
 
     auto dataType = item->getDataType();
     auto inputPoints = item->getDataset<Points>();
@@ -359,39 +359,40 @@ std::uint64_t get_item_rawsize(const std::string& datasetGuid)
 }
 
 // Get all children
-// Returns a tuple of two lists: 
-// Data Hierarcht Item guids
-// Dataset guids
-py::tuple get_item_children(const std::string& datasetGuid)
+// Returns a list of tuples
+// Each tuple contains:
+// (Data Hierarchy Item guid, Dataset guid)
+py::list get_item_children(const std::string& datasetGuid)
 {
     auto item = mv::dataHierarchy().getItem(QString(datasetGuid.c_str()));
+    qDebug() << "Children for id: " << QString(datasetGuid.c_str());
 
     auto children = item->getChildren();
-    py::list dhiResults;
-    py::list dataResults;
+    py::list guidTupleList;
     for (auto child : children) {
         // The child might be a Dataset rather than an Item
         // however datasets hae 0 children and items have > 0 
-        if (child->getNumberOfChildren() == 0) {
-            dataResults.append(child->getId().toStdString());
-        }
-        else {
-            dhiResults.append(child->getId().toStdString());
-        }
+
+        auto childId = child->getId().toStdString();
+        auto childDatasetId = child->getDataset()->getId().toStdString();
+        auto guidTuple = py::make_tuple(childId, childDatasetId);
+        guidTupleList.append(guidTuple);
     }
-    return py::make_tuple(dhiResults, dataResults);
+    return guidTupleList;
 }
 
 mvstudio_core::DataItemType get_data_type(const std::string& datasetGuid) {
     qDebug() << "Get type for id: " << QString(datasetGuid.c_str());
-    if (mv::data().getDataset<Points>(QString(datasetGuid.c_str())).isValid()) {
-        return mvstudio_core::Points;
-    }
-    if (mv::data().getDataset<Images>(QString(datasetGuid.c_str())).isValid()) {
+    auto dataset = mv::data().getDataset(QString(datasetGuid.c_str()));
+    auto datatype = dataset->getDataType();
+    if (datatype == ImageType) {
         return mvstudio_core::Image;
     }
-    if (mv::data().getDataset<Clusters>(QString(datasetGuid.c_str())).isValid()) {
+    if (datatype == ClusterType) {
         return mvstudio_core::Cluster;
+    }
+    if (datatype == PointType) {
+        return mvstudio_core::Points;
     }
 }
 
@@ -424,6 +425,38 @@ py::tuple  get_image_dimensions(const std::string& datasetGuid)
     return py::make_tuple(size.width(), size.height(), numPixels);
 }
 
+py::tuple get_cluster(const std::string& datasetGuid)
+{
+    auto clusterData = mv::data().getDataset<Clusters>(QString(datasetGuid.c_str()));
+    auto clusters = clusterData->getClusters();
+    auto clusterNames = clusterData->getClusterNames();
+    py::list names;
+    py::list ids;
+    for (auto name : clusterNames) {
+        names.append(name.toStdString());
+    }
+    py::list colors;
+    py::list indexes_list;
+    for (auto cluster: clusters) {
+        ids.append(cluster.getId().toStdString());
+        auto color = cluster.getColor();
+        float r, g, b, a;
+        color.getRgbF(&r, &g, &b, &a);
+        colors.append(py::make_tuple(r, g, b, a));
+        auto indices = cluster.getIndices();
+        auto size = indices.size();
+
+        auto indexArray = py::array_t<unsigned int>(size);
+        py::buffer_info array_info = indexArray.request();
+        unsigned int* output = static_cast<unsigned int*>(array_info.ptr);
+        for (auto i = 0; i < size; i++) {
+            output[i] = indices[i];
+        }
+        indexes_list.append(indexArray);
+    }
+    return py::make_tuple(indexes_list, names, colors, ids);
+}
+
 py::module get_MVData_module()
 {
     py::module MVData_module = py::module_::create_extension_module("mvstudio_core", nullptr, new py::module_::module_def);
@@ -448,6 +481,7 @@ py::module get_MVData_module()
     MVData_module.def("get_data_type", get_data_type, py::arg("datasetGuid") = py::str());
     MVData_module.def("find_image_dataset", find_image_dataset, py::arg("datasetGuid") = py::str());
     MVData_module.def("get_image_dimensions", get_image_dimensions, py::arg("datasetGuid") = py::str());
+    MVData_module.def("get_cluster", get_cluster, py::arg("datasetGuid") = py::str());
     MVData_module.def(
         "add_new_data",
         add_new_mvdata,

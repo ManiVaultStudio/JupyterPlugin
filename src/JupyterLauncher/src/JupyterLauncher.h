@@ -79,6 +79,7 @@ public slots:
     void jupyterServerFinished(int exitCode, QProcess::ExitStatus exitStatus);
     void jupyterServerStateChanged(QProcess::ProcessState newState);
     void jupyterServerStarted();
+    void shutdownJupyterServer();
 
 private:
     QHash<QString, PluginFactory*>                      _pluginFactories;   /** All loaded plugin factories */
