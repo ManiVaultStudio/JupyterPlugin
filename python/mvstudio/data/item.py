@@ -156,15 +156,15 @@ class Item:
         return mvstudio_core.get_item_numpoints(self.datasetId)
 
     def __str__(self) -> str:
-        children_strs = [f'Item id: {self._hierarchy_id}, dataset id: {self.datasetId}, display name: {self.name}, type: {self.type}']
+        children_strs = [f'{"  "*(len(self._hierarchy_id)-1)}Item id: {self._hierarchy_id}, dataset id: {self.datasetId}, display name: {self.name}, type: {self.type}']
         for child in self.children():
-            children_strs.append(" " + str(child))
+            children_strs.append(str(child))
 
         return '\n'.join(children_strs)
     
     def __repr__(self) -> str:
         children_reprs = [f'Item({self._hierarchy_id}, {self.datasetId}, {self.name}, {repr(self.type)})']
         for child in self.children():
-            children_reprs.append(" " + repr(child))
+            children_reprs.append(repr(child))
 
         return '\n'.join(children_reprs)
