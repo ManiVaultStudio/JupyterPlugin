@@ -73,7 +73,16 @@ py::array get_data_for_item(const std::string& datasetGuid)
     unsigned int numPoints;
     auto item = mv::dataHierarchy().getItem(QString(datasetGuid.c_str()));
 
+    // If this is not a point item we need the parent
     auto dataType = item->getDataType();
+    if (dataType != PointType) {
+        item = item->getParent();
+        dataType = item->getDataType();
+        if (dataType != PointType) {
+            return py::array_t<float>(0);
+        }
+    }
+
     auto inputPoints = item->getDataset<Points>();
     numDimensions = inputPoints->getNumDimensions();
     numPoints = inputPoints->isFull() ? inputPoints->getNumPoints() : inputPoints->indices.size();
