@@ -6,6 +6,7 @@ cmake_minimum_required(VERSION 3.21)
 set(JUPYTERPLUGIN "JupyterPlugin")
 PROJECT(${JUPYTERPLUGIN})
 
+set(MVSTUDIO_VERSION "0.1.0" CACHE STRING "Version used for the mvstudio modules data and kernel")
 add_subdirectory(src/JupyterLauncher)
 
 # -----------------------------------------------------------------------------
@@ -53,6 +54,7 @@ find_package(Qt6 COMPONENTS Widgets WebEngineWidgets REQUIRED)
 set(PythonVERSION 3.11)
 include(dependencies.cmake)
 include(FeatureSummary)
+
 
 # -----------------------------------------------------------------------------
 # Source files
@@ -196,10 +198,23 @@ if (MVSTUDIO_ENABLE_PYTHON_BUILD)
             message(STATUS "'poetry' succesfully installed")
         endif()
     endif()
-    message(STATUS "Building the mvstudio python package in ${CMAKE_CURRENT_SOURCE_DIR}")
+    message(STATUS "Building the mvstudio_data python package in ${CMAKE_CURRENT_SOURCE_DIR}")
+    execute_process(
+        COMMAND ${Python_EXECUTABLE} -m poetry version ${MVSTUDIO_VERSION}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/python/mvstudio_data
+        COMMAND_ERROR_IS_FATAL ANY)    
     execute_process(
         COMMAND ${Python_EXECUTABLE} -m poetry build --no-interaction --format=wheel
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/python
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/python/mvstudio_data
+        COMMAND_ERROR_IS_FATAL ANY)
+    message(STATUS "Building the mvstudio_data python package in ${CMAKE_CURRENT_SOURCE_DIR}")
+    execute_process(
+        COMMAND ${Python_EXECUTABLE} -m poetry version ${MVSTUDIO_VERSION}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/python/mvstudio_kernel
+        COMMAND_ERROR_IS_FATAL ANY)  
+    execute_process(
+        COMMAND ${Python_EXECUTABLE} -m poetry build --no-interaction --format=wheel
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/python/mvstudio_kernel
         COMMAND_ERROR_IS_FATAL ANY)
 endif ()
 
@@ -214,8 +229,11 @@ install(TARGETS ${JUPYTERPLUGIN}
     ARCHIVE DESTINATION lib     COMPONENT LINKLIB # Windows .lib 
 )
 
-install(FILES jupyter_server_config.py python/dist/mvstudio-0.8.0-py3-none-any.whl
-DESTINATION Plugins/JupyterPlugin COMPONENT PLUGINS)
+install(FILES jupyter_server_config.py python/mvstudio_data/dist/mvstudio_data-${MVSTUDIO_VERSION}-py3-none-any.whl
+DESTINATION Plugins/JupyterPlugin/wheelhouse COMPONENT PLUGINS)
+
+install(FILES jupyter_server_config.py python/mvstudio_kernel/dist/mvstudio_kernel-${MVSTUDIO_VERSION}-py3-none-any.whl
+DESTINATION Plugins/JupyterPlugin/wheelhouse COMPONENT PLUGINS)
 
 add_custom_command(TARGET ${JUPYTERPLUGIN} POST_BUILD
     COMMAND "${CMAKE_COMMAND}"

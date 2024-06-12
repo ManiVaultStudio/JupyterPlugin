@@ -28,6 +28,8 @@ find_package(Qt6 COMPONENTS Widgets WebEngineWidgets REQUIRED)
 # -----------------------------------------------------------------------------
 
 qt6_add_resources(RESOURCE_FILES res/jupyter_launcher_resources.qrc)
+message(status "Configuring mvstudio_version.h")
+configure_file(src/mvstudio_version.h.in src/ver/mvstudio_version.h)
 
 set(SOURCES
     src/JupyterLauncher.h
@@ -58,6 +60,7 @@ add_library(${JUPYTERLAUNCHER} SHARED ${SOURCES} ${RESOURCES} ${RESOURCE_FILES})
 
 qt_wrap_cpp(JUPYTERLAUNCHER_MOC ${PLUGIN_MOC_HEADERS} TARGET ${JUPYTERLAUNCHER})
 target_sources(${JUPYTERLAUNCHER} PRIVATE ${JUPYTERLAUNCHER_MOC})
+target_include_directories(${JUPYTERLAUNCHER} PUBLIC "${CMAKE_CURRENT_BINARY_DIR}/src/ver")
 
 # -----------------------------------------------------------------------------
 # Target include directories

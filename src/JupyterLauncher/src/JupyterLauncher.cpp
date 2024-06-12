@@ -1,5 +1,5 @@
 #include "JupyterLauncher.h"
-
+#include <mvstudio_version.h>
 #include "GlobalSettingsAction.h"
 
 #include <event/Event.h>
@@ -211,7 +211,7 @@ void JupyterLauncher::preparePythonProcess(QProcess &process, const QString vers
 
 // TBD merge the two runScript signatures
 
-int JupyterLauncher::runPythonScript(const QString scriptName, QString& sout, QString& serr, const QString version)
+int JupyterLauncher::runPythonScript(const QString scriptName, QString& sout, QString& serr, const QString version, const QStringList params)
 {
     // 1. Prepare a python process with the python path
     QProcess pythonScriptProcess;
@@ -234,7 +234,7 @@ int JupyterLauncher::runPythonScript(const QString scriptName, QString& sout, QS
     auto result = 0;
     auto pyinterp = QFileInfo(_settingsAction.getPythonPathAction(version).getFilePath());
     auto pydir = QDir::toNativeSeparators(pyinterp.absolutePath());
-    pythonScriptProcess.start(pydir + QString("/python"), QStringList({ tempFile.fileName() }));
+    pythonScriptProcess.start(pydir + QString("/python"), QStringList({ tempFile.fileName() }) + params);
     if (!pythonScriptProcess.waitForStarted()) {
         result = 2;
         serr = QString("Could not run python interpreter %1 ").arg(pydir + QString("/python"));
@@ -318,13 +318,13 @@ bool JupyterLauncher::optionallyInstallMVWheel(const QString version)
     QMessageBox::StandardButton reply = QMessageBox::question(
         nullptr, 
         "mvstudio.data_hierarchy missing", 
-        "mvstudio.data_hierarchy 0.1.0 is needed in the python environment.\n Do you wish to install it now?",
+        QString("mvstudio.data_hierarchy ") + mvstudio_version + " is needed in the python environment.\n Do you wish to install it now ? ",
         QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes);
     if (reply == QMessageBox::Yes) {
         auto MVWheelPath = QCoreApplication::applicationDirPath() + "/Plugins/JupyterPlugin/wheelhouse/";
         MVWheelPath = QDir::toNativeSeparators(MVWheelPath);
-        auto dataWheel = MVWheelPath + "mvstudio_data-0.1.0-py3-none-any.whl";
-        auto kernelWheel = MVWheelPath + "mvstudio_kernel-0.1.0-py3-none-any.whl";
+        auto dataWheel = MVWheelPath + "mvstudio_data-" + mvstudio_version + "-py3-none-any.whl";
+        auto kernelWheel = MVWheelPath + "mvstudio_kernel-" + mvstudio_version + "-py3-none-any.whl";
         qDebug() << "Wheels paths: " << dataWheel << kernelWheel;
         auto pyinterp = QFileInfo(_settingsAction.getPythonPathAction(version).getFilePath());
         auto pydir = QDir::toNativeSeparators(pyinterp.absolutePath());
@@ -521,8 +521,8 @@ void JupyterLauncher::loadJupyterPythonKernel(const QString pyversion)
 
     QString serr;
     QString sout;
-    // 1. Check the path to see if MVJupyterPluginManager is installed
-    auto exitCode = runPythonScript(":/text/check_env.py", sout, serr, pyversion); 
+    // 1. Check the path to see if the correct version of mvstudio is installed
+    auto exitCode = runPythonScript(":/text/check_env.py", sout, serr, pyversion, QStringList{mvstudio_version});
     if (exitCode == 2) {
         qDebug() << serr << sout;
         // TODO display error message box

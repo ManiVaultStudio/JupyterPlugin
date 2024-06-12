@@ -85,7 +85,8 @@ private:
     QHash<QString, PluginFactory*>                      _pluginFactories;   /** All loaded plugin factories */
     std::vector<std::unique_ptr<mv::plugin::Plugin>>    _plugins;           /** Vector of plugin instances */
     // TBD merge the two runPythonScript signatures
-    int runPythonScript(const QString scriptName, QString& sout, QString& serr, const QString version); /** Run a python script from the resources return the exit code and stderr and stdout */
+    /** Run a python script from the resources return the exit code and stderr and stdout */
+    int runPythonScript(const QString scriptName, QString& sout, QString& serr, const QString version, const QStringList params = {}); 
     bool runPythonCommand(const QStringList params, const QString version);
 
     void setPythonEnv(const QString version);
