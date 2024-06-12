@@ -33,7 +33,7 @@ In the JupyterLauncher select the following a directory containing The JupyterLa
 
 The kernel relies on Jupyter-Xeus components to expose a python 3.11 environment. 
 
-The architecture of hte kernel is based on Slicer/SlicerJupyter.  The correspondance is shown in the table below.
+The architecture of the kernel is based on Slicer/SlicerJupyter.  The correspondance is shown in the table below.
 
 ManiVault JupyterPlugin | Slicer SlicerJupyter extension | Manivault Example
 ---| --- | ---

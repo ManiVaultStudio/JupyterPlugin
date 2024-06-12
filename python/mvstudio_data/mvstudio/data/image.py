@@ -24,5 +24,10 @@ class ImageMixin:
         return None 
 
 class ImageItem(ImageMixin, Item):
+    """
+    ImageItem adds the Image property the basic Item
+    Images are numpy arrays sahpes to match the image
+    meta data
+    """
     def __init__(self, guid_tuple, name, hierarchy_id):
         super().__init__(guid_tuple, name, hierarchy_id)

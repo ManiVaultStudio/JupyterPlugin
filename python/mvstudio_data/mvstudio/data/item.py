@@ -4,8 +4,13 @@ import numpy as np
 import numpy.typing as npt
 from enum import Enum
 from .factory import makeItem
-        
+
 class Item:
+    """
+    Item is a Points item and at the same time it
+    forms the basis for other item types (Image, Cluster)
+    which are created using Mixins
+    """
     ItemType = Enum('ItemType', ['Image', 'Points', 'Cluster'])
             
     def __init__(self, guid_tuple, name, hierarchy_id):

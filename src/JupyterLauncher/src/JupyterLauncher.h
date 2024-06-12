@@ -86,7 +86,7 @@ private:
     std::vector<std::unique_ptr<mv::plugin::Plugin>>    _plugins;           /** Vector of plugin instances */
     // TBD merge the two runPythonScript signatures
     int runPythonScript(const QString scriptName, QString& sout, QString& serr, const QString version); /** Run a python script from the resources return the exit code and stderr and stdout */
-    bool runPythonScript(const QStringList params, const QString version);
+    bool runPythonCommand(const QStringList params, const QString version);
 
     void setPythonEnv(const QString version);
     void preparePythonProcess(QProcess &process, const QString version);

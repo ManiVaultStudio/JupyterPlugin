@@ -1,9 +1,9 @@
 {
-	"display_name": "ManiVault (JupyterPlugin)",
+	"display_name": "ManiVaultStudio",
 	"language": "python",
 	"metadata": {
 	  "kernel_provisioner": {
-		"provisioner_name": "mvjupyterplugin-existing-provisioner"
+		"provisioner_name": "mvstudio-existing-provisioner"
 	  }
 	}
 }

@@ -191,13 +191,19 @@ void set_points_from_numpy_array(const void* data_in, std::vector<size_t> shape,
     }
 }
 
-bool add_new_mvdata(const py::array& data, std::string dataSetName)
+/**
+ * Add new point data in the root of the hierarchy.
+ * If successful returns a guid for the new point data
+ * If unsuccessful return a empty string
+ */
+std::string add_new_mvdata(const py::array& data, std::string dataSetName)
 {
     py::buffer_info buf_info = data.request();
     void* ptr = buf_info.ptr;
     std::vector<size_t> shape(buf_info.shape.begin(), buf_info.shape.end());
     size_t ndim = data.ndim();
     mv::Dataset<Points> points = mv::data().createDataset<Points>("Points", dataSetName.c_str(), nullptr);
+
     auto dtype = data.dtype();
     // PointData is limited in its type support - hopefully the commented types wil be added soon
     if (auto point_setter = (
@@ -215,9 +221,9 @@ bool add_new_mvdata(const py::array& data, std::string dataSetName)
         nullptr)
     ) {
         point_setter(ptr, shape, points, false);
-        return true;
+        return points.getDatasetId().toStdString();
     }
-    return false;
+    return std::string("");
 }
 
 bool add_mvimage(const py::array& data, std::string dataSetName) 

@@ -54,5 +54,9 @@ class ClusterMixin:
         return Cluster(clusterDict, ids, colors)  
 
 class ClusterItem(ClusterMixin, Item):
+    """
+    ClusterItem adds the cluster property to the
+    basic Item type 
+    """
     def __init__(self, guid_tuple, item_name, hierarchy_id):
         super().__init__(guid_tuple, item_name, hierarchy_id)

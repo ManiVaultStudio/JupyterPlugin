@@ -1,8 +1,10 @@
 import mvstudio_core
+import numpy as np
+import warnings
 from typing import Generator, Self
 from .item import Item
 from .factory import makeItem
-            
+         
 class Hierarchy:
     def __init__(self):
         self._dataType = "Unknown"
@@ -65,6 +67,28 @@ class Hierarchy:
             if item is not None:
                 break
         return item
+    
+    def addPointsItem(self, data: np.ndarray, name: str) ->Item|None:
+        """Add a points data item and return the corresponding Item 
+            or None if the operation is unsuccessful
+
+        Args: 
+            data: The numpy array contain the point data 
+            name: A name for the 
+        """
+        guid = mvstudio_core.add_new_data(data, name)
+        if len(guid) == 0:
+            warnings.warn("Could not add item", RuntimeWarning)
+            return None
+        else:
+            self._refresh()
+            return self.getItemByIndex(guid)
+        
+    def addImageItem(self):
+        pass
+
+    def addClusterItem(self, index: list[int]):
+        pass
 
 
     def children(self) -> Generator[Item, None, None]:

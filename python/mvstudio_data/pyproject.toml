@@ -1,9 +1,9 @@
 [tool.poetry]
-name = "mvstudio"
-version = "0.8.0"
+name = "mvstudio_data"
+version = "0.1.0"
 authors = ["Baldur van Lew <b.van_lew@lumc.nl>"]
 readme = "README.md"
-description = 'Python integration for the ManiVaultStudio (mvstudio)'
+description = 'Python data model for the ManiVaultStudio (mvstudio)'
 license = "MIT"
 repository = "https://github.com/ManiVaultStudio/JupyterPlugin"
 keywords = ["JupyterLab", "kernel", "manager", "data"]
@@ -33,8 +33,3 @@ build-backend = "poetry.core.masonry.api"
 [tool.black]
 line-length = 120
 
-[project.scripts]
-MVLaunchJupyter = "mvstudio.__main__:main"
-
-[tool.poetry.plugins."jupyter_client.kernel_provisioners"]
-mvstudio-existing-provisioner = "mvstudio.kernel_utils:ExistingProvisioner"

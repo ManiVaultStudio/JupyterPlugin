@@ -253,34 +253,34 @@ int JupyterLauncher::runPythonScript(const QString scriptName, QString& sout, QS
     return result;
 }
 
-bool JupyterLauncher::runPythonScript(const QStringList params, const QString version)
+bool JupyterLauncher::runPythonCommand(const QStringList params, const QString version)
 {
     auto pyinterp = QFileInfo(_settingsAction.getPythonPathAction(version).getFilePath());
     auto pydir = QDir::toNativeSeparators(pyinterp.absolutePath());
-    QProcess mvInstallProcess;
-    this->preparePythonProcess(mvInstallProcess, version);
-    mvInstallProcess.start(pydir + QString("/python"), params);
+    QProcess mvScriptProcess;
+    this->preparePythonProcess(mvScriptProcess, version);
+    mvScriptProcess.start(pydir + QString("/python"), params);
     try {
-        if (!mvInstallProcess.waitForStarted()) {
+        if (!mvScriptProcess.waitForStarted()) {
             throw std::runtime_error("failed start");
         }
-        if (!mvInstallProcess.waitForFinished()) {
+        if (!mvScriptProcess.waitForFinished()) {
             throw std::runtime_error("run timeout");
         }
-        if (mvInstallProcess.exitStatus() != QProcess::NormalExit) {
+        if (mvScriptProcess.exitStatus() != QProcess::NormalExit) {
             throw std::runtime_error("failed run");
         }
-        if (mvInstallProcess.exitCode() == 1) {
+        if (mvScriptProcess.exitCode() == 1) {
             throw std::runtime_error("operation error");
         }
     }
     catch (const std::exception& e) {
-        auto serr = QString::fromUtf8(mvInstallProcess.readAllStandardError());
-        auto sout = QString::fromUtf8(mvInstallProcess.readAllStandardOutput());
+        auto serr = QString::fromUtf8(mvScriptProcess.readAllStandardError());
+        auto sout = QString::fromUtf8(mvScriptProcess.readAllStandardOutput());
         qWarning() << "Script failed running " << params.join(" ") << "giving: " << "\n stdout : " << sout << "\n stderr : " << serr;
         return false;
     }
-    mvInstallProcess.deleteLater();
+    mvScriptProcess.deleteLater();
     return true;
 }
 
@@ -310,7 +310,7 @@ bool JupyterLauncher::installKernel(const QString version)
         }
     }
     // 3. Install the ManiVaultStudio kernel for the current user 
-    return runPythonScript(QStringList({ "-m", "jupyter", "kernelspec", "install",  kernelDir.absolutePath() + QDir::separator() + QString("ManiVaultStudio"), "--user" }), version);
+    return runPythonCommand(QStringList({ "-m", "jupyter", "kernelspec", "install",  kernelDir.absolutePath() + QDir::separator() + QString("ManiVaultStudio"), "--user" }), version);
 }
 
 bool JupyterLauncher::optionallyInstallMVWheel(const QString version)
@@ -318,18 +318,22 @@ bool JupyterLauncher::optionallyInstallMVWheel(const QString version)
     QMessageBox::StandardButton reply = QMessageBox::question(
         nullptr, 
         "mvstudio.data_hierarchy missing", 
-        "mvstudio.data_hierarchy 0.8 is needed in the python environment.\n Do you wish to install it now?",
+        "mvstudio.data_hierarchy 0.1.0 is needed in the python environment.\n Do you wish to install it now?",
         QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes);
     if (reply == QMessageBox::Yes) {
-        auto MVWheelPath = QCoreApplication::applicationDirPath() + "/Plugins/JupyterPlugin/mvstudio-0.8.0-py3-none-any.whl";
+        auto MVWheelPath = QCoreApplication::applicationDirPath() + "/Plugins/JupyterPlugin/wheelhouse/";
+        MVWheelPath = QDir::toNativeSeparators(MVWheelPath);
+        auto dataWheel = MVWheelPath + "mvstudio_data-0.1.0-py3-none-any.whl";
+        auto kernelWheel = MVWheelPath + "mvstudio_kernel-0.1.0-py3-none-any.whl";
+        qDebug() << "Wheels paths: " << dataWheel << kernelWheel;
         auto pyinterp = QFileInfo(_settingsAction.getPythonPathAction(version).getFilePath());
         auto pydir = QDir::toNativeSeparators(pyinterp.absolutePath());
-        if (!runPythonScript(QStringList({ "-m", "pip", "install", MVWheelPath.toStdString().c_str() }), version)) {
+        if (!runPythonCommand(QStringList({ "-m", "pip", "install", dataWheel.toStdString().c_str(), kernelWheel.toStdString().c_str() }), version)) {
             qWarning() << "Installing the MVJupyterPluginManager failed. See logging for more information";
             return false;
         }
         if (!this->installKernel(version)) {
-            qWarning() << "Installing the ManiVaultStudion Jupyter kernel failed. See logging for more information";
+            qWarning() << "Installing the ManiVaultStudio Jupyter kernel failed. See logging for more information";
             return false;
         }
     } else {
@@ -547,8 +551,11 @@ void JupyterLauncher::loadJupyterPythonKernel(const QString pyversion)
 
     QPluginLoader jupyLoader(jupyterPluginPath);
 
+    // Set the shared library path to allow the plugin to find the selected python shared library
 #ifdef _WIN32
     SetDllDirectoryA(QString(sharedLibDir.absolutePath() + "/").toUtf8().data());
+#else
+    qputenv("LD_LIBRARY_PATH", QString(sharedLibDir.absolutePath() + "/").toUtf8() + ":" + qgetenv("LD_LIBRARY_PATH");
 #endif
     // Check if the plugin was loaded successfully
     if (!jupyLoader.load()) {
