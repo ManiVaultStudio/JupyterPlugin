@@ -8,7 +8,7 @@
 #include <zmq.hpp>
 #include <zmq_addon.hpp>
 #include <xeus/xhistory_manager.hpp>
-#include <xeus-zmq/xserver_shell_main.hpp>
+//#include <xeus-zmq/xserver_shell_main.hpp>
 #include <xeus-python/xinterpreter.hpp>
 #include <xeus-python/xdebugger.hpp>
 #include <xeus-python/xpaths.hpp>
@@ -33,7 +33,10 @@ void XeusKernel::startKernel(const QString& connection_path)
 
     //// Test without configuration file (default zmq ports)
     //xeus::xconfiguration config = xeus::load_configuration("D:\\TempProj\\DevBundle\\Jupyter\\install\\Debug\\external_kernels\\ManiVault\\connection.json");
-    auto context = xeus::make_context<zmq::context_t>();
+    //auto context =  xeus::make_context<zmq::context_t>();
+    using context_type = xeus::xcontext_impl<zmq::context_t>;
+    using context_ptr = std::unique_ptr<context_type>;
+    context_ptr context = context_ptr(new context_type());
     std::unique_ptr<XeusInterpreter> interpreter = std::unique_ptr<XeusInterpreter>(new XeusInterpreter());
     std::unique_ptr<xeus::xhistory_manager> hist = xeus::make_in_memory_history_manager();
     m_kernel = new xeus::xkernel(
@@ -58,7 +61,7 @@ void XeusKernel::startKernel(const QString& connection_path)
     jsonObj["hb_port"] = std::stoi(set_config.m_hb_port);
     jsonObj["signature_scheme"] = set_config.m_signature_scheme.c_str();
     jsonObj["key"] = set_config.m_key.c_str();
-    jsonObj["kernel_name"] = "ManiVault Studio";
+    jsonObj["kernel_name"] = "ManiVaultStudio";
     std::ofstream confFile(connection_path.toUtf8()); // "D:\\TempProj\\DevBundle\\Jupyter\\install\\Debug\\external_kernels\\ManiVault\\connection.json");
     confFile << jsonObj;
 

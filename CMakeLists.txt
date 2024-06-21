@@ -65,6 +65,8 @@ set(JUPYTERPLUGIN_SOURCES
     src/JupyterPlugin.cpp
     src/XeusKernel.h
     src/XeusKernel.cpp
+    src/XeusPoller.h
+    src/XeusPoller.cpp
     src/XeusServer.h
     src/XeusServer.cpp
     src/XeusInterpreter.h
@@ -80,6 +82,8 @@ set(JUPYTERPLUGIN_SOURCES
 set(PLUGIN_MOC_HEADERS
 	src/JupyterPlugin.h
     src/XeusKernel.h
+    src/XeusPoller.h
+    src/XeusServer.h
 )
 
 source_group( Plugin FILES ${JUPYTERPLUGIN_SOURCES})

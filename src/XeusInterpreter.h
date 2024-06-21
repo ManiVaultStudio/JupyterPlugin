@@ -28,8 +28,8 @@ private:
 
     nl::json execute_request_impl(int execution_counter,
                                const std::string& code,
-                               bool store_history,
                                bool silent,
+                               bool store_history,
                                nl::json user_expressions,
                                bool allow_stdin) override;
 

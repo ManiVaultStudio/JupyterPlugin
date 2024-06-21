@@ -4,19 +4,21 @@ set(xtl_VERSION "0.7.7")
 set(nlohmann_json_VERSION "v3.11.3" )
 set(nlohmann_json_SHA "a22461d13119ac5c78f205d3df1db13403e58ce1bb1794edc9313677313f4a9d")
 set(nlohmann_json_PATH "https://github.com/nlohmann/json/releases/download/${nlohmann_json_VERSION}/include.zip")
-set(xeus_VERSION "3.1.4")
+set(xeus_VERSION "3.2.0")
 
 # Building xeus-zmq
 set(libzmq_VERSION "v4.3.5")
 set(libzmq_PATH "https://github.com/zeromq/libzmq/releases/download/v4.3.4/zeromq-4.3.4.tar.gz")
 set(cppzmq_VERSION "v4.10.0")
 set(cppzmq_PATH "https://github.com/zeromq/cppzmq/archive/refs/tags/v4.10.0.tar.gz")
-set(xeus-zmq_VERSION "1.1.1")
+#set(xeus-zmq_VERSION "2.0.0")
+set(xeus-zmq_VERSION "1.3.0")
 
 # Building xeus-python
 set(pybind11_VERSION "2.11.1")
 set(pybind11_json_VERSION "0.2.11")
-set(xeus-python_VERSION "0.15.12")
+#set(xeus-python_VERSION "0.17.0")
+set(xeus-python_VERSION "0.16.0")
 set(ARTIFACTORY-DOWNLOAD-TOKEN "cmVmdGtuOjAxOjAwMDAwMDAwMDA6OGV4QnVZcmR0S2piU0RSWTJTbjRRQTMxYkRh")
 
 if (WIN32)
@@ -92,11 +94,12 @@ CPMAddPackage(
             "XEUS_STATIC_DEPENDENCIES ON"
             "CMAKE_POSITION_INDEPENDENT_CODE ON"
             "XEUS_DISABLE_ARCH_NATIVE ON"
-            "XEUS_USE_DYNAMIC_UUID ON")
+            "XEUS_USE_DYNAMIC_UUID ON"
+            "XEUS_ZMQ_BUILD_WITHOUT_LIBSODIUM ON")
 
 if (xeus_ADDED)
     install(TARGETS nlohmann_json EXPORT xeus-targets)
-    include("${xeus_BINARY_DIR}/xeusConfig.cmake")
+    #include("${xeus_BINARY_DIR}/xeusConfig.cmake")
 endif()
 
 # produces libzmq and libzmq-static depending on settings
@@ -159,7 +162,7 @@ CPMAddPackage(
     VERSION ${xeus-zmq_VERSION}
     GIT_TAG ${xeus-zmq_VERSION}
     EXCLUDE_FROM_ALL YES
-    PATCH_COMMAND git apply --ignore-space-change --ignore-whitespace --whitespace=nowarn ${CMAKE_CURRENT_SOURCE_DIR}/cmake/libsodiumopt.patch
+    # PATCH_COMMAND git apply --ignore-space-change --ignore-whitespace --whitespace=nowarn ${CMAKE_CURRENT_SOURCE_DIR}/cmake/libsodiumopt.patch
     OPTIONS "XEUS_ZMQ_BUILD_TESTS OFF"
             "XEUS_ZMQ_BUILD_SHARED_LIBS OFF"
             "XEUS_ZMQ_BUILD_STATIC_LIBS ON"

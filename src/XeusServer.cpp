@@ -1,6 +1,7 @@
 #include "XeusServer.h"
 #include <QTimer>
 #include <QDebug>
+#include <thread>
 
 XeusServer::XeusServer(zmq::context_t& context,
                  const xeus::xconfiguration& config,
@@ -9,7 +10,10 @@ XeusServer::XeusServer(zmq::context_t& context,
 {
   m_pollTimer = new QTimer();
   m_pollTimer->setInterval(10);
-  QObject::connect(m_pollTimer, &QTimer::timeout, [=]() { poll(0); });
+  QObject::connect(m_pollTimer, &QTimer::timeout, [=]() { 
+
+      poll(0); 
+  });
 }
 
 XeusServer::~XeusServer()
@@ -22,20 +26,29 @@ void XeusServer::start_impl(xeus::xpub_message message)
 {
     start_publisher_thread();
     start_heartbeat_thread();
-
     m_pollTimer->start();
     publish(std::move(message), xeus::channel::SHELL);
+}
 
+void XeusServer::on_received_control_msg(xeus::xmessage* pmsg)
+{
+    xeus::xmessage msg(std::move(*pmsg));
+    xserver::notify_control_listener(std::move(msg));
+    delete pmsg;
+}
+
+void XeusServer::on_received_shell_msg(xeus::xmessage* pmsg)
+{
+    xeus::xmessage msg(std::move(*pmsg));
+    xserver::notify_shell_listener(std::move(msg));
+    delete pmsg;
 }
 
 void XeusServer::stop_impl()
 {
-    xserver_zmq::stop_impl();
+
     m_pollTimer->stop();
-    stop_channels(); // halt the communication channels
-    std::this_thread::sleep_for(std::chrono::milliseconds(50));
-    // Slicer shutsdown the whole qSlicerApplication with exit(0)
-    // when stop_impl is called 
+    this->stop_channels(); 
 }
 
 std::unique_ptr<xeus::xserver> make_XeusServer(xeus::xcontext& context,
@@ -44,5 +57,5 @@ std::unique_ptr<xeus::xserver> make_XeusServer(xeus::xcontext& context,
 {
     qDebug() << "Server IP: " << config.m_ip.c_str();
     qDebug() << "Server Key: " << config.m_key.c_str();
-    return std::make_unique<XeusServer>(context.get_wrapped_context<zmq::context_t>(), config, eh);
-}
+    return  std::make_unique<XeusServer>(context.get_wrapped_context<zmq::context_t>(), config, eh);
+ }

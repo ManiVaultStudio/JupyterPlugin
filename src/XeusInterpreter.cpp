@@ -34,8 +34,8 @@ void XeusInterpreter::configure_impl()
 // Execute incoming code and publish the result
 nl::json XeusInterpreter::execute_request_impl(int execution_counter,
   const std::string& code,
-  bool store_history,
   bool silent,
+  bool store_history,
   nl::json user_expressions,
   bool allow_stdin) 
 {
@@ -77,26 +77,20 @@ nl::json XeusInterpreter::is_complete_request_impl(const std::string& code)
 
 nl::json XeusInterpreter::kernel_info_request_impl()
 {
-    std::string banner = ""
-        "#     #                 #     #                                #####                              \n"                             
-        "##   ##   ##   #    # # #     #   ##   #    # #      #####    #     # ##### #    # #####  #  #### \n"
-        "# # # #  #  #  ##   # # #     #  #  #  #    # #        #      #         #   #    # #    # # #    #\n"
-        "#  #  # #    # # #  # # #     # #    # #    # #        #       #####    #   #    # #    # # #    #\n"
-        "#     # ###### #  # # #  #   #  ###### #    # #        #            #   #   #    # #    # # #    #\n"
-        "#     # #    # #   ## #   # #   #    # #    # #        #      #     #   #   #    # #    # # #    #\n"
-        "#     # #    # #    # #    #    #    #  ####  ######   #       #####    #    ####  #####  #  #### \n"
-        "                                                                                                  \n"                                                                              
-        "            #                                         ######                                      \n"
-        "            # #    # #####  #   # ##### ###### #####  #     # #      #    #  ####  # #    #       \n"
-        "            # #    # #    #  # #    #   #      #    # #     # #      #    # #    # # ##   #       \n"
-        "            # #    # #    #   #     #   #####  #    # ######  #      #    # #      # # #  #       \n"
-        "      #     # #    # #####    #     #   #      #####  #       #      #    # #  ### # #  # #       \n"
-        "      #     # #    # #        #     #   #      #   #  #       #      #    # #    # # #   ##       \n"
-        "       #####   ####  #        #     #   ###### #    # #       ######  ####   ####  # #    #       \n"
-        "\n"
-        "\n"
-        " ManiVault Studio JupyterPlugin\n"
-        " A python kernel with access to the ManiVault Studio";
+    std::string banner = R"(
+          __  __             ___     __          _ _   
+         |  \/  | __ _ _ __ (_) \   / /_ _ _   _| | |_ 
+         | |\/| |/ _` | '_ \| |\ \ / / _` | | | | | _|
+         | |  | | (_| | | | | | \ V / (_| | |_| | | |_ 
+         |_|  |_|\__,_|_| |_|_|  \_/_\__,_|\__,_|_|\__|
+               / ___|| |_ _   _  __| (_) ___           
+               \___ \| __| | | |/ _` | |/ _ \          
+                ___) | |_| |_| | (_| | | (_) |         
+               |____/ \__|\__,_|\__,_|_|\___/          
+                                                       
+        
+                 ManiVaultStudio JupyterPlugin
+          A python kernel with access to the ManiVault Studio)";
 
     return xeus::create_info_reply(xeus::get_protocol_version(),
         "ManiVault JupyterPlugin",

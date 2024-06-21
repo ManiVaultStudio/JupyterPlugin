@@ -21,10 +21,10 @@ packages = [
 comm ='~=0.2.2'
 python = '~=3.11'
 numpy = '~=1.26'
-jupyterlab_server = "~=2.25.2"
-jupyter_server = "~=2.12.5"
-jupyter_client = "~=8.6.0"
-xeus-python-shell = "~0.6.1"
+jupyterlab_server = "~=2.25"
+jupyter_server = "~=2.12"
+jupyter_client = "~=8.6"
+xeus-python-shell = "~0.6"
 
 [build-system]
 requires = ["poetry-core"]

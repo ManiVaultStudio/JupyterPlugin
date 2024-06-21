@@ -14,11 +14,12 @@ class ImageMixin:
             otherwise return None
         """
         # information is in the image metadata
+        # TODO cache image array and add cache clear option
         if self.type is not Item.ItemType.Image:
             return None
         id = mvstudio_core.find_image_dataset(self.datasetId)
         if len(id) > 0:
-            size = mvstudio_core.get_image_dimensions(id)
+            size = mvstudio_core.get_image_dimensions(self.datasetId)
             array =  mvstudio_core.get_image_item(self.datasetId)
             return array.reshape(size[0], size[1], -1)
         return None 
