@@ -346,20 +346,48 @@ py::array get_mv_image(const std::string& imageGuid)
     auto numImages = images->getNumberOfImages();
     auto numPixels = images->getNumberOfPixels();
     auto numComponents = images->getNumberOfComponentsPerPixel();
-    auto size = numPixels * numComponents;
+    auto imqSize = images->getImageSize();
+    unsigned int width = imqSize.width();
+    unsigned int height = imqSize.height();
+    auto pixcmpSize = numPixels * numComponents;
 
-    
-    auto result = py::array_t<float>({ size, numImages });
+    // For further information on why the numpy array shapes are 
+    // specified as shown see 
+    // https://scikit-image.org/skimage-tutorials/lectures/00_images_are_arrays.html#other-shapes-and-their-meanings
+
+    std::vector<unsigned int> shape{0};
+
+    if (numImages == 1) {
+        if (numComponents == 1) {
+            // 2D Grayscale
+            shape = std::vector<unsigned int>({ width, height });
+        }
+        else {
+            // 2D Multichannel
+            shape = std::vector<unsigned int> { width, height, numComponents };
+        }
+    } else {
+
+        if (numComponents == 1) {
+            // 3D Grayscale
+            shape = std::vector<unsigned int> { numImages, width, height };
+        }
+        else {
+            // 3D Multichannel
+            shape = std::vector<unsigned int> { numImages, width, height, numComponents };
+        }
+    }
+
+    auto result = py::array_t<float>(shape);
     py::buffer_info result_info = result.request();
     float* output = static_cast<float*>(result_info.ptr);
-
-    for (auto i = 0; i < numImages; ++i) {
+    for (auto imIdx = 0; imIdx < numImages; ++imIdx) {
         QVector<float> scalarData;
         scalarData.resize(numPixels * numComponents);
         QPair<float, float> scalarDataRange;
-        images->getScalarData(i, scalarData, scalarDataRange);
-        for (auto j = 0; j < size; j++) {
-            output[(i * size) + j] = scalarData[j];
+        images->getImageScalarData(imIdx, scalarData, scalarDataRange);
+        for (auto pixcmpIdx = 0; pixcmpIdx < pixcmpSize; ++pixcmpIdx) {
+            output[(imIdx * pixcmpSize) + pixcmpIdx] = scalarData[pixcmpIdx];
         }
     }
 

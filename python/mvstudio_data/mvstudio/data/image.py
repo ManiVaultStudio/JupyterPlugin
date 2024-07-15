@@ -2,27 +2,27 @@ import mvstudio_core
 from .item import Item
 import numpy.typing as npt
 import numpy as np
+import functools
 
 Image = npt.NDArray[np.float32]
 Images = list[Image] 
 
 class ImageMixin:
     """Mixin for Item to create an Image Item"""
-    @property
+    @functools.cached_property
     def image(self) -> np.ndarray:
         """If this is an image return the image data in a numpy array
-            otherwise return None
+            otherwise return np.empty([0])
         """
         # information is in the image metadata
         # TODO cache image array and add cache clear option
         if self.type is not Item.ItemType.Image:
-            return None
+            return np.empty([0])
         id = mvstudio_core.find_image_dataset(self.datasetId)
         if len(id) > 0:
-            size = mvstudio_core.get_image_dimensions(self.datasetId)
             array =  mvstudio_core.get_image_item(self.datasetId)
-            return array.reshape(size[0], size[1], -1)
-        return None 
+            return array
+        return np.empty([0]) 
 
 class ImageItem(ImageMixin, Item):
     """

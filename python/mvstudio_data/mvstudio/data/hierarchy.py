@@ -84,8 +84,23 @@ class Hierarchy:
             self._refresh()
             return self.getItemByIndex(guid)
         
-    def addImageItem(self):
-        pass
+    def addImageItem(self, data: np.ndarray, name: str) -> Item|None:
+        """Add an image data item at the root
+
+        Args:
+            data (np.ndarray): A numpy array representing the image
+            namestr (_type_): A string name for the points item.
+
+        Returns:
+            Item|None: _description_
+        """
+        guid = mvstudio_core.add_new_image(data, name)
+        if len(guid) == 0:
+            warnings.warn("Could not add item", RuntimeWarning)
+            return None
+        else:
+            self._refresh()
+            return self.getItemByIndex(guid)
 
     def addClusterItem(self, index: list[int]):
         pass

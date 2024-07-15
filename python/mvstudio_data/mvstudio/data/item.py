@@ -4,6 +4,7 @@ import numpy as np
 import numpy.typing as npt
 from enum import Enum
 from .factory import makeItem
+from clusterbase import Clusters
 
 class Item:
     """
@@ -113,7 +114,21 @@ class Item:
             if item is not None:
                 break
         return item
+    
+    def addClusterItem(self, clusters: Clusters) -> Self | None:
+        """Add a clusteritem as a child of this points item
 
+        Args:
+            cluster (Cluster): A set of clusters that matches the point items in terms of indexes
+
+        Returns:
+            Self | None: _description_
+        """
+        for cluster in clusters:
+            if not all(c < self.numpoints for c in cluster.clusters):
+                return None
+        
+        
     
     @property
     def points(self) -> np.ndarray:

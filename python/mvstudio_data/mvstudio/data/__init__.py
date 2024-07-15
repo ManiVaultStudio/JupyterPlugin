@@ -4,7 +4,7 @@
 from .hierarchy import Hierarchy
 from .item import Item
 from .image import ImageItem
-from .cluster import ClusterItem
+from .cluster import ClusterItem, Cluster
       
 
-__all__ = ("Hierarchy", "Item", "ImageItem", "ClusterItem")
+__all__ = ("Hierarchy", "Item", "ImageItem", "ClusterItem", "Cluster")
