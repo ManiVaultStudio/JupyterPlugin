@@ -44,8 +44,8 @@ nl::json XeusInterpreter::execute_request_impl(int execution_counter,
     return xpyt::interpreter::execute_request_impl(
         execution_counter,
         code,
-        store_history,
         silent,
+        store_history,
         user_expressions,
         allow_stdin
     );

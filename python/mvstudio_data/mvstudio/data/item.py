@@ -4,7 +4,7 @@ import numpy as np
 import numpy.typing as npt
 from enum import Enum
 from .factory import makeItem
-from clusterbase import Clusters
+from .clusterbase import Cluster
 
 class Item:
     """
@@ -14,7 +14,8 @@ class Item:
     """
     ItemType = Enum('ItemType', ['Image', 'Points', 'Cluster'])
             
-    def __init__(self, guid_tuple, name, hierarchy_id):
+    def __init__(self, hierarchy, guid_tuple, name, hierarchy_id):
+        self._hierarchy = hierarchy
         self._guid_tuple = guid_tuple  # contains the item guid and dataset guid
         self._name = name
         self._hierarchy_id = hierarchy_id
@@ -30,7 +31,7 @@ class Item:
         child_id = 1
         for childGuidTuple in guidTuples:
             item_name = mvstudio_core.get_item_name(self.datasetId)
-            self._children.append(makeItem(childGuidTuple, item_name, self._hierarchy_id + [child_id]))
+            self._children.append(makeItem(self._hierarchy, childGuidTuple, item_name, self._hierarchy_id + [child_id]))
             child_id += 1
 
     def _setType(self):
@@ -115,20 +116,28 @@ class Item:
                 break
         return item
     
-    def addClusterItem(self, clusters: Clusters) -> Self | None:
+    def addClusterItem(self, cluster: Cluster, cluster_name: str) -> Self | None:
         """Add a clusteritem as a child of this points item
 
         Args:
             cluster (Cluster): A set of clusters that matches the point items in terms of indexes
 
         Returns:
-            Self | None: _description_
+            Self | None: An ClusterItem is successful orherwise None
         """
-        for cluster in clusters:
-            if not all(c < self.numpoints for c in cluster.clusters):
+        for index_list in cluster.clusters:
+            if not all(c < self.numpoints for c in index_list):
                 return None
         
+        guid = mvstudio_core.add_new_cluster(
+            (cluster.names, cluster.clusters, cluster.colors, cluster.ids),
+            cluster_name,
+            self.datasetId
+        )
+        if not guid:
+            return None
         
+        return self._hierarchy.getItem(guid)
     
     @property
     def points(self) -> np.ndarray:

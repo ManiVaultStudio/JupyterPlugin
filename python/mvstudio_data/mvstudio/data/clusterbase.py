@@ -45,5 +45,3 @@ class Cluster:
     @property
     def colors(self) -> list[str]:
         return self._colors
-
-Clusters = list[Cluster]

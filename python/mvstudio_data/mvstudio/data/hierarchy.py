@@ -20,7 +20,7 @@ class Hierarchy:
         hierarchy_id = 1
         for guid_tuple in self._top_level:
             item_name = mvstudio_core.get_item_name(guid_tuple[1])
-            self._hierarchy.append(makeItem(guid_tuple, item_name, [hierarchy_id]))   
+            self._hierarchy.append(makeItem(self, guid_tuple, item_name, [hierarchy_id]))   
             hierarchy_id += 1
 
     def refresh(self): 

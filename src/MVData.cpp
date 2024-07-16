@@ -277,7 +277,7 @@ std::string add_new_mvdata(const py::array& data, std::string dataSetName)
     return std::string("");
 }
 
-bool add_mvimage(const py::array& data, std::string dataSetName) 
+std::string add_mvimage(const py::array& data, std::string dataSetName)
 {
     // The MV Datamodel is Band Interlaced by Pixel.
     // This means that an image stack (which might be hyperspectral or simply RGB/RGBA)
@@ -332,9 +332,9 @@ bool add_mvimage(const py::array& data, std::string dataSetName)
         QStringList filePaths = { QString("Source is numpy array %1 via JupyterPlugin").arg(dataSetName.c_str()) };
         imageDataset->setImageFilePaths(filePaths);
         events().notifyDatasetDataChanged(imageDataset);
-        return true;
+        return points.getDatasetId().toStdString();
     }
-    return false;
+    return std::string("");
 }
 
 // All images are float in ManiVault 1.x.
@@ -392,6 +392,56 @@ py::array get_mv_image(const std::string& imageGuid)
     }
 
     return result;
+}
+
+std::string add_cluster(const py::tuple& tupleOfClusterLists, std::string dataSetName, const std::string& parentPointDatasetGuid)
+{
+    auto warnings = pybind11::module::import("warnings");
+    auto builtins = pybind11::module::import("builtins");
+    // validate the incoming tuple
+    if (tupleOfClusterLists.size() != 4) {
+        warnings.attr("warn")(
+            "Names, cluster indexes, ids and colors must be present.",
+            builtins.attr("UserWarning"));
+        return "";
+    }
+
+    auto names_list = tupleOfClusterLists[0].cast<py::list>();
+    auto clusters_list = tupleOfClusterLists[1].cast<py::list>();
+    auto colors_list = tupleOfClusterLists[2].cast<py::list>();
+    auto ids_list = tupleOfClusterLists[3].cast<py::list>();
+    if (!(names_list.size() + clusters_list.size() - ids_list.size() - colors_list.size() == 0)) {
+        warnings.attr("warn")(
+            "The lengths of the lists names, cluster indexes, ids and colors must be present.",
+            builtins.attr("UserWarning"));
+    }
+
+    auto parent = mv::dataHierarchy().getItem(QString(parentPointDatasetGuid.c_str()));
+    Dataset<Clusters> clusters = mv::data().createDataset("Cluster", dataSetName.c_str(), parent->getDataset<Points>());
+
+    for (size_t i = 0; i < names_list.size(); ++i) {
+        auto indexes = clusters_list[i].cast<py::array>();
+        std::string name = names_list[i].cast<py::str>();
+        auto colorTup = colors_list[i].cast<py::tuple>();
+        std::string id = ids_list[i].cast<py::str>();
+        Cluster cluster;
+        cluster.setName(QString("cluster %1").arg(QString::number(i + 1)));
+        auto clusterIndices = indexes.cast<std::vector<std::uint32_t>>();
+        // cluster indexes
+        cluster.setIndices(clusterIndices);
+        // cluster color
+        auto a = (colorTup.size() == 4) ? colorTup[3].cast<float>() : 1.0;
+        auto clusterColor = QColor::fromRgbF(colorTup[0].cast<float>(), colorTup[1].cast<float>(), colorTup[2].cast<float>(), a);
+        cluster.setColor(clusterColor);
+        // cluster 
+        cluster.setName(name.c_str());
+        // Use the auto generated id
+
+        clusters->addCluster(cluster);
+
+    }
+    return clusters.getDatasetId().toStdString();
+
 }
 
 // return Hierarchy Item and Data set guid in tuple
@@ -582,6 +632,18 @@ py::module get_MVData_module()
         add_mvimage,
         py::arg("data") = py::array(),
         py::arg("dataSetName") = py::str()
+    );
+    // The cluster tuple contains the following lists
+    // names
+    // indexes (clusters) 
+    // colors 
+    // ids (ignored)
+    MVData_module.def(
+        "add_new_cluster",
+        add_cluster,
+        py::arg("tupleOfClusterLists") = py::tuple(),
+        py::arg("clusterName") = py::str(),
+        py::arg("parentPointDatasetGuid") = py::str()
     );
     return MVData_module;
 }
