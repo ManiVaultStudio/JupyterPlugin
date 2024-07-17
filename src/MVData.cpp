@@ -360,21 +360,21 @@ py::array get_mv_image(const std::string& imageGuid)
     if (numImages == 1) {
         if (numComponents == 1) {
             // 2D Grayscale
-            shape = std::vector<unsigned int>({ width, height });
+            shape = std::vector<unsigned int>({ height, width });
         }
         else {
             // 2D Multichannel
-            shape = std::vector<unsigned int> { width, height, numComponents };
+            shape = std::vector<unsigned int> { height, width, numComponents };
         }
     } else {
 
         if (numComponents == 1) {
             // 3D Grayscale
-            shape = std::vector<unsigned int> { numImages, width, height };
+            shape = std::vector<unsigned int> { numImages, height, width };
         }
         else {
             // 3D Multichannel
-            shape = std::vector<unsigned int> { numImages, width, height, numComponents };
+            shape = std::vector<unsigned int> { numImages, height, width, numComponents };
         }
     }
 
