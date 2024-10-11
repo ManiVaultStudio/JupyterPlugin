@@ -23,6 +23,23 @@ This plugin kernel based on the Xeus kernel is compatible with Jupyter software.
 
 ## Building
 
+1. Setup a python 3.11 environment and install `poetry`
+2. Pass `Python_EXECUTABLE` and `ManiVaultDir` to cmake
+3. (On Windows) Use [vcpkg](https://github.com/microsoft/vcpkg) and define `DCMAKE_TOOLCHAIN_FILE="[YOURPATHTO]/vcpkg/scripts/buildsystems/vcpkg.cmake"`
+
+For example:
+```
+conda create -n ManiVaultPythonPlugin python=3.11
+conda activate ManiVaultPythonPlugin
+pip install poetry
+
+Python_EXECUTABLE="[YOUR_PATH_TO]/miniconda3/envs/ManiVaultPythonPlugin/python.exe"
+ManiVault_DIR="[YOUR_PATH_TO]/install/cmake/mv"
+
+install openssl with vcpkg
+CMAKE_TOOLCHAIN_FILE="[YOUR_PATH_TO]/vcpkg/scripts/buildsystems/vcpkg.cmake"
+```
+
 The Build produces a JupyterLauncher and a JupyterPlugin. The Jupyter-Xeus dependencies and their dependencies (libzmq and a number of header-only libraries) are also built and linked statically to simplify installation.
 
 The JupyterLauncher is a regular plugin installed in the Plugins directory but the JupyterPlugin 

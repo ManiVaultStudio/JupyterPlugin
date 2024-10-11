@@ -1,13 +1,17 @@
 cmake_minimum_required(VERSION 3.21)
 
+# vcpkg library settings
+if(DEFINED CMAKE_TOOLCHAIN_FILE AND CMAKE_TOOLCHAIN_FILE MATCHES "vcpkg" AND WIN32)
+    set(VCPKG_HOST_TRIPLET "x64-windows-static-md" CACHE STRING "")
+    set(VCPKG_TARGET_TRIPLET "x64-windows-static-md" CACHE STRING "")
+    set(VCPKG_LIBRARY_LINKAGE "static" CACHE STRING "")
+endif()
+
 # -----------------------------------------------------------------------------
 # Jupyter Plugin
 # -----------------------------------------------------------------------------
 set(JUPYTERPLUGIN "JupyterPlugin")
 PROJECT(${JUPYTERPLUGIN})
-
-set(MVSTUDIO_VERSION "0.1.0" CACHE STRING "Version used for the mvstudio modules data and kernel")
-add_subdirectory(src/JupyterLauncher)
 
 # -----------------------------------------------------------------------------
 # CMake Options
@@ -16,45 +20,53 @@ set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_AUTOMOC ON)
 
-set(QTVERSION 6)
-set(CPPZMQ_BUILD_TESTS OFF) # cppzmq
-
-cmake_policy(SET CMP0074 NEW)
-# gcc visibility setting
+# Ensures that all non-inline and inline symbols are hidden unless explicitly marked for export
 set(CMAKE_CXX_VISIBILITY_PRESET hidden)
-set(CMAKE_VISIBILITY_INLINES_HIDDEN 1)
+set(CMAKE_VISIBILITY_INLINES_HIDDEN ON)
 
 if(MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /DWIN32 /EHsc /MP /permissive- /Zc:__cplusplus")
-	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /NODEFAULTLIB:LIBCMT")
-	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MDd")
-	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MD")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /NODEFAULTLIB:LIBCMT")
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MDd")
+    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MD")
 endif(MSVC)
 
-# -----------------------------------------------------------------------------
-# Set install directory
-# -----------------------------------------------------------------------------
-# Check if the directory to the ManiVault installation has been provided
-if(NOT DEFINED MV_INSTALL_DIR)
-    set(MV_INSTALL_DIR "" CACHE PATH "Directory where ManiVault is installed")
-    message(FATAL_ERROR "Please set MV_INSTALL_DIR to the directory where ManiVault is installed")
+set(MV_JUPYTER_USE_VCPKG OFF)
+if(DEFINED VCPKG_TARGET_TRIPLET)
+    set(MV_JUPYTER_USE_VCPKG ON)
 endif()
-file(TO_CMAKE_PATH ${MV_INSTALL_DIR} MV_INSTALL_DIR)
 
-
-set(xtl_DIR "${xtl_SOURCE_DIR}" CACHE PATH "")
-set(PYBIND11_DIR "${pybind_SOURCE_DIR}")
-set(PYBIND11_INCLUDE_DIR "${pybind_SOURCE_DIR}/include" CACHE PATH "Path to root of pybind11 include")
-# These header only libraries are packages with xeus-zmq for convenience
-set(nlohmann_json_INCLUDE_DIR ${nlohmann_SOURCE_DIR}/include)
-set(cppzmq_INCLUDE_DIR ${xeus-zmq_ROOT}/include)
-
-
-find_package(Qt6 COMPONENTS Widgets WebEngineWidgets REQUIRED)
-set(PythonVERSION 3.11)
-include(dependencies.cmake)
+# Cmake internal functions for generating a summary of enabled/disabled features.
 include(FeatureSummary)
 
+# -----------------------------------------------------------------------------
+# Dependencies
+# -----------------------------------------------------------------------------
+# xeus-python depends on: xeus-zmq, pybind11, pybind11_json and nlohmann_json
+# xeus-zmq depends on: xeus, ZeroMQ (libzmq), cppzmq, OpenSSL, and nlohmann_json
+# xeus depends on: nlohmann json
+set(nlohmann_json_VERSION "v3.11.3")
+set(xeus_VERSION "5.1.1")
+set(libzmq_VERSION "v4.3.5")
+set(cppzmq_VERSION "v4.10.0")
+set(xeus-zmq_VERSION "3.1.0")
+set(pybind11_VERSION "v2.13.6")
+set(pybind11_json_VERSION "0.2.14")
+set(xeus-python_VERSION "0.17.1")
+set(Python_VERSION "3.11")
+
+find_package(Qt6 COMPONENTS Widgets WebEngineWidgets REQUIRED)
+find_package(ManiVault COMPONENTS Core PointData ClusterData ImageData CONFIG QUIET)
+find_package(Python ${Python_VERSION} COMPONENTS Development Interpreter REQUIRED)
+
+message(STATUS "Python root dir: ${Python_ROOT_DIR}")
+message(STATUS "*** Python libraries : ${Python_LIBRARIES}")
+message(STATUS "*** Python include dirs ${Python_INCLUDE_DIRS}")
+
+include(cmake/dependencies.cmake)
+
+set(MVSTUDIO_VERSION "0.1.0" CACHE STRING "Version used for the mvstudio modules data and kernel")
+add_subdirectory(src/JupyterLauncher)
 
 # -----------------------------------------------------------------------------
 # Source files
@@ -80,13 +92,13 @@ set(JUPYTERPLUGIN_SOURCES
 )
 
 set(PLUGIN_MOC_HEADERS
-	src/JupyterPlugin.h
+    src/JupyterPlugin.h
     src/XeusKernel.h
     src/XeusPoller.h
     src/XeusServer.h
 )
 
-source_group( Plugin FILES ${JUPYTERPLUGIN_SOURCES})
+source_group(Plugin FILES ${JUPYTERPLUGIN_SOURCES})
 
 # -----------------------------------------------------------------------------
 # CMake Target
@@ -94,25 +106,12 @@ source_group( Plugin FILES ${JUPYTERPLUGIN_SOURCES})
 # Create dynamic library for the plugin
 add_library(${JUPYTERPLUGIN} SHARED ${JUPYTERPLUGIN_SOURCES})
 
-add_dependencies(${JUPYTERPLUGIN} xeus-python-static JupyterLauncher)
-
-qt_wrap_cpp(JUPYTERPLUGIN_MOC ${PLUGIN_MOC_HEADERS} TARGET ${JUPYTERPLUGIN})
-target_sources(${JUPYTERPLUGIN} PRIVATE ${JUPYTERPLUGIN_MOC})
+add_dependencies(${JUPYTERPLUGIN} JupyterLauncher)
 
 # -----------------------------------------------------------------------------
 # Target include directories
 # -----------------------------------------------------------------------------
-# Include HDPS headers, including system data plugins
-target_include_directories(${JUPYTERPLUGIN} PRIVATE 
-    "${MV_INSTALL_DIR}/$<CONFIGURATION>/include/" 
-    "${xeus_INCLUDE_DIR}"
-    "${xeus-zmq_INCLUDE_DIR}" 
-    "${xeus-python_INCLUDE_DIR}" 
-    "${xtl_INCLUDE_DIRS}"
-    "${nlohmann_json_INCLUDE_DIR}"
-    "${PYBIND11_INCLUDE_DIR}"
-    "${PYTHON_INCLUDE_DIR}"
-)
+target_include_directories(${JUPYTERPLUGIN} PRIVATE  "${ManiVault_INCLUDE_DIR}")
 
 # -----------------------------------------------------------------------------
 # Target properties
@@ -135,35 +134,22 @@ list(APPEND IMAGE_DATA_HEADERS ${CMAKE_CURRENT_BINARY_DIR}/${EXPORT_HEADER_FILE_
 target_link_libraries(${JUPYTERPLUGIN} PUBLIC Qt6::Widgets)
 target_link_libraries(${JUPYTERPLUGIN} PUBLIC Qt6::WebEngineWidgets)
 
-# Link to HDPS and data plugins
-# The link path in this repo assumes that the ManiVault core was built locally
-# in contrast to having been installed with an installer. In the latter case you'll have
-# to adapt the MV_LINK_PATH and PLUGIN_LINK_PATH to your install folder
-set(MV_LINK_PATH "${MV_INSTALL_DIR}/$<CONFIGURATION>/lib")
-set(PLUGIN_LINK_PATH "${MV_INSTALL_DIR}/$<CONFIGURATION>/$<IF:$<CXX_COMPILER_ID:MSVC>,lib,Plugins>")
-set(MV_LINK_SUFFIX $<IF:$<CXX_COMPILER_ID:MSVC>,${CMAKE_LINK_LIBRARY_SUFFIX},${CMAKE_SHARED_LIBRARY_SUFFIX}>)
+target_link_libraries(${JUPYTERPLUGIN} PRIVATE ManiVault::Core)
+target_link_libraries(${JUPYTERPLUGIN} PRIVATE ManiVault::PointData)
+target_link_libraries(${JUPYTERPLUGIN} PRIVATE ManiVault::ImageData)
+target_link_libraries(${JUPYTERPLUGIN} PRIVATE ManiVault::ClusterData)
 
-set(MV_LINK_LIBRARY "${MV_LINK_PATH}/${CMAKE_SHARED_LIBRARY_PREFIX}MV_Public${MV_LINK_SUFFIX}")
-set(POINTDATA_LINK_LIBRARY "${PLUGIN_LINK_PATH}/${CMAKE_SHARED_LIBRARY_PREFIX}PointData${MV_LINK_SUFFIX}") 
-set(IMAGEDATA_LINK_LIBRARY "${PLUGIN_LINK_PATH}/${CMAKE_SHARED_LIBRARY_PREFIX}ImageData${MV_LINK_SUFFIX}") 
-set(CLUSTERDATA_LINK_LIBRARY "${PLUGIN_LINK_PATH}/${CMAKE_SHARED_LIBRARY_PREFIX}ClusterData${MV_LINK_SUFFIX}")
-
-target_link_libraries(${JUPYTERPLUGIN} PUBLIC "${MV_LINK_LIBRARY}")
-target_link_libraries(${JUPYTERPLUGIN} PUBLIC "${POINTDATA_LINK_LIBRARY}")
-target_link_libraries(${JUPYTERPLUGIN} PUBLIC "${IMAGEDATA_LINK_LIBRARY}")
-target_link_libraries(${JUPYTERPLUGIN} PUBLIC "${CLUSTERDATA_LINK_LIBRARY}")
 target_link_libraries(${JUPYTERPLUGIN} PUBLIC xeus-static)
 target_link_libraries(${JUPYTERPLUGIN} PUBLIC xeus-zmq-static)
 target_link_libraries(${JUPYTERPLUGIN} PUBLIC xeus-python-static)
 target_link_libraries(${JUPYTERPLUGIN} PUBLIC libzmq-static cppzmq-static)
-target_link_libraries(${JUPYTERPLUGIN} PUBLIC "${PYTHON_LIBRARY}")
 target_link_libraries(${JUPYTERPLUGIN} PUBLIC pybind11::embed)
+target_link_libraries(${JUPYTERPLUGIN} PUBLIC nlohmann_json::nlohmann_json)
 
 if (MSVC)
     target_compile_options(${JUPYTERPLUGIN} PUBLIC /wd4251 /wd4141)
     target_compile_options(${JUPYTERPLUGIN} PUBLIC /wd4018 /wd4267 /wd4715 /wd4146 /wd4129)
 endif()
-target_compile_features(${JUPYTERPLUGIN} PUBLIC cxx_std_14)
 
 # -----------------------------------------------------------------------------
 # Python MVJupyterPluginManager package
@@ -251,7 +237,7 @@ add_custom_command(TARGET ${JUPYTERPLUGIN} POST_BUILD
 # -----------------------------------------------------------------------------
 # Automatically set the debug environment (command + working directory) for MSVC
 if(MSVC)
-    set_property(TARGET ${JUPYTERPLUGIN} PROPERTY VS_DEBUGGER_WORKING_DIRECTORY $<IF:$<CONFIG:DEBUG>,${MV_INSTALL_DIR}/debug,${MV_INSTALL_DIR}/release>)
+    set_property(TARGET ${JUPYTERPLUGIN} PROPERTY VS_DEBUGGER_WORKING_DIRECTORY $<IF:$<CONFIG:DEBUG>,${ManiVault_INSTALL_DIR}/debug,${MV_INSTALL_DIR}/release>)
     set_property(TARGET ${JUPYTERPLUGIN} PROPERTY VS_DEBUGGER_COMMAND $<IF:$<CONFIG:DEBUG>,"${MV_INSTALL_DIR}/debug/ManiVault Studio.exe","${MV_INSTALL_DIR}/release/ManiVault Studio.exe">)
 endif()
 

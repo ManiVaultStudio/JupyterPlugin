@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.17)
+cmake_minimum_required(VERSION 3.21)
 
 # -----------------------------------------------------------------------------
 # BinExporter Plugin
@@ -28,8 +28,11 @@ find_package(Qt6 COMPONENTS Widgets WebEngineWidgets REQUIRED)
 # -----------------------------------------------------------------------------
 
 qt6_add_resources(RESOURCE_FILES res/jupyter_launcher_resources.qrc)
-message(status "Configuring mvstudio_version.h")
-configure_file(src/mvstudio_version.h.in src/ver/mvstudio_version.h)
+
+# uses MVSTUDIO_VERSION
+set(MVSTUDIO_VERSIO_IN src/mvstudio_version.h.in)
+set(MVSTUDIO_VERSIO_H src/mvstudio_version.h.in)
+configure_file(${MVSTUDIO_VERSIO_IN} ${MVSTUDIO_VERSIO_H} @ONLY)
 
 set(SOURCES
     src/JupyterLauncher.h
@@ -39,10 +42,6 @@ set(SOURCES
     src/GlobalSettingsAction.cpp
     src/SettingsAction.h
     src/SettingsAction.cpp
-)
-
-set(PLUGIN_MOC_HEADERS
-    src/JupyterLauncher.h
 )
 
 set (RESOURCES
@@ -58,22 +57,16 @@ source_group( ResourceFiles\\generated FILES ${CMAKE_CURRENT_BINARY_DIR}/qrc_jup
 # -----------------------------------------------------------------------------
 add_library(${JUPYTERLAUNCHER} SHARED ${SOURCES} ${RESOURCES} ${RESOURCE_FILES})
 
-qt_wrap_cpp(JUPYTERLAUNCHER_MOC ${PLUGIN_MOC_HEADERS} TARGET ${JUPYTERLAUNCHER})
-target_sources(${JUPYTERLAUNCHER} PRIVATE ${JUPYTERLAUNCHER_MOC})
-target_include_directories(${JUPYTERLAUNCHER} PUBLIC "${CMAKE_CURRENT_BINARY_DIR}/src/ver")
-
 # -----------------------------------------------------------------------------
 # Target include directories
 # -----------------------------------------------------------------------------
-target_include_directories(${JUPYTERLAUNCHER} PRIVATE 
-    "${MV_INSTALL_DIR}/$<CONFIGURATION>/include/"
-)
+target_include_directories(${JUPYTERLAUNCHER} PRIVATE "${ManiVault_INCLUDE_DIR}")
+target_include_directories(${JUPYTERLAUNCHER} PUBLIC "${MVSTUDIO_VERSIO_H}")
 
 # -----------------------------------------------------------------------------
 # Target properties
 # -----------------------------------------------------------------------------
 target_compile_features(${JUPYTERLAUNCHER} PRIVATE cxx_std_17)
-
 
 include(GenerateExportHeader)
 generate_export_header(${JUPYTERLAUNCHER})
@@ -81,17 +74,10 @@ generate_export_header(${JUPYTERLAUNCHER})
 # -----------------------------------------------------------------------------
 # Target library linking
 # -----------------------------------------------------------------------------
-set(MV_LINK_PATH "${MV_INSTALL_DIR}/$<CONFIGURATION>/lib")
-set(PLUGIN_LINK_PATH "${MV_INSTALL_DIR}/$<CONFIGURATION>/$<IF:$<CXX_COMPILER_ID:MSVC>,lib,Plugins>")
-set(MV_LINK_SUFFIX $<IF:$<CXX_COMPILER_ID:MSVC>,${CMAKE_LINK_LIBRARY_SUFFIX},${CMAKE_SHARED_LIBRARY_SUFFIX}>)
-
-set(MV_LINK_LIBRARY "${MV_LINK_PATH}/${CMAKE_SHARED_LIBRARY_PREFIX}MV_Public${MV_LINK_SUFFIX}")
-set(POINTDATA_LINK_LIBRARY "${PLUGIN_LINK_PATH}/${CMAKE_SHARED_LIBRARY_PREFIX}PointData${MV_LINK_SUFFIX}") 
-
 target_link_libraries(${JUPYTERLAUNCHER} PRIVATE Qt6::Widgets)
 target_link_libraries(${JUPYTERLAUNCHER} PRIVATE Qt6::WebEngineWidgets)
-target_link_libraries(${JUPYTERLAUNCHER} PRIVATE "${MV_LINK_LIBRARY}")
-target_link_libraries(${JUPYTERLAUNCHER} PRIVATE "${POINTDATA_LINK_LIBRARY}")
+target_link_libraries(${JUPYTERLAUNCHER} PRIVATE ManiVault::Core)
+target_link_libraries(${JUPYTERLAUNCHER} PRIVATE ManiVault::PointData)
 
 # -----------------------------------------------------------------------------
 # Target installation
@@ -107,7 +93,7 @@ add_custom_command(TARGET ${JUPYTERLAUNCHER} POST_BUILD
     COMMAND "${CMAKE_COMMAND}"
         --install ${CMAKE_CURRENT_BINARY_DIR}
         --config $<CONFIGURATION>
-        --prefix ${MV_INSTALL_DIR}/$<CONFIGURATION>
+        --prefix ${ManiVault_INSTALL_DIR}/$<CONFIGURATION>
 )
 
 # -----------------------------------------------------------------------------
@@ -115,6 +101,6 @@ add_custom_command(TARGET ${JUPYTERLAUNCHER} POST_BUILD
 # -----------------------------------------------------------------------------
 # Automatically set the debug environment (command + working directory) for MSVC
 if(MSVC)
-    set_property(TARGET ${JUPYTERLAUNCHER} PROPERTY VS_DEBUGGER_WORKING_DIRECTORY  $<IF:$<CONFIG:DEBUG>,${MV_INSTALL_DIR}/debug,${MV_INSTALL_DIR}/release>)
-    set_property(TARGET ${JUPYTERLAUNCHER} PROPERTY VS_DEBUGGER_COMMAND $<IF:$<CONFIG:DEBUG>,"${MV_INSTALL_DIR}/debug/ManiVault Studio.exe","${MV_INSTALL_DIR}/release/ManiVault Studio.exe">)
+    set_property(TARGET ${JUPYTERLAUNCHER} PROPERTY VS_DEBUGGER_WORKING_DIRECTORY  $<IF:$<CONFIG:DEBUG>,${ManiVault_INSTALL_DIR}/debug,${ManiVault_INSTALL_DIR}/release>)
+    set_property(TARGET ${JUPYTERLAUNCHER} PROPERTY VS_DEBUGGER_COMMAND $<IF:$<CONFIG:DEBUG>,"${ManiVault_INSTALL_DIR}/debug/ManiVault Studio.exe","${ManiVault_INSTALL_DIR}/release/ManiVault Studio.exe">)
 endif()
