@@ -4,6 +4,18 @@ This project provided python 3.11 integration into ManiVault. In the current rel
 
 Using the JupyterPlugin data can loaded into the DataHierarchy for which there is no loader plugin available. Data from the hierarchy can be subjected to additional processing, analysis or viewing supported by standard python packages.
 
+## Building
+
+- Setup a python environment, e.g.
+```bash
+conda create -n ManiVaultPythonPlugin python=3.11
+conda activate ManiVaultPythonPlugin
+pip install poetry
+```
+- Define `ManiVault_DIR` pointing to the ManiVault cmake file folder, e.g. `YOUR_LOCAL_PATH/install/cmake/mv`
+- Define `Python_EXECUTABLE` pointing to the python exe, e.g. `YOUR_LOCAL_PATH/AppData/Local/miniconda3/envs/ManiVaultPythonPlugin/python.exe`
+
+
 ## Python environment requirements.
 
 The following python and library versions must be installed.
