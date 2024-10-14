@@ -22,7 +22,8 @@ CPMAddPackage(
     NAME nlohmann_json
     GITHUB_REPOSITORY "nlohmann/json"
     GIT_TAG ${nlohmann_json_VERSION}
-    EXCLUDE_FROM_ALL YES
+    OPTIONS
+    "JSON_BuildTests OFF"
 )
 
 # produces xeus and xeus-static
