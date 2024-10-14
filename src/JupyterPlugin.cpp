@@ -1,11 +1,6 @@
 #include "JupyterPlugin.h"
 
-#include <event/Event.h>
-
-#include <DatasetsMimeData.h>
-
 #include <QDebug>
-#include <QMimeData>
 #include <QProcess>
 #include <QDir>
 
@@ -79,84 +74,10 @@ void JupyterPlugin::init()
 
     });
 
-    // Alternatively, classes which derive from hdsp::EventListener (all plugins do) can also respond to events
-    _eventListener.addSupportedEventType(static_cast<std::uint32_t>(EventType::DatasetAdded));
-    _eventListener.addSupportedEventType(static_cast<std::uint32_t>(EventType::DatasetDataChanged));
-    _eventListener.addSupportedEventType(static_cast<std::uint32_t>(EventType::DatasetRemoved));
-    _eventListener.addSupportedEventType(static_cast<std::uint32_t>(EventType::DatasetDataSelectionChanged));
-    _eventListener.registerDataEventByType(PointType, std::bind(&JupyterPlugin::onDataEvent, this, std::placeholders::_1));
-
     auto jupyter_configFilepath = std::string("TODO: Add configfile path here from action");
     
     // Manual start
     pKernel->startKernel(_settingsAction.getConnectionFilePathAction().getFilePath());
-}
-
-void JupyterPlugin::onDataEvent(mv::DatasetEvent* dataEvent)
-{
-    // Get smart pointer to dataset that changed
-    const auto changedDataSet = dataEvent->getDataset();
-
-    // Get GUI name of the dataset that changed
-    const auto datasetGuiName = changedDataSet->getGuiName();
-
-    // The data event has a type so that we know what type of data event occurred (e.g. data added, changed, removed, renamed, selection changes)
-    switch (dataEvent->getType()) {
-
-        // A points dataset was added
-        case EventType::DatasetAdded:
-        {
-            // Cast the data event to a data added event
-            const auto dataAddedEvent = static_cast<DatasetAddedEvent*>(dataEvent);
-
-            // Get the GUI name of the added points dataset and print to the console
-            qDebug() << datasetGuiName << "was added";
-
-            break;
-        }
-
-        // Points dataset data has changed
-        case EventType::DatasetDataChanged:
-        {
-            // Cast the data event to a data changed event
-            const auto dataChangedEvent = static_cast<DatasetDataChangedEvent*>(dataEvent);
-
-            // Get the name of the points dataset of which the data changed and print to the console
-            qDebug() << datasetGuiName << "data changed";
-
-            break;
-        }
-
-        // Points dataset data was removed
-        case EventType::DatasetRemoved:
-        {
-            // Cast the data event to a data removed event
-            const auto dataRemovedEvent = static_cast<DatasetRemovedEvent*>(dataEvent);
-
-            // Get the name of the removed points dataset and print to the console
-            qDebug() << datasetGuiName << "was removed";
-
-            break;
-        }
-
-        // Points dataset selection has changed
-        case EventType::DatasetDataSelectionChanged:
-        {
-            // Cast the data event to a data selection changed event
-            const auto dataSelectionChangedEvent = static_cast<DatasetDataSelectionChangedEvent*>(dataEvent);
-
-            // Get the selection set that changed
-            const auto& selectionSet = changedDataSet->getSelection<Points>();
-
-            // Print to the console
-            qDebug() << datasetGuiName << "selection has changed";
-
-            break;
-        }
-
-        default:
-            break;
-    }
 }
 
 ViewPlugin* JupyterPluginFactory::produce()
@@ -166,12 +87,7 @@ ViewPlugin* JupyterPluginFactory::produce()
 
 mv::DataTypes JupyterPluginFactory::supportedDataTypes() const
 {
-    DataTypes supportedTypes;
-
-    // This example analysis plugin is compatible with points datasets
-    supportedTypes.append(PointType);
-
-    return supportedTypes;
+    return { PointType };
 }
 
 mv::gui::PluginTriggerActions JupyterPluginFactory::getPluginTriggerActions(const mv::Datasets& datasets) const
@@ -185,7 +101,7 @@ mv::gui::PluginTriggerActions JupyterPluginFactory::getPluginTriggerActions(cons
     const auto numberOfDatasets = datasets.count();
 
     if (numberOfDatasets >= 1 && PluginFactory::areAllDatasetsOfTheSameType(datasets, PointType)) {
-        auto pluginTriggerAction = new PluginTriggerAction(const_cast<JupyterPluginFactory*>(this), this, "Example", "View example data", getIcon(), [this, getPluginInstance, datasets](PluginTriggerAction& pluginTriggerAction) -> void {
+        auto pluginTriggerAction = new PluginTriggerAction(const_cast<JupyterPluginFactory*>(this), this, "Jupyter Plugin", "Jupyter bridge", getIcon(), [this, getPluginInstance, datasets](PluginTriggerAction& pluginTriggerAction) -> void {
             for (auto dataset : datasets)
                 getPluginInstance();
         });

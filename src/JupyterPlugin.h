@@ -37,8 +37,6 @@ class QLabel;
  *
  * @authors B. van Lew
  */
-
-
 class JUPYTERPLUGIN_EXPORT JupyterPlugin : public ViewPlugin
 {
     Q_OBJECT
@@ -54,15 +52,8 @@ public:
     /** Destructor */
     ~JupyterPlugin();
 
-   
     /** This function is called by the core after the view plugin has been created */
     void init() override;
-
-    /**
-     * Invoked when a data event occurs
-     * @param dataEvent Data event which occurred
-     */
-    void onDataEvent(mv::DatasetEvent* dataEvent);
 
     void setConnectionPath(const QString& connection_path);
 
