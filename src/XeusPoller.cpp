@@ -1,8 +1,6 @@
-#include <iostream>
-
 #include "XeusPoller.h"
 
-
+#include <iostream>
 
 XeusWorkerThread::XeusWorkerThread(QObject* parent,
     poller_t poller)

@@ -2,11 +2,11 @@
 
 // QTs slots clashes with Python.h slots
 #undef slots
-#include "xeus-python/xinterpreter.hpp"
-#include "xeus/xeus.hpp"
-#include "xeus/xcomm.hpp"
+#include <xeus-python/xinterpreter.hpp>
 #define slots Q_SLOTS
+
 #include <pybind11/embed.h>
+#include <pybind11/pybind11.h>
 
 /**
  * This class wraps the xeus python interpreter

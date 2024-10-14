@@ -1,21 +1,27 @@
 #include "XeusKernel.h"
+
 #include "XeusInterpreter.h"
 #include "XeusServer.h"
 
-#include <QStandardPaths>
-#include <QDir>
 #include <QCoreApplication>
-#include <zmq.hpp>
-#include <zmq_addon.hpp>
+#include <QDir>
+#include <QStandardPaths>
+
+#include <nlohmann/json.hpp>
+
 #include <xeus/xhistory_manager.hpp>
 //#include <xeus-zmq/xserver_shell_main.hpp>
 #include <xeus-python/xinterpreter.hpp>
 #include <xeus-python/xdebugger.hpp>
 #include <xeus-python/xpaths.hpp>
-#include "nlohmann/json.hpp"
-#include <memory>
-#include <fstream>
+#include <xeus/xkernel.hpp>
+#include <zmq_addon.hpp>
+#include <zmq.hpp>
 
+#include <fstream>
+#include <memory>
+#include <string>
+#include <ostream>
 
 XeusKernel::XeusKernel()
 {

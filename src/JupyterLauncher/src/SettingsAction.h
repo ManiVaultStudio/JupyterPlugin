@@ -4,6 +4,8 @@
 #include <actions/DirectoryPickerAction.h>
 #include <actions/FilePickerAction.h>
 
+#include <QtLogging>
+
 using namespace mv::gui;
 
 class JupyterLauncher;

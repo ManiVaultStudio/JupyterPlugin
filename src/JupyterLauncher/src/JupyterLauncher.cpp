@@ -6,20 +6,21 @@
 #include <DatasetsMimeData.h>
 #include <PointData/PointData.h>
 
+#include <QByteArray>
 #include <QDebug>
 #include <QMimeData>
+#include <QNetworkAccessManager>
+#include <QNetworkReply>
 #include <QPluginLoader>
 #include <QProcessEnvironment>
 #include <QTemporaryFile>
 #include <QThread>
-#include <QByteArray>
-#include <QNetworkAccessManager>
-#include <QNetworkReply>
 
+#include <exception>
 #include <cstdlib>
+#include <iostream>
 #include <sstream>
 #include <stdexcept>
-#include <iostream>
 
 #ifdef _WIN32
 #include <windows.h>

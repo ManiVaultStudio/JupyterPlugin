@@ -1,10 +1,21 @@
 #include "XeusInterpreter.h"
+
 #include "MVData.h"
-#include <QDebug>
-#include <pybind11/pybind11.h>
-#include <xeus/xhelper.hpp>
-//#include <xcomm.hpp>
+
 #include <iostream>
+#include <string>
+
+#include <xeus/xcomm.hpp>
+#include <xeus/xhelper.hpp>
+#include <xeus/xinterpreter.hpp>
+#include <xeus-python/xinterpreter.hpp>
+
+#include <pybind11/embed.h>
+#include <pybind11/pybind11.h>
+#include <pybind11/gil.h>
+
+#include <QDebug>
+
 namespace py = pybind11;
 
 XeusInterpreter::XeusInterpreter()
