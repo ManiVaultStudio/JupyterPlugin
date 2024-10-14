@@ -1,7 +1,5 @@
 #pragma once
 
-#include "SettingsAction.h"
-
 #include <BackgroundTask.h>
 #include <Dataset.h>
 #include <PluginFactory.h>
@@ -55,7 +53,6 @@ public:
 
 protected:
     mv::Dataset<Points>     _points;                    /** Points smart pointer */
-    SettingsAction          _settingsAction;            /** Settings action */
     QString                 _currentDatasetName;        /** Name of the current dataset */
     QLabel*                 _currentDatasetNameLabel;   /** Label that show the current dataset name */
     mv::BackgroundTask*     _serverBackgroundTask;      /** The background task monitoring the Jupyter Server */
@@ -87,6 +84,8 @@ private:
     void logProcessOutput();
 
     const QString getVirtDir(const QString);
+    QString getPythonExePath();
+    QString getPythonConfigPath();
 };
 
 /**

@@ -35,8 +35,6 @@ set(SOURCES
     src/JupyterLauncher.json
     src/GlobalSettingsAction.h
     src/GlobalSettingsAction.cpp
-    src/SettingsAction.h
-    src/SettingsAction.cpp
 )
 
 set (RESOURCES

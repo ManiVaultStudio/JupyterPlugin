@@ -1,25 +1,19 @@
 #include "JupyterLauncher.h"
 #include "GlobalSettingsAction.h"
 
-#include <event/Event.h>
-
-#include <DatasetsMimeData.h>
+#include <CoreInterface.h>
 #include <PointData/PointData.h>
 
 #include <QByteArray>
 #include <QDebug>
-#include <QMimeData>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QPluginLoader>
-#include <QProcessEnvironment>
 #include <QTemporaryFile>
 #include <QThread>
 
 #include <exception>
-#include <cstdlib>
 #include <iostream>
-#include <sstream>
 #include <stdexcept>
 
 #ifdef _WIN32
@@ -35,12 +29,10 @@ JupyterLauncher::JupyterLauncher(const PluginFactory* factory) :
     _points(),
     _currentDatasetName(),
     _currentDatasetNameLabel(new QLabel()),
-    _settingsAction(this, "Settings Action"),
     _serverBackgroundTask(nullptr),
     _serverPollTimer(nullptr)
 {
     setObjectName("Jupyter kernel plugin launcher");
-    // Align text in the center
     _currentDatasetNameLabel->setAlignment(Qt::AlignCenter);
 }
 
@@ -53,17 +45,6 @@ JupyterLauncher::~JupyterLauncher()
 
 void JupyterLauncher::init()
 {
-    // Create layout
-    auto layout = new QVBoxLayout();
-
-    layout->setContentsMargins(0, 0, 0, 0);
-
-    layout->addWidget(_currentDatasetNameLabel);
-
-    // Apply the layout
-    getWidget().setLayout(layout);
-
-    addDockingAction(&_settingsAction);
 }
 
 // Distinguish between python in a regular or conda directory
@@ -90,12 +71,21 @@ const QString JupyterLauncher::getVirtDir(const QString pydir)
     return pydir;
 }
 
+QString JupyterLauncher::getPythonExePath()
+{
+    return mv::settings().getPluginGlobalSettingsGroupAction<GlobalSettingsAction>(this)->getDefaultPythonPathAction().getFilePath();
+}
+
+QString JupyterLauncher::getPythonConfigPath()
+{
+    return mv::settings().getPluginGlobalSettingsGroupAction<GlobalSettingsAction>(this)->getDefaultConnectionPathAction().getFilePath();
+}
 
 // Emulate the environment changes from a venv activate script
 void JupyterLauncher::setPythonEnv(const QString version)
 {
     // 1. Configure a process to run python on the user selected python interpreter
-    auto pyinterp = QFileInfo(_settingsAction.getPythonPathAction(version).getFilePath());
+    auto pyinterp = QFileInfo(getPythonExePath());
     auto pydir = QDir::toNativeSeparators(pyinterp.absolutePath());
     auto virtdir = getVirtDir(pydir);
 #ifdef _WIN32
@@ -121,7 +111,7 @@ void JupyterLauncher::setPythonEnv(const QString version)
 void JupyterLauncher::preparePythonProcess(QProcess &process, const QString version)
 {
     // 1. Configure a process to run python on the user selected python interpreter
-    auto pyinterp = QFileInfo(_settingsAction.getPythonPathAction(version).getFilePath());
+    auto pyinterp = QFileInfo(getPythonExePath());
     auto pydir = QDir::toNativeSeparators(pyinterp.absolutePath());
 #ifdef _WIN32
     QString sep(";"); // path separator
@@ -158,7 +148,7 @@ int JupyterLauncher::runPythonScript(const QString scriptName, QString& sout, QS
 
     // 3. Run the script synchronously
     auto result = 0;
-    auto pyinterp = QFileInfo(_settingsAction.getPythonPathAction(version).getFilePath());
+    auto pyinterp = QFileInfo(getPythonExePath());
     auto pydir = QDir::toNativeSeparators(pyinterp.absolutePath());
     pythonScriptProcess.start(pydir + QString("/python"), QStringList({ tempFile.fileName() }) + params);
     if (!pythonScriptProcess.waitForStarted()) {
@@ -181,7 +171,7 @@ int JupyterLauncher::runPythonScript(const QString scriptName, QString& sout, QS
 
 bool JupyterLauncher::runPythonCommand(const QStringList params, const QString version)
 {
-    auto pyinterp = QFileInfo(_settingsAction.getPythonPathAction(version).getFilePath());
+    auto pyinterp = QFileInfo(getPythonExePath());
     auto pydir = QDir::toNativeSeparators(pyinterp.absolutePath());
     QProcess mvScriptProcess;
     this->preparePythonProcess(mvScriptProcess, version);
@@ -253,7 +243,7 @@ bool JupyterLauncher::optionallyInstallMVWheel(const QString version)
         auto dataWheel = MVWheelPath + "mvstudio_data-" + pluginVersion + "-py3-none-any.whl";
         auto kernelWheel = MVWheelPath + "mvstudio_kernel-" + pluginVersion + "-py3-none-any.whl";
         qDebug() << "Wheels paths: " << dataWheel << kernelWheel;
-        auto pyinterp = QFileInfo(_settingsAction.getPythonPathAction(version).getFilePath());
+        auto pyinterp = QFileInfo(getPythonExePath());
         auto pydir = QDir::toNativeSeparators(pyinterp.absolutePath());
         if (!runPythonCommand(QStringList({ "-m", "pip", "install", dataWheel.toStdString().c_str(), kernelWheel.toStdString().c_str() }), version)) {
             qWarning() << "Installing the MVJupyterPluginManager failed. See logging for more information";
@@ -363,10 +353,10 @@ bool JupyterLauncher::startJupyterServerProcess(const QString version)
     QString sep(":");
 #endif
 
-    auto pyinterp = QFileInfo(_settingsAction.getPythonPathAction(version).getFilePath());
+    auto pyinterp = QFileInfo(getPythonExePath());
     auto pydir = QDir::toNativeSeparators(pyinterp.absolutePath());
     _serverProcess.setProcessChannelMode(QProcess::MergedChannels);
-    auto connectionPath = _settingsAction.getConnectionFilePathAction(version).getFilePath();
+    auto connectionPath = getPythonConfigPath();
     // In order to run python -m jupyter lab and access the MANIVAULT_JUPYTERPLUGIN_CONNECTION_FILE 
     // the env variable this must be set in the current process.
     // Setting it in the child QProcess does not work for reasons that are unclear.
@@ -510,8 +500,7 @@ void JupyterLauncher::loadJupyterPythonKernel(const QString pyversion)
     _plugins.push_back(std::move(std::unique_ptr<plugin::Plugin>(pluginInstance)));
 
     // Communicate the connection file path via the child action in the JupyterPlugin
-    //auto connectionPath = _settingsAction.getConnectionFilePathAction().getFilePath();
-    auto connectionPath = _settingsAction.getConnectionFilePathAction(pyversion).getFilePath();
+    auto connectionPath = getPythonConfigPath();
     auto jpActions = pluginInstance->getChildren();
     for(auto action: jpActions) {
         qDebug() << action->text() << ": " << action->data();
@@ -537,7 +526,7 @@ JupyterLauncherFactory::JupyterLauncherFactory() :
     _statusBarPopupGroupAction(this, "Popup Group"),
     _statusBarPopupAction(this, "Popup")
 {
-
+    setMaximumNumberOfInstances(1);
 }
 
 ViewPlugin* JupyterLauncherFactory::produce()
@@ -562,7 +551,14 @@ void JupyterLauncherFactory::initialize()
 
     auto launchJupyterPython311 = new TriggerAction(this, "Start Jupyter Kernel and Lab (3.11)");
     connect(launchJupyterPython311, &TriggerAction::triggered, this, [this]() {
-        auto plugin = mv::plugins().requestPlugin<JupyterLauncher>("Jupyter Launcher");
+        auto openJupyterPlugins = mv::plugins().getPluginsByFactory(this);
+
+        JupyterLauncher* plugin = nullptr;
+        if (openJupyterPlugins.empty())
+            plugin = mv::plugins().requestPlugin<JupyterLauncher>("Jupyter Launcher");
+        else
+            plugin = dynamic_cast<JupyterLauncher*>(openJupyterPlugins.front());
+
         plugin->loadJupyterPythonKernel("3.11");
     });
 
@@ -571,6 +567,9 @@ void JupyterLauncherFactory::initialize()
 
     // Sets the action that is shown when the status bar is clicked
     _statusBarAction->setPopupAction(&_statusBarPopupGroupAction);
+
+    // Always show
+    _statusBarAction->getConditionallyVisibleAction().setChecked(false);
 
     // Position to the right of the status bar action
     _statusBarAction->setIndex(-1);
