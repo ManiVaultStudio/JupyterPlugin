@@ -29,11 +29,6 @@ find_package(Qt6 COMPONENTS Widgets WebEngineWidgets REQUIRED)
 
 qt6_add_resources(RESOURCE_FILES res/jupyter_launcher_resources.qrc)
 
-# uses MVSTUDIO_VERSION
-set(MVSTUDIO_VERSIO_IN src/mvstudio_version.h.in)
-set(MVSTUDIO_VERSIO_H src/mvstudio_version.h.in)
-configure_file(${MVSTUDIO_VERSIO_IN} ${MVSTUDIO_VERSIO_H} @ONLY)
-
 set(SOURCES
     src/JupyterLauncher.h
     src/JupyterLauncher.cpp
@@ -61,7 +56,6 @@ add_library(${JUPYTERLAUNCHER} SHARED ${SOURCES} ${RESOURCES} ${RESOURCE_FILES})
 # Target include directories
 # -----------------------------------------------------------------------------
 target_include_directories(${JUPYTERLAUNCHER} PRIVATE "${ManiVault_INCLUDE_DIR}")
-target_include_directories(${JUPYTERLAUNCHER} PUBLIC "${MVSTUDIO_VERSIO_H}")
 
 # -----------------------------------------------------------------------------
 # Target properties

@@ -11,7 +11,10 @@ endif()
 # Jupyter Plugin
 # -----------------------------------------------------------------------------
 set(JUPYTERPLUGIN "JupyterPlugin")
-PROJECT(${JUPYTERPLUGIN})
+PROJECT(${JUPYTERPLUGIN}
+    VERSION 0.1.0
+    DESCRIPTION "Jupyter plugin for ManiVault"
+    LANGUAGES CXX)
 
 # -----------------------------------------------------------------------------
 # CMake Options
@@ -65,7 +68,6 @@ message(STATUS "*** Python include dirs ${Python_INCLUDE_DIRS}")
 
 include(cmake/dependencies.cmake)
 
-set(MVSTUDIO_VERSION "0.1.0" CACHE STRING "Version used for the mvstudio modules data and kernel")
 add_subdirectory(src/JupyterLauncher)
 
 # -----------------------------------------------------------------------------
@@ -190,7 +192,7 @@ if (MVSTUDIO_ENABLE_PYTHON_BUILD)
     endif()
     message(STATUS "Building the mvstudio_data python package in ${CMAKE_CURRENT_SOURCE_DIR}")
     execute_process(
-        COMMAND ${Python_EXECUTABLE} -m poetry version ${MVSTUDIO_VERSION}
+        COMMAND ${Python_EXECUTABLE} -m poetry version ${CMAKE_PROJECT_VERSION}
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/python/mvstudio_data
         COMMAND_ERROR_IS_FATAL ANY)    
     execute_process(
@@ -199,7 +201,7 @@ if (MVSTUDIO_ENABLE_PYTHON_BUILD)
         COMMAND_ERROR_IS_FATAL ANY)
     message(STATUS "Building the mvstudio_data python package in ${CMAKE_CURRENT_SOURCE_DIR}")
     execute_process(
-        COMMAND ${Python_EXECUTABLE} -m poetry version ${MVSTUDIO_VERSION}
+        COMMAND ${Python_EXECUTABLE} -m poetry version ${CMAKE_PROJECT_VERSION}
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/python/mvstudio_kernel
         COMMAND_ERROR_IS_FATAL ANY)  
     execute_process(
@@ -219,10 +221,10 @@ install(TARGETS ${JUPYTERPLUGIN}
     ARCHIVE DESTINATION lib     COMPONENT LINKLIB # Windows .lib 
 )
 
-install(FILES jupyter_server_config.py python/mvstudio_data/dist/mvstudio_data-${MVSTUDIO_VERSION}-py3-none-any.whl
+install(FILES jupyter_server_config.py python/mvstudio_data/dist/mvstudio_data-${CMAKE_PROJECT_VERSION}-py3-none-any.whl
 DESTINATION Plugins/JupyterPlugin/wheelhouse COMPONENT PLUGINS)
 
-install(FILES jupyter_server_config.py python/mvstudio_kernel/dist/mvstudio_kernel-${MVSTUDIO_VERSION}-py3-none-any.whl
+install(FILES jupyter_server_config.py python/mvstudio_kernel/dist/mvstudio_kernel-${CMAKE_PROJECT_VERSION}-py3-none-any.whl
 DESTINATION Plugins/JupyterPlugin/wheelhouse COMPONENT PLUGINS)
 
 add_custom_command(TARGET ${JUPYTERPLUGIN} POST_BUILD

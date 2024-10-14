@@ -1,5 +1,4 @@
 #include "JupyterLauncher.h"
-#include <mvstudio_version.h>
 #include "GlobalSettingsAction.h"
 
 #include <event/Event.h>
@@ -315,16 +314,17 @@ bool JupyterLauncher::installKernel(const QString version)
 
 bool JupyterLauncher::optionallyInstallMVWheel(const QString version)
 {
+    const QString pluginVersion = getVersion();
     QMessageBox::StandardButton reply = QMessageBox::question(
         nullptr, 
         "mvstudio.data_hierarchy missing", 
-        QString("mvstudio.data_hierarchy ") + mvstudio_version + " is needed in the python environment.\n Do you wish to install it now ? ",
+        QString("mvstudio.data_hierarchy ") + pluginVersion + " is needed in the python environment.\n Do you wish to install it now ? ",
         QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes);
     if (reply == QMessageBox::Yes) {
         auto MVWheelPath = QCoreApplication::applicationDirPath() + "/Plugins/JupyterPlugin/wheelhouse/";
         MVWheelPath = QDir::toNativeSeparators(MVWheelPath);
-        auto dataWheel = MVWheelPath + "mvstudio_data-" + mvstudio_version + "-py3-none-any.whl";
-        auto kernelWheel = MVWheelPath + "mvstudio_kernel-" + mvstudio_version + "-py3-none-any.whl";
+        auto dataWheel = MVWheelPath + "mvstudio_data-" + pluginVersion + "-py3-none-any.whl";
+        auto kernelWheel = MVWheelPath + "mvstudio_kernel-" + pluginVersion + "-py3-none-any.whl";
         qDebug() << "Wheels paths: " << dataWheel << kernelWheel;
         auto pyinterp = QFileInfo(_settingsAction.getPythonPathAction(version).getFilePath());
         auto pydir = QDir::toNativeSeparators(pyinterp.absolutePath());
@@ -522,7 +522,7 @@ void JupyterLauncher::loadJupyterPythonKernel(const QString pyversion)
     QString serr;
     QString sout;
     // 1. Check the path to see if the correct version of mvstudio is installed
-    auto exitCode = runPythonScript(":/text/check_env.py", sout, serr, pyversion, QStringList{mvstudio_version});
+    auto exitCode = runPythonScript(":/text/check_env.py", sout, serr, pyversion, QStringList{ getVersion() });
     if (exitCode == 2) {
         qDebug() << serr << sout;
         // TODO display error message box
