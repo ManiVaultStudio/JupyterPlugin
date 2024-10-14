@@ -36,8 +36,8 @@ public: // Action getters
             return _python312Path;
         }
 
-        qWarning() << "getPythonPathAction: Only 3.11 and 3.12 are supported but got " << pyversion << ". Defaulting to 3.12";
-        return _python312Path;
+        qWarning() << "getPythonPathAction: Only 3.11 and 3.12 are supported but got " << pyversion << ". Defaulting to 3.11";
+        return _python311Path;
     }
     FilePickerAction& getConnectionFilePathAction(const QString& pyversion) {
         if (pyversion == "3.11") {
@@ -47,8 +47,8 @@ public: // Action getters
             return _connection312FilePath;
         }
 
-        qWarning() << "getConnectionFilePathAction: Only 3.11 and 3.12 are supported but got " << pyversion << ". Defaulting to 3.12";
-        return _connection312FilePath;
+        qWarning() << "getConnectionFilePathAction: Only 3.11 and 3.12 are supported but got " << pyversion << ". Defaulting to 3.11";
+        return _connection311FilePath;
     }
 
     void enableVersion(const QString& pyversion);
