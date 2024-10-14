@@ -21,11 +21,13 @@
  * @authors B. van Lew
 */
 
-// xeus includes
+#include <memory>
+
 #include <xeus-zmq/xserver_zmq.hpp>
 #include <xeus/xkernel_configuration.hpp>
 #include <zmq.hpp>
-#include "XeusPoller.h"
+
+#include <QObject>
 
 class QTimer;
 
@@ -36,7 +38,7 @@ public:
     Q_OBJECT
 
 public: 
-    XeusServer(zmq::context_t& context,
+    XeusServer(xeus::xcontext& context,
                const xeus::xconfiguration& config,
                nl::json::error_handler_t eh);
 
@@ -51,12 +53,13 @@ protected:
     void start_impl(xeus::xpub_message message) override;
     void stop_impl() override;
 
-    QTimer* m_pollTimer;
-
 private slots:
 
     void on_received_shell_msg(xeus::xmessage* msg);
     void on_received_control_msg(xeus::xmessage* msg);
+
+private:
+    QTimer* m_pollTimer = nullptr;
 };
 
 std::unique_ptr<xeus::xserver> make_XeusServer(xeus::xcontext& context,

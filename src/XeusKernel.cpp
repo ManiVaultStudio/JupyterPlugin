@@ -40,13 +40,13 @@ void XeusKernel::startKernel(const QString& connection_path)
     std::unique_ptr<XeusInterpreter> interpreter = std::unique_ptr<XeusInterpreter>(new XeusInterpreter());
     std::unique_ptr<xeus::xhistory_manager> hist = xeus::make_in_memory_history_manager();
     m_kernel = new xeus::xkernel(
-        //config,
-        xeus::get_user_name(),
-        std::move(context),
-        std::move(interpreter),
-        make_XeusServer,
-        std::move(hist),
-        nullptr
+        /*config: noy used here */
+        /*user_name*/ xeus::get_user_name(),
+        /*context*/ std::move(context),
+        /*interpreter*/ std::move(interpreter),
+        /*server_builder*/ make_XeusServer,
+        /*history_manager*/ std::move(hist),
+        /*logger*/ nullptr
     );
 
     // Save the congig that was generated
