@@ -527,6 +527,10 @@ void JupyterLauncher::loadJupyterPythonKernel(const QString pyversion)
     return;
 }
 
+/// ////////////////////// ///
+/// JupyterLauncherFactory ///
+/// ////////////////////// ///
+
 JupyterLauncherFactory::JupyterLauncherFactory() :
     ViewPluginFactory(),
     _statusBarAction(nullptr),
@@ -556,15 +560,14 @@ void JupyterLauncherFactory::initialize()
     _statusBarPopupGroupAction.setConfigurationFlag(WidgetAction::ConfigurationFlag::NoGroupBoxInPopupLayout);
     _statusBarPopupGroupAction.addAction(&_statusBarPopupAction);
 
-
-    _statusBarAction = new PluginStatusBarAction(this, "Status Bar", getKind());
-    auto launchJupyterPython311 = new TriggerAction(this, "py3.11: Kernel and Jupyter Lab");
-    _statusBarAction->addMenuAction(launchJupyterPython311);
-
+    auto launchJupyterPython311 = new TriggerAction(this, "Start Jupyter Kernel and Lab (3.11)");
     connect(launchJupyterPython311, &TriggerAction::triggered, this, [this]() {
         auto plugin = mv::plugins().requestPlugin<JupyterLauncher>("Jupyter Launcher");
         plugin->loadJupyterPythonKernel("3.11");
     });
+
+    _statusBarAction = new PluginStatusBarAction(this, "Jupyter Launcher", getKind());
+    _statusBarAction->addMenuAction(launchJupyterPython311);
 
     // Sets the action that is shown when the status bar is clicked
     _statusBarAction->setPopupAction(&_statusBarPopupGroupAction);
@@ -574,7 +577,6 @@ void JupyterLauncherFactory::initialize()
 
     // Assign the status bar action so that it will appear on the main window status bar
     setStatusBarAction(_statusBarAction);
-    _statusBarAction->getConditionallyVisibleAction().setChecked(false);
 }
 
 QIcon JupyterLauncherFactory::getIcon(const QColor& color /*= Qt::black*/) const
@@ -584,12 +586,7 @@ QIcon JupyterLauncherFactory::getIcon(const QColor& color /*= Qt::black*/) const
 
 mv::DataTypes JupyterLauncherFactory::supportedDataTypes() const
 {
-    DataTypes supportedTypes;
-
-    // This example analysis plugin is compatible with points datasets
-    supportedTypes.append(PointType);
-
-    return supportedTypes;
+    return { PointType };
 }
 
 mv::gui::PluginTriggerActions JupyterLauncherFactory::getPluginTriggerActions(const mv::Datasets& datasets) const
@@ -603,7 +600,7 @@ mv::gui::PluginTriggerActions JupyterLauncherFactory::getPluginTriggerActions(co
     const auto numberOfDatasets = datasets.count();
 
     if (numberOfDatasets >= 1 && PluginFactory::areAllDatasetsOfTheSameType(datasets, PointType)) {
-        auto pluginTriggerAction = new PluginTriggerAction(const_cast<JupyterLauncherFactory*>(this), this, "Example", "View example data", getIcon(), [this, getPluginInstance, datasets](PluginTriggerAction& pluginTriggerAction) -> void {
+        auto pluginTriggerAction = new PluginTriggerAction(const_cast<JupyterLauncherFactory*>(this), this, "JupyterPlugin", "Open Jupyter Bridge", getIcon(), [this, getPluginInstance, datasets](PluginTriggerAction& pluginTriggerAction) -> void {
             for (auto dataset : datasets)
                 getPluginInstance();
         });

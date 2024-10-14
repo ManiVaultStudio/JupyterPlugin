@@ -1,27 +1,23 @@
 #pragma once
 
+#include "SettingsAction.h"
+
+#include <BackgroundTask.h>
+#include <Dataset.h>
+#include <PluginFactory.h>
 #include <ViewPlugin.h>
 
-#include <Dataset.h>
+#include <actions/HorizontalGroupAction.h>
+#include <actions/StringAction.h>
+#include <actions/PluginStatusBarAction.h>
+
 #include <PointData/PointData.h>
-#include "SettingsAction.h"
-#include <PluginFactory.h>
+
 #include <QWidget>
 #include <QProcess>
-#include "BackgroundTask.h"
 
-#include <actions/PluginStatusBarAction.h>
-#include <actions/HorizontalGroupAction.h>
-
-/** All plugin related classes are in the ManiVault plugin namespace */
 using namespace mv::plugin;
-
-/** Drop widget used in this plugin is located in the ManiVault gui namespace */
 using namespace mv::gui;
-
-/** Dataset reference used in this plugin is located in the ManiVault util namespace */
-using namespace mv::util;
-
 
 class QLabel;
 
@@ -54,8 +50,6 @@ public:
     void init() override;
 
      bool validatePythonEnvironment();
-
-    QString& getPythonLibPath();
 
     void loadJupyterPythonKernel(const QString version);
 
@@ -96,9 +90,7 @@ private:
 };
 
 /**
- * Example view plugin factory class
- *
- * Note: Factory does not need to be altered (merely responsible for generating new plugins when requested)
+ * Jupyter Launcher view plugin factory class
  */
 class JupyterLauncherFactory : public ViewPluginFactory
 {
