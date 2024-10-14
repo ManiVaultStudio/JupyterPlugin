@@ -53,12 +53,6 @@ public:
     /** This function is called by the core after the view plugin has been created */
     void init() override;
 
-    /**
-     * Invoked when a data event occurs
-     * @param dataEvent Data event which occurred
-     */
-    void onDataEvent(mv::DatasetEvent* dataEvent);
-
      bool validatePythonEnvironment();
 
     QString& getPythonLibPath();
@@ -71,7 +65,7 @@ protected:
     QString                 _currentDatasetName;        /** Name of the current dataset */
     QLabel*                 _currentDatasetNameLabel;   /** Label that show the current dataset name */
     mv::BackgroundTask*     _serverBackgroundTask;      /** The background task monitoring the Jupyter Server */
-    QProcess                _serverProcess;             /** A detached process for tunning the Jupyter server */
+    QProcess                _serverProcess;             /** A detached process for running the Jupyter server */
     QTimer*                 _serverPollTimer;           /** Poll the server process output at a regular interval */
 
 public slots:

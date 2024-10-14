@@ -35,7 +35,9 @@ JupyterLauncher::JupyterLauncher(const PluginFactory* factory) :
     _points(),
     _currentDatasetName(),
     _currentDatasetNameLabel(new QLabel()),
-    _settingsAction(this, "Settings Action")
+    _settingsAction(this, "Settings Action"),
+    _serverBackgroundTask(nullptr),
+    _serverPollTimer(nullptr)
 {
     setObjectName("Jupyter kernel plugin launcher");
     // Align text in the center
@@ -62,82 +64,6 @@ void JupyterLauncher::init()
     getWidget().setLayout(layout);
 
     addDockingAction(&_settingsAction);
-
-    // Alternatively, classes which derive from hdsp::EventListener (all plugins do) can also respond to events
-    _eventListener.addSupportedEventType(static_cast<std::uint32_t>(EventType::DatasetAdded));
-    _eventListener.addSupportedEventType(static_cast<std::uint32_t>(EventType::DatasetDataChanged));
-    _eventListener.addSupportedEventType(static_cast<std::uint32_t>(EventType::DatasetRemoved));
-    _eventListener.addSupportedEventType(static_cast<std::uint32_t>(EventType::DatasetDataSelectionChanged));
-    _eventListener.registerDataEventByType(PointType, std::bind(&JupyterLauncher::onDataEvent, this, std::placeholders::_1));
-
-    //this->loadPlugin();
-}
-
-void JupyterLauncher::onDataEvent(mv::DatasetEvent* dataEvent)
-{
-    // Get smart pointer to dataset that changed
-    const auto changedDataSet = dataEvent->getDataset();
-
-    // Get GUI name of the dataset that changed
-    const auto datasetGuiName = changedDataSet->getGuiName();
-
-    // The data event has a type so that we know what type of data event occurred (e.g. data added, changed, removed, renamed, selection changes)
-    switch (dataEvent->getType()) {
-
-        // A points dataset was added
-        case EventType::DatasetAdded:
-        {
-            // Cast the data event to a data added event
-            const auto dataAddedEvent = static_cast<DatasetAddedEvent*>(dataEvent);
-
-            // Get the GUI name of the added points dataset and print to the console
-            qDebug() << datasetGuiName << "was added";
-
-            break;
-        }
-
-        // Points dataset data has changed
-        case EventType::DatasetDataChanged:
-        {
-            // Cast the data event to a data changed event
-            const auto dataChangedEvent = static_cast<DatasetDataChangedEvent*>(dataEvent);
-
-            // Get the name of the points dataset of which the data changed and print to the console
-            qDebug() << datasetGuiName << "data changed";
-
-            break;
-        }
-
-        // Points dataset data was removed
-        case EventType::DatasetRemoved:
-        {
-            // Cast the data event to a data removed event
-            const auto dataRemovedEvent = static_cast<DatasetRemovedEvent*>(dataEvent);
-
-            // Get the name of the removed points dataset and print to the console
-            qDebug() << datasetGuiName << "was removed";
-
-            break;
-        }
-
-        // Points dataset selection has changed
-        case EventType::DatasetDataSelectionChanged:
-        {
-            // Cast the data event to a data selection changed event
-            const auto dataSelectionChangedEvent = static_cast<DatasetDataSelectionChangedEvent*>(dataEvent);
-
-            // Get the selection set that changed
-            const auto& selectionSet = changedDataSet->getSelection<Points>();
-
-            // Print to the console
-            qDebug() << datasetGuiName << "selection has changed";
-
-            break;
-        }
-
-        default:
-            break;
-    }
 }
 
 // Distinguish between python in a regular or conda directory
@@ -495,7 +421,7 @@ bool JupyterLauncher::validatePythonEnvironment()
 // e.g.
 // "3.11"
 // "3.12"
-// There  must be a JupyterPlugin (a kernel provider) that matches the python vesion for this to work.
+// There  must be a JupyterPlugin (a kernel provider) that matches the python version for this to work.
 void JupyterLauncher::loadJupyterPythonKernel(const QString pyversion)
 {
     auto jupyterPluginPath = QCoreApplication::applicationDirPath() + "/Plugins/JupyterPlugin/JupyterPlugin";

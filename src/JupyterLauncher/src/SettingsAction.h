@@ -54,7 +54,7 @@ public: // Action getters
     void enableVersion(const QString& pyversion);
 
 private:
-    JupyterLauncher*    _jupyterLauncher;   
+    JupyterLauncher* _jupyterLauncher;   
     FilePickerAction _python311Path;
     FilePickerAction _connection311FilePath;
     FilePickerAction _python312Path;
