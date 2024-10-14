@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.21)
 
 # -----------------------------------------------------------------------------
-# BinExporter Plugin
+# JupyterLauncher View Plugin
 # -----------------------------------------------------------------------------
 set(JUPYTERLAUNCHER "JupyterLauncher")
 PROJECT(${JUPYTERLAUNCHER})

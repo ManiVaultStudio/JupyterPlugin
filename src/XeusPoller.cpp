@@ -2,8 +2,7 @@
 
 #include <iostream>
 
-XeusWorkerThread::XeusWorkerThread(QObject* parent,
-    poller_t poller)
+XeusWorkerThread::XeusWorkerThread(QObject* parent, poller_t poller)
     : QThread(parent)
     , m_poller(std::move(poller))
     , m_request_stop(false)

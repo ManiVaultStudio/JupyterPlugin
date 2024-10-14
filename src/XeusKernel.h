@@ -39,6 +39,6 @@ private:
     void onReadyStandardError();
 
 private:
-    xeus::xkernel *m_kernel;
-    QProcess m_jupyterLabServer_process;
+    xeus::xkernel *m_kernel = nullptr;
+    QProcess m_jupyterLabServer_process = QProcess{};
 };

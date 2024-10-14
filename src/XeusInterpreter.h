@@ -12,7 +12,7 @@
  * This class wraps the xeus python interpreter
  * In the slicer implementation (xSlicerInterpreter.cxx in SlicerJupyter)
  * the wrapping adds additional functionality.ine
- * In the first iteration this wapper is effectively a noop 
+ * In the first iteration this wrapper is effectively a noop 
  * but it provides a point for additional functionality when 
  * processing python code.
 */
@@ -45,6 +45,7 @@ private:
 
     void shutdown_request_impl() override;
 
-    pybind11::scoped_interpreter* python_interpreter;
-    py::module comm_module;
+private:
+    pybind11::scoped_interpreter* python_interpreter = nullptr;
+    py::module comm_module = {};
 };

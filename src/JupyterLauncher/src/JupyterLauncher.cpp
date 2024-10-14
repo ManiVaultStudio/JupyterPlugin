@@ -274,7 +274,7 @@ bool JupyterLauncher::runPythonCommand(const QStringList params, const QString v
             throw std::runtime_error("operation error");
         }
     }
-    catch (const std::exception& e) {
+    catch ([[maybe_unused]] const std::exception& e) {
         auto serr = QString::fromUtf8(mvScriptProcess.readAllStandardError());
         auto sout = QString::fromUtf8(mvScriptProcess.readAllStandardOutput());
         qWarning() << "Script failed running " << params.join(" ") << "giving: " << "\n stdout : " << sout << "\n stderr : " << serr;

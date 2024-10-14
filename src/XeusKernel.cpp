@@ -55,8 +55,8 @@ void XeusKernel::startKernel(const QString& connection_path)
         /*logger*/ nullptr
     );
 
-    // Save the congig that was generated
-    auto set_config = m_kernel->get_config();
+    // Save the config that was generated
+    const auto& set_config = m_kernel->get_config();
     nlohmann::json jsonObj;
     jsonObj["transport"] = set_config.m_transport.c_str();
     jsonObj["ip"] = set_config.m_ip.c_str();
@@ -68,9 +68,9 @@ void XeusKernel::startKernel(const QString& connection_path)
     jsonObj["signature_scheme"] = set_config.m_signature_scheme.c_str();
     jsonObj["key"] = set_config.m_key.c_str();
     jsonObj["kernel_name"] = "ManiVaultStudio";
-    std::ofstream confFile(connection_path.toUtf8()); // "D:\\TempProj\\DevBundle\\Jupyter\\install\\Debug\\external_kernels\\ManiVault\\connection.json");
-    confFile << jsonObj;
 
+    std::ofstream configFile(connection_path.toUtf8()); // "D:\\TempProj\\DevBundle\\Jupyter\\install\\Debug\\external_kernels\\ManiVault\\connection.json");
+    configFile << jsonObj;
 
     //const auto& config = m_kernel->get_config();
     qInfo() << "Xeus Kernel settings";
