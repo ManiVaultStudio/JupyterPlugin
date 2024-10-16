@@ -74,7 +74,7 @@ void JupyterPlugin::init()
 
     });
 
-    auto jupyter_configFilepath = std::string("TODO: Add configfile path here from action");
+    auto jupyter_configFilepath = std::string("TODO: Add config file path here from action");
     
     // Manual start
     pKernel->startKernel(_settingsAction.getConnectionFilePathAction().getFilePath());

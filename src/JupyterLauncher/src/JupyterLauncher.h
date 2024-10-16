@@ -75,7 +75,6 @@ private:
     bool runPythonCommand(const QStringList params, const QString version);
 
     void setPythonEnv(const QString version);
-    void preparePythonProcess(QProcess &process, const QString version);
     bool installKernel(const QString version);
     bool optionallyInstallMVWheel(const QString version);
 
