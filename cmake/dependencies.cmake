@@ -22,8 +22,17 @@ CPMAddPackage(
     NAME nlohmann_json
     GITHUB_REPOSITORY "nlohmann/json"
     GIT_TAG ${nlohmann_json_VERSION}
+    EXCLUDE_FROM_ALL YES
     OPTIONS
     "JSON_BuildTests OFF"
+)
+
+CPMAddPackage(
+    NAME xtl
+    GITHUB_REPOSITORY "xtensor-stack/xtl"
+    GIT_TAG ${xtl_VERSION}
+    EXCLUDE_FROM_ALL YES
+    OPTIONS "BUILD_TESTS OFF"
 )
 
 # produces xeus and xeus-static

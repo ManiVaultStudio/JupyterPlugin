@@ -38,7 +38,7 @@ public:
     Q_OBJECT
 
 public: 
-    XeusServer(xeus::xcontext& context,
+    XeusServer(zmq::context_t& context,
                const xeus::xconfiguration& config,
                nl::json::error_handler_t eh);
 

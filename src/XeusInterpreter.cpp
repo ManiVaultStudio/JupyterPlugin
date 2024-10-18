@@ -43,20 +43,22 @@ void XeusInterpreter::configure_impl()
 }
 
 // Execute incoming code and publish the result
-void XeusInterpreter::execute_request_impl(send_reply_callback cb,
-                                              int execution_count,
-                                              const std::string& code,
-                                              xeus::execute_request_config config,
-                                              nl::json user_expressions)
+nl::json XeusInterpreter::execute_request_impl(int execution_counter,
+                                               const std::string& code,
+                                               bool silent,
+                                               bool store_history,
+                                               nl::json user_expressions,
+                                               bool allow_stdin) 
 {
     qDebug() << "code: " << code.c_str();
 
     return xpyt::interpreter::execute_request_impl(
-        cb,
-        execution_count,
+        execution_counter,
         code,
-        config,
-        user_expressions
+        silent,
+        store_history,
+        user_expressions,
+        allow_stdin
     );
 }
 
