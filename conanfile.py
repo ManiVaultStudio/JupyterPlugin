@@ -1,10 +1,7 @@
-from conans import ConanFile, tools
+from conans import ConanFile
 from conan.tools.cmake import CMakeDeps, CMake, CMakeToolchain
-from conans.tools import save, load
-from conans.tools import os_info, SystemPackageTool
-
+from conans.tools import save, load, SystemPackageTool
 import os
-import shutil
 import pathlib
 import subprocess
 from rules_support import PluginBranchInfo
@@ -32,7 +29,6 @@ class JupyterPluginConan(ConanFile):
     license = "MIT"
 
     short_paths = True
-    # generators = "cmake"
     generators = "CMakeDeps"
 
     # Options may need to change depending on the packaged library
@@ -42,7 +38,7 @@ class JupyterPluginConan(ConanFile):
 
     scm = {
         "type": "git",
-        "subfolder": "ManiVaultStudio/JupyterPlugin",
+        "subfolder": "hdps/JupyterPlugin",
         "url": "auto",
         "revision": "auto",
     }
@@ -63,31 +59,26 @@ class JupyterPluginConan(ConanFile):
         )
 
     def set_version(self):
-        # print("In setversion")
         # Assign a version from the branch name
         branch_info = PluginBranchInfo(self.recipe_folder)
         self.version = branch_info.version
 
     def requirements(self):
-        #if os.environ.get("CONAN_REQUIRE_HDILIB", None) is not None:
-        #    self.requires("HDILib/1.2.6@biovault/stable")
         branch_info = PluginBranchInfo(self.__get_git_path())
         print(f"Core requirement {branch_info.core_requirement}")
         self.requires(branch_info.core_requirement)
 
     # Remove runtime and use always default (MD/MDd)
     def configure(self):
-        # if self.settings.compiler == "Visual Studio":
-        #    del self.settings.compiler.runtime
         pass
 
     def system_requirements(self):
-        if os_info.is_macos:
+        if self.settings.os == "Macos":
             installer = SystemPackageTool()
             installer.install("libomp")
             proc = subprocess.run("brew --prefix libomp",  shell=True, capture_output=True)
             subprocess.run(f"ln {proc.stdout.decode('UTF-8').strip()}/lib/libomp.dylib /usr/local/lib/libomp.dylib", shell=True)
-        if os_info.is_linux:
+        if self.settings.os == "Linux":
             self.run("sudo apt update && sudo apt install -y libtbb2-dev libsodium-dev")
 
     def config_options(self):
@@ -130,7 +121,7 @@ class JupyterPluginConan(ConanFile):
 
     def _configure_cmake(self):
         cmake = CMake(self)
-        cmake.configure(build_script_folder="ManiVaultStudio/JupyterPlugin", cli_args=["--log-level=DEBUG"])
+        cmake.configure(build_script_folder="hdps/JupyterPlugin")
         cmake.verbose = True
         return cmake
 
@@ -169,10 +160,6 @@ class JupyterPluginConan(ConanFile):
             ]
         )
         self.copy(pattern="*", src=package_dir)
-        # Add the debug support files to the package
-        # (*.pdb) if building the Visual Studio version
-        # if self.settings.compiler == "Visual Studio":
-        #     self.copy("*.pdb", dst="lib/Debug", keep_path=False)
 
     def package_info(self):
         self.cpp_info.debug.libdirs = ["Debug/lib"]
