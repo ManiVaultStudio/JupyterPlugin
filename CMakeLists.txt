@@ -85,19 +85,10 @@ set(JUPYTERPLUGIN_SOURCES
     src/XeusServer.cpp
     src/XeusInterpreter.h
     src/XeusInterpreter.cpp
-    src/SettingsAction.h
-    src/SettingsAction.cpp
     src/MVData.cpp
     src/MVData.h
     src/JupyterPlugin.json
     ${CMAKE_CURRENT_BINARY_DIR}/jupyterplugin_export.h
-)
-
-set(PLUGIN_MOC_HEADERS
-    src/JupyterPlugin.h
-    src/XeusKernel.h
-    src/XeusPoller.h
-    src/XeusServer.h
 )
 
 source_group(Plugin FILES ${JUPYTERPLUGIN_SOURCES})

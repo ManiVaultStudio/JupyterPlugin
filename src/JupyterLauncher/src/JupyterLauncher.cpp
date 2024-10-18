@@ -1,6 +1,7 @@
 #include "JupyterLauncher.h"
 #include "GlobalSettingsAction.h"
 
+#include <actions/WidgetAction.h>
 #include <CoreInterface.h>
 #include <PointData/PointData.h>
 
@@ -94,26 +95,31 @@ void JupyterLauncher::setPythonEnv(const QString version)
     QString pyDir = QFileInfo(pyInterpreter).absolutePath();
 
     //auto virtdir = getVirtDir(pydir);
-    QString currentPATH = QString::fromUtf8(qgetenv("PATH"));
+    //QString currentPATH = QString::fromUtf8(qgetenv("PATH"));
 
-    auto pathSeparator = []() -> QString {
-        // Return the appropriate path separator based on the OS
-        return (QOperatingSystemVersion::currentType() == QOperatingSystemVersion::Windows) ? ";" : ":";
-        };
+    //auto pathSeparator = []() -> QString {
+    //    // Return the appropriate path separator based on the OS
+    //    return (QOperatingSystemVersion::currentType() == QOperatingSystemVersion::Windows) ? ";" : ":";
+    //    };
 
-    QString newPATH = pyDir + pathSeparator() + currentPATH;
+    //QString newPATH = pyDir + pathSeparator() + currentPATH;
 
     //qputenv("VIRTUAL_ENV", QDir::toNativeSeparators(virtdir).toUtf8());
     //qputenv("PATH", newPATH.toUtf8());
+
     qputenv("PYTHONHOME", pyInterpreter.toUtf8());
+
     // PYTHONPATH is essential to picking up the modules in a venv environment
     // without it the xeusinterpreter will fail to load as the xeus_python_shell
     // will not be found.
-//#ifdef _WIN32
-//    qputenv("PYTHONPATH", QDir::toNativeSeparators(QString(virtdir + "/Lib/site-packages")).toUtf8());
-//#else
-//    qputenv("PYTHONPATH", QDir::toNativeSeparators(QString(virtdir + "/lib/python" + version + "/site-packages")).toUtf8());
-//#endif
+    QString pythonPath;
+
+#ifdef _WIN32
+    pythonPath = QDir::toNativeSeparators(pyDir + "/Lib/site-packages");
+#else
+    pythonPath = QDir::toNativeSeparators(pyDir + "/lib/python" + version + "/site-packages");
+#endif
+    qputenv("PYTHONPATH", pythonPath.toUtf8());
 }
 
 
@@ -519,47 +525,49 @@ void JupyterLauncher::loadJupyterPythonKernel(const QString pyversion)
     QLibrary jupyterPluginLib(jupyterPluginPath);
     qDebug() << "Using python plugin at: " << jupyterPluginLib.fileName();
 
-    QPluginLoader jupyLoader(jupyterPluginLib.fileName());
+    QPluginLoader jupyterPluginLoader(jupyterPluginLib.fileName());
 
     // Check if the plugin was loaded successfully
-    if (!jupyLoader.load()) {
-        qWarning() << "Failed to load plugin:" << jupyLoader.errorString();
+    if (!jupyterPluginLoader.load()) {
+        qWarning() << "Failed to load plugin:" << jupyterPluginLoader.errorString();
         return;
     }
 
-    QString pluginKind = jupyLoader.metaData().value("MetaData").toObject().value("name").toString();
-    QString menuName = jupyLoader.metaData().value("MetaData").toObject().value("menuName").toString();
-    QString version = jupyLoader.metaData().value("MetaData").toObject().value("version").toString();
-    auto pluginFactory = dynamic_cast<PluginFactory*>(jupyLoader.instance());
-
     // If pluginFactory is a nullptr then loading of the plugin failed for some reason. Print the reason to output.
-    if (!pluginFactory)
+    auto jupyterPluginFactory = dynamic_cast<PluginFactory*>(jupyterPluginLoader.instance());
+    if (!jupyterPluginFactory)
     {
-        qWarning() << "Failed to load plugin: " << jupyterPluginPath << jupyLoader.errorString();
+        qWarning() << "Failed to load plugin: " << jupyterPluginPath << jupyterPluginLoader.errorString();
+        return;
     }
 
+    QJsonObject jupyterPluginMetaData = jupyterPluginLoader.metaData().value("MetaData").toObject();
+    QString pluginKind = jupyterPluginMetaData.value("name").toString();
+    QString menuName = jupyterPluginMetaData.value("menuName").toString();
+    QString version = jupyterPluginMetaData.value("version").toString();
+
     // Loading of the plugin succeeded so cast it to its original class
-    _pluginFactories[pluginKind] = pluginFactory;
+    _pluginFactories[pluginKind] = jupyterPluginFactory;
     _pluginFactories[pluginKind]->setKind(pluginKind);
     _pluginFactories[pluginKind]->setVersion(version);
     _pluginFactories[pluginKind]->initialize();
 
-    auto pluginInstance = pluginFactory->produce();
-    _plugins.push_back(std::move(std::unique_ptr<plugin::Plugin>(pluginInstance)));
+    auto jupyterPluginInstance = _plugins.emplace_back(jupyterPluginFactory->produce());
 
     // Communicate the connection file path via the child action in the JupyterPlugin
-    auto connectionPath = getPythonConfigPath();
-    auto jpActions = pluginInstance->getChildren();
-    for(auto action: jpActions) {
-        qDebug() << action->text() << ": " << action->data();
-        if (action->text() == QString("Connection file path")) {
-            action->setData(connectionPath);
-        }
+    // TODO: just create a file instead of having to point here
+    auto connectionFileAction = jupyterPluginInstance->findChildByPath("Connection file");
+    if (connectionFileAction != nullptr)
+    {
+        FilePickerAction* connectionFilePickerAction = static_cast<FilePickerAction*>(connectionFileAction);
+        auto connectionPath = getPythonConfigPath();
+        connectionFilePickerAction->setFilePath(connectionPath);
     }
+
     // Load the plugin but first set the environment to get 
     // the correct python version
     setPythonEnv(pyversion);
-    pluginInstance->init();
+    jupyterPluginInstance->init();
     startJupyterServerProcess(pyversion);
     return;
 }

@@ -1,17 +1,18 @@
 #include "JupyterPlugin.h"
 
+#include <CoreInterface.h>
+#include <PointData/PointData.h>
+
 #include <QDebug>
 #include <QProcess>
 #include <QDir>
+#include <QStandardPaths>
 
 #include "XeusKernel.h"
-#include "jupyterplugin_export.h"
 
 Q_PLUGIN_METADATA(IID "nl.BioVault.JupyterPlugin")
 
-
 using namespace mv;
-
 
 class JupyterPlugin::PrivateKernel {
 public:
@@ -31,53 +32,22 @@ public:
 
 JupyterPlugin::JupyterPlugin(const PluginFactory* factory) :
     ViewPlugin(factory),
-    _dropWidget(nullptr),
-    _points(),
-    _currentDatasetName(),
-    _currentDatasetNameLabel(new QLabel()),
-    _settingsAction(this, "JupyterPlugin Settings"),
-    pKernel(new PrivateKernel())
+    _connectionFilePath(this, "Connection file", QDir(QStandardPaths::standardLocations(QStandardPaths::HomeLocation)[0]).filePath("connection.json")),
+    _pKernel(std::make_unique<PrivateKernel>())
 {
-    // This line is mandatory if drag and drop behavior is required
-    _currentDatasetNameLabel->setAcceptDrops(true);
-
-    // Align text in the center
-    _currentDatasetNameLabel->setAlignment(Qt::AlignCenter);
 }
 
 JupyterPlugin::~JupyterPlugin() = default;
 
 void JupyterPlugin::setConnectionPath(const QString& connection_path)
 {
-    this->_connectionPath = connection_path;
+    _connectionFilePath.setFilePath(connection_path);
 }
 
 void JupyterPlugin::init()
 {
-    // Create layout
-    auto layout = new QVBoxLayout();
-
-    layout->setContentsMargins(0, 0, 0, 0);
-
-    layout->addWidget(_currentDatasetNameLabel);
-
-    // Apply the layout
-    getWidget().setLayout(layout);
-
-    // Respond when the name of the dataset in the dataset reference changes
-    connect(&_points, &Dataset<Points>::guiNameChanged, this, [this]() {
-
-        auto newDatasetName = _points->getGuiName();
-
-        // Update the current dataset name label
-        _currentDatasetNameLabel->setText(QString("Current points dataset: %1").arg(newDatasetName));
-
-    });
-
-    auto jupyter_configFilepath = std::string("TODO: Add config file path here from action");
-    
-    // Manual start
-    pKernel->startKernel(_settingsAction.getConnectionFilePathAction().getFilePath());
+    QString jupyter_configFilepath = _connectionFilePath.getFilePath();
+    _pKernel->startKernel(jupyter_configFilepath);
 }
 
 ViewPlugin* JupyterPluginFactory::produce()
@@ -95,7 +65,7 @@ mv::gui::PluginTriggerActions JupyterPluginFactory::getPluginTriggerActions(cons
     PluginTriggerActions pluginTriggerActions;
 
     const auto getPluginInstance = [this]() -> JupyterPlugin* {
-        return dynamic_cast<JupyterPlugin*>(plugins().requestViewPlugin(getKind()));
+        return dynamic_cast<JupyterPlugin*>(mv::plugins().requestViewPlugin(getKind()));
     };
 
     const auto numberOfDatasets = datasets.count();

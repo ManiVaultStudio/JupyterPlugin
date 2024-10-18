@@ -2,27 +2,15 @@
 
 #include <ViewPlugin.h>
 
+#include <actions/FilePickerAction.h>
 #include <Dataset.h>
-#include <widgets/DropWidget.h>
-
-#include <PointData/PointData.h>
-#include "SettingsAction.h"
-#include <QWidget>
 
 #include <memory>
 
 #include "jupyterplugin_export.h"
 
-/** All plugin related classes are in the HDPS plugin namespace */
 using namespace mv::plugin;
-
-/** Drop widget used in this plugin is located in the HDPS gui namespace */
 using namespace mv::gui;
-
-/** Dataset reference used in this plugin is located in the HDPS util namespace */
-using namespace mv::util;
-
-class QLabel;
 
 /**
  * Jupyter plugin class
@@ -57,18 +45,12 @@ public:
 
     void setConnectionPath(const QString& connection_path);
 
-protected:
-    DropWidget*             _dropWidget;                /** Widget for drag and drop behavior */
-    SettingsAction          _settingsAction;            /** Settings action */
-    mv::Dataset<Points>     _points;                    /** Points smart pointer */
-    QString                 _currentDatasetName;        /** Name of the current dataset */
-    QLabel*                 _currentDatasetNameLabel;   /** Label that show the current dataset name */
-    QString                 _connectionPath;            /** absolute path to the connection file*/
-
 private:
     // shield the implementation dependencies
     class PrivateKernel;
-    std::unique_ptr<PrivateKernel> pKernel;
+    std::unique_ptr<PrivateKernel> _pKernel;
+
+    FilePickerAction                _connectionFilePath;        /** Settings action */
 };
 
 /**

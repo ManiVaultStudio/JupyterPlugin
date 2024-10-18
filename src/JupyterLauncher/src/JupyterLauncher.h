@@ -14,6 +14,8 @@
 #include <QWidget>
 #include <QProcess>
 
+#include <vector>
+
 using namespace mv::plugin;
 using namespace mv::gui;
 
@@ -68,7 +70,7 @@ public slots:
 
 private:
     QHash<QString, PluginFactory*>                      _pluginFactories;   /** All loaded plugin factories */
-    std::vector<std::unique_ptr<mv::plugin::Plugin>>    _plugins;           /** Vector of plugin instances */
+    std::vector<mv::plugin::Plugin*>                    _plugins;           /** Vector of plugin instances */
     // TBD merge the two runPythonScript signatures
     /** Run a python script from the resources return the exit code and stderr and stdout */
     int runPythonScript(const QString scriptName, QString& sout, QString& serr, const QString version, const QStringList params = {}); 
