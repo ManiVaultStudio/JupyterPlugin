@@ -14,9 +14,9 @@ class JupyterPluginConan(ConanFile):
     """Class to package SNE-Analyses using conan
 
     Packages both RELEASE and DEBUG.
-    Uses rules_support (github.com/hdps/rulessupport) to derive
+    Uses rules_support (github.com/ManiVaultStudio/rulessupport) to derive
     versioninfo based on the branch naming convention
-    as described in https://github.com/hdps/core/wiki/Branch-naming-rules
+    as described in https://github.com/ManiVaultStudio/core/wiki/Branch-naming-rules
     """
 
     name = "JupyterPlugin"
@@ -135,23 +135,16 @@ class JupyterPluginConan(ConanFile):
         return cmake
 
     def build(self):
-        print("Build OS is : ", self.settings.os)
-
-        # The JupyterPlugin build expects the HDPS package to be in this install dir
-        hdps_pkg_root = self.deps_cpp_info["hdps-core"].rootpath
-        print("Install dir type: ", self.install_dir)
-        shutil.copytree(hdps_pkg_root, self.install_dir)
+        print("Build OS is: ", self.settings.os)
 
         cmake = self._configure_cmake()
         cmake.build(build_type="Debug")
-        cmake.install(build_type="Debug")
-
-        # cmake_release = self._configure_cmake()
         cmake.build(build_type="Release")
-        cmake.install(build_type="Release")
-
+        
     def package(self):
-        package_dir = os.path.join(self.build_folder, "package")
+        package_dir = pathlib.Path(self.build_folder, "package")
+        debug_dir = package_dir / "Debug"
+        release_dir = package_dir / "Release"
         print("Packaging install dir: ", package_dir)
         subprocess.run(
             [
@@ -161,7 +154,7 @@ class JupyterPluginConan(ConanFile):
                 "--config",
                 "Debug",
                 "--prefix",
-                os.path.join(package_dir, "Debug"),
+                debug_dir,
             ]
         )
         subprocess.run(
@@ -172,7 +165,7 @@ class JupyterPluginConan(ConanFile):
                 "--config",
                 "Release",
                 "--prefix",
-                os.path.join(package_dir, "Release"),
+                release_dir,
             ]
         )
         self.copy(pattern="*", src=package_dir)
