@@ -47,6 +47,7 @@ void JupyterPlugin::setConnectionPath(const QString& connection_path)
 void JupyterPlugin::init()
 {
     QString jupyter_configFilepath = _connectionFilePath.getFilePath();
+    qDebug() << "JupyterPlugin::init with " << jupyter_configFilepath;
     _pKernel->startKernel(jupyter_configFilepath);
 }
 

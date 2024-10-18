@@ -107,7 +107,7 @@ void JupyterLauncher::setPythonEnv(const QString version)
     //qputenv("VIRTUAL_ENV", QDir::toNativeSeparators(virtdir).toUtf8());
     //qputenv("PATH", newPATH.toUtf8());
 
-    qputenv("PYTHONHOME", pyInterpreter.toUtf8());
+    qputenv("PYTHONHOME", pyDir.toUtf8());
 
     // PYTHONPATH is essential to picking up the modules in a venv environment
     // without it the xeusinterpreter will fail to load as the xeus_python_shell
@@ -406,11 +406,10 @@ void JupyterLauncher::jupyterServerStarted()
 
 bool JupyterLauncher::startJupyterServerProcess(const QString version)
 {
-#ifdef _WIN32
-    QString sep(";"); // path separator
-#else
-    QString sep(":");
-#endif
+    // Return the appropriate path separator based on the OS
+    auto pathSeparator = []() -> QString {
+        return (QOperatingSystemVersion::currentType() == QOperatingSystemVersion::Windows) ? ";" : ":";
+        };
 
     auto pyinterp = QFileInfo(getPythonExePath());
     auto pydir = QDir::toNativeSeparators(pyinterp.absolutePath());
@@ -421,7 +420,7 @@ bool JupyterLauncher::startJupyterServerProcess(const QString version)
     // Setting it in the child QProcess does not work for reasons that are unclear.
     qputenv("MANIVAULT_JUPYTERPLUGIN_CONNECTION_FILE", QDir::toNativeSeparators(connectionPath).toUtf8());
     auto runEnvironment = QProcessEnvironment::systemEnvironment();
-    runEnvironment.insert("PATH", pydir + sep + runEnvironment.value("PATH"));
+    runEnvironment.insert("PATH", pydir + pathSeparator() + runEnvironment.value("PATH"));
     auto configPath = QCoreApplication::applicationDirPath() + "/Plugins/JupyterPlugin/jupyter_server_config.py";
 
     _serverBackgroundTask = new BackgroundTask(nullptr, "JupyterLab Server");
@@ -446,7 +445,9 @@ bool JupyterLauncher::startJupyterServerProcess(const QString version)
     _serverPollTimer = new QTimer();
     _serverPollTimer->setInterval(20); // poll every 20ms
 
-    QObject::connect(_serverPollTimer, &QTimer::timeout, [=]() { logProcessOutput(); });
+    QObject::connect(_serverPollTimer, &QTimer::timeout, [=]() { 
+        logProcessOutput(); 
+        });
     _serverPollTimer->start();
     return true;
 }
@@ -502,9 +503,9 @@ void JupyterLauncher::loadJupyterPythonKernel(const QString pyversion)
     auto pythonLibrary = QFileInfo(sout);
     QString sharedLibFilePath = pythonLibrary.absoluteFilePath();
     QDir sharedLibDir = pythonLibrary.dir();
-    qDebug() << "Using python shared library at: " << sharedLibFilePath;
 
     // This seems cleaner but does not work
+    //qDebug() << "Using python shared library at: " << sharedLibFilePath;
     //if (!QLibrary::isLibrary(sharedLibFilePath))
     //    qWarning() << "Not a library: " << sharedLibFilePath;
 
@@ -514,7 +515,7 @@ void JupyterLauncher::loadJupyterPythonKernel(const QString pyversion)
     //else
     //    qDebug() << "Failed to load python library";
 
-    qDebug() << "Using python shared library at: " << sharedLibDir.absolutePath();
+    qDebug() << "Using python shared library " << pythonLibrary.fileName() << " at: " << sharedLibDir.absolutePath();
 #ifdef _WIN32
     SetDllDirectoryA(QString(sharedLibDir.absolutePath() + "/").toUtf8().data());
 #else
