@@ -8,11 +8,9 @@ using namespace mv::gui;
 
 GlobalSettingsAction::GlobalSettingsAction(QObject* parent, const plugin::PluginFactory* pluginFactory) :
     PluginGlobalSettingsGroupAction(parent, pluginFactory),
-    _defaultPythonPathAction(this, "Default python interpreter", ""),
-    _defaultConnectionPathAction(this, "Connection file path", "")
+    _defaultPythonPathAction(this, "Default python interpreter", "")
 {
     _defaultPythonPathAction.setToolTip("A python(.exe) interpreter for Jupyter Plugin");
-    _defaultConnectionPathAction.setToolTip("The file used to store and communicate the kernel connection parameters");
 
     QString pythonString = QStandardPaths::findExecutable("python");
     if (!pythonString.isEmpty()) {
@@ -26,9 +24,7 @@ GlobalSettingsAction::GlobalSettingsAction(QObject* parent, const plugin::Plugin
     QStringList pythonFilter = { "Python interpreter (python*)" };
 #endif
     _defaultPythonPathAction.setNameFilters(pythonFilter);
-    _defaultConnectionPathAction.setNameFilters(connectionFilter);
 
     // The add action automatically assigns a settings prefix to _pointSizeAction so there is no need to do this manually
     addAction(&_defaultPythonPathAction);
-    addAction(&_defaultConnectionPathAction);
 }

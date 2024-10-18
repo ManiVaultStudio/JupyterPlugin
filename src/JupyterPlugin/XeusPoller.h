@@ -1,13 +1,14 @@
 #pragma once
+
 #include <atomic>
 #include <functional>
 #include <optional>
+#include <utility>
 
 #include <QThread>
-#include <QSharedData>
 
-#include "xeus/xserver.hpp"
-
+#include <xeus/xserver.hpp>
+#include <xeus/xmessage.hpp>
 
 class XeusWorkerThread : public QThread
 {

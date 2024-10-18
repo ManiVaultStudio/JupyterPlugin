@@ -1,0 +1,14 @@
+{
+    "name": "jupyterplugin",
+    "version": "0.0.1",
+    "dependencies": [
+        {
+            "name": "openssl",
+            "platform": "windows"
+        }
+    ],
+    "builtin-baseline":"73964f854d0d6424f335e9515b61b3a2dad5e15b",
+    "overrides": [
+        { "name": "openssl", "version": "3.3.2#1" }
+    ]
+}

@@ -20,11 +20,14 @@ packages = [{include = "MVJupyterPluginManager", from = 'src'}]
 [tool.poetry.dependencies]
 comm ='~=0.2.2'
 python = '~=3.11'
+numpy = '~=1.26'
 jupyterlab_server = "~=2.25.2"
 jupyter_server = "~=2.12.5"
 jupyter_client = "~=8.6.0"
 xeus-python-shell = "~0.6.1"
-
+jupyterlab = "~=4.2"
+xeus-python-shell = "~0.6"
+ipython = "~8.28"
 
 [build-system]
 requires = ["poetry-core"]

@@ -1,21 +1,21 @@
 #include "XeusKernel.h"
+
 #include "XeusInterpreter.h"
 #include "XeusServer.h"
 
-#include <QStandardPaths>
-#include <QDir>
 #include <QCoreApplication>
-#include <zmq.hpp>
-#include <zmq_addon.hpp>
-#include <xeus/xhistory_manager.hpp>
-//#include <xeus-zmq/xserver_shell_main.hpp>
-#include <xeus-python/xinterpreter.hpp>
-#include <xeus-python/xdebugger.hpp>
-#include <xeus-python/xpaths.hpp>
-#include "nlohmann/json.hpp"
-#include <memory>
-#include <fstream>
+#include <QStandardPaths>
 
+#include <nlohmann/json.hpp>
+
+#include <xeus/xhistory_manager.hpp>
+#include <xeus/xkernel.hpp>
+#include <zmq.hpp>
+
+#include <fstream>
+#include <memory>
+#include <string>
+#include <ostream>
 
 XeusKernel::XeusKernel()
 {
@@ -23,7 +23,7 @@ XeusKernel::XeusKernel()
     connect(&m_jupyterLabServer_process, &QProcess::readyReadStandardError, this, &XeusKernel::onReadyStandardError);
 }
 
-void XeusKernel::startKernel(const QString& connection_path)
+void XeusKernel::startKernel(const QString& connection_path, const QString& pluginVersion)
 {
     auto searchPath = QStringList(QCoreApplication::applicationDirPath() + "/python");
     QString pythonExecutable = QStandardPaths::findExecutable("python", searchPath);
@@ -37,20 +37,20 @@ void XeusKernel::startKernel(const QString& connection_path)
     using context_type = xeus::xcontext_impl<zmq::context_t>;
     using context_ptr = std::unique_ptr<context_type>;
     context_ptr context = context_ptr(new context_type());
-    std::unique_ptr<XeusInterpreter> interpreter = std::unique_ptr<XeusInterpreter>(new XeusInterpreter());
+    std::unique_ptr<XeusInterpreter> interpreter = std::make_unique<XeusInterpreter>(pluginVersion);
     std::unique_ptr<xeus::xhistory_manager> hist = xeus::make_in_memory_history_manager();
     m_kernel = new xeus::xkernel(
-        //config,
-        xeus::get_user_name(),
-        std::move(context),
-        std::move(interpreter),
-        make_XeusServer,
-        std::move(hist),
-        nullptr
+        /*config: noy used here */
+        /*user_name*/ xeus::get_user_name(),
+        /*context*/ std::move(context),
+        /*interpreter*/ std::move(interpreter),
+        /*server_builder*/ make_XeusServer,
+        /*history_manager*/ std::move(hist),
+        /*logger*/ nullptr
     );
 
-    // Save the congig that was generated
-    auto set_config = m_kernel->get_config();
+    // Save the config that was generated
+    const auto& set_config = m_kernel->get_config();
     nlohmann::json jsonObj;
     jsonObj["transport"] = set_config.m_transport.c_str();
     jsonObj["ip"] = set_config.m_ip.c_str();
@@ -62,9 +62,10 @@ void XeusKernel::startKernel(const QString& connection_path)
     jsonObj["signature_scheme"] = set_config.m_signature_scheme.c_str();
     jsonObj["key"] = set_config.m_key.c_str();
     jsonObj["kernel_name"] = "ManiVaultStudio";
-    std::ofstream confFile(connection_path.toUtf8()); // "D:\\TempProj\\DevBundle\\Jupyter\\install\\Debug\\external_kernels\\ManiVault\\connection.json");
-    confFile << jsonObj;
 
+    qDebug() << "Writing connection config to " << connection_path;
+    std::ofstream configFile(connection_path.toUtf8());
+    configFile << jsonObj;
 
     //const auto& config = m_kernel->get_config();
     qInfo() << "Xeus Kernel settings";
@@ -91,21 +92,6 @@ bool XeusKernel::startJupyterLabServer(QString noteBookDirectory)
     auto searchPath = QStringList(QCoreApplication::applicationDirPath() + "/python");
     QString execString = QStandardPaths::findExecutable("python", searchPath);
     QStringList args;
-    //args << "-m" << "jupyter" << "lab" << "--no-browser ";
-    //args << "-m" << "jupyter" << "lab" << "--ServerApp.kernel_manager_class=MVJupyterPluginManager.ExternalMappingKernelManager" << "--no-browser";
-    //m_jupyterLabServer_process.setWorkingDirectory(searchPath[0]);
-    //m_jupyterLabServer_process.start(execString, args);
-
-    //
-    //m_jupyterLabServer_process.setProcessChannelMode(QProcess::MergedChannels);
-    /*
-    auto vbsExe = QDir::toNativeSeparators(QCoreApplication::applicationDirPath() + "/python/runjupyter.vbs");
-    QStringList args;
-    args << "/nologo" << vbsExe;
-    qInfo() << "Executing: " << vbsExe;
-    QString execString = QString("cscript");
-    m_jupyterLabServer_process.start(execString, args);
-    */
 
     auto success = m_jupyterLabServer_process.waitForStarted(60000);
     if (!success) {

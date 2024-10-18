@@ -30,6 +30,12 @@
 *.exe
 *.out
 *.app
+
+# Other
 build
 src/MVJupyterPlugin/Manager/MVJupyterPluginManager.egg-info/**/*.*
 src/MVJupyterPluginManager.egg-info/**/*.*
+poetry.lock
+*.whl
+python/mvstudio_data/dist/
+python/mvstudio_kernel/dist/

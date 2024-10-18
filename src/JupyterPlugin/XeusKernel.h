@@ -31,7 +31,7 @@ public:
     virtual ~XeusKernel()=default;
 
     bool startJupyterLabServer(QString noteBookDirectory);
-    void startKernel(const QString& connection_path);
+    void startKernel(const QString& connection_path, const QString& pluginVersion = "");
     void stopKernel();
 
 private:
@@ -39,6 +39,6 @@ private:
     void onReadyStandardError();
 
 private:
-    xeus::xkernel *m_kernel;
-    QProcess m_jupyterLabServer_process;
+    xeus::xkernel *m_kernel = nullptr;
+    QProcess m_jupyterLabServer_process = QProcess{};
 };

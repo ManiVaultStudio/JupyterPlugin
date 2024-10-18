@@ -2,7 +2,6 @@
 
 #include <PluginGlobalSettingsGroupAction.h>
 
-#include <actions/DirectoryPickerAction.h>
 #include <actions/FilePickerAction.h>
 
 namespace mv {
@@ -32,14 +31,8 @@ public:
     Q_INVOKABLE GlobalSettingsAction(QObject* parent, const mv::plugin::PluginFactory* pluginFactory);
 
 public: // Action getters
-
-    //mv::gui::FilePickerAction& getDefaultConnectionPathAction() { return _defaultConnectionPathAction; }
-    mv::gui::FilePickerAction& getDefaultConnectionPathAction() { return _defaultConnectionPathAction; }
-
     mv::gui::FilePickerAction& getDefaultPythonPathAction() { return _defaultPythonPathAction; }
 
 private:
-    // due to some file picker bugs use string for now
-    mv::gui::FilePickerAction   _defaultConnectionPathAction;       /** Default connection file path */
     mv::gui::FilePickerAction   _defaultPythonPathAction;           /** Default python path */
 };

@@ -1,15 +1,28 @@
 #include "XeusInterpreter.h"
+
 #include "MVData.h"
-#include <QDebug>
-#include <pybind11/pybind11.h>
-#include <xeus/xhelper.hpp>
-//#include <xcomm.hpp>
+
 #include <iostream>
+#include <string>
+
+#include <xeus/xcomm.hpp>
+#include <xeus/xhelper.hpp>
+#include <xeus/xinterpreter.hpp>
+#include <xeus-python/xinterpreter.hpp>
+
+#include <pybind11/embed.h>
+#include <pybind11/pybind11.h>
+#include <pybind11/gil.h>
+
+#include <QDebug>
+
 namespace py = pybind11;
 
-XeusInterpreter::XeusInterpreter()
+XeusInterpreter::XeusInterpreter(const QString& pluginVersion):
+    xpyt::interpreter(),
+    _pluginVersion(pluginVersion)
 {
-    python_interpreter = new pybind11::scoped_interpreter;
+    _python_interpreter = new pybind11::scoped_interpreter();
 }
 
 void XeusInterpreter::configure_impl()
@@ -33,13 +46,13 @@ void XeusInterpreter::configure_impl()
 
 // Execute incoming code and publish the result
 nl::json XeusInterpreter::execute_request_impl(int execution_counter,
-  const std::string& code,
-  bool silent,
-  bool store_history,
-  nl::json user_expressions,
-  bool allow_stdin) 
+                                               const std::string& code,
+                                               bool silent,
+                                               bool store_history,
+                                               nl::json user_expressions,
+                                               bool allow_stdin) 
 {
-    qDebug() << "code: " << code.c_str();
+    qDebug() << "Python: " << code.c_str();
 
     return xpyt::interpreter::execute_request_impl(
         execution_counter,
@@ -94,7 +107,7 @@ nl::json XeusInterpreter::kernel_info_request_impl()
 
     return xeus::create_info_reply(xeus::get_protocol_version(),
         "ManiVault JupyterPlugin",
-        JUPYTERPLUGIN_VERSION,
+        _pluginVersion.toStdString(),
         "python",
         "3.11",
         "text/x-python",

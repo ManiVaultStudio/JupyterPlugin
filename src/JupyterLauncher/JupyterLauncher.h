@@ -1,27 +1,23 @@
 #pragma once
 
+#include <BackgroundTask.h>
+#include <Dataset.h>
+#include <PluginFactory.h>
 #include <ViewPlugin.h>
 
-#include <Dataset.h>
+#include <actions/HorizontalGroupAction.h>
+#include <actions/StringAction.h>
+#include <actions/PluginStatusBarAction.h>
+
 #include <PointData/PointData.h>
-#include "SettingsAction.h"
-#include <PluginFactory.h>
+
 #include <QWidget>
 #include <QProcess>
-#include "BackgroundTask.h"
 
-#include <actions/PluginStatusBarAction.h>
-#include <actions/HorizontalGroupAction.h>
+#include <vector>
 
-/** All plugin related classes are in the ManiVault plugin namespace */
 using namespace mv::plugin;
-
-/** Drop widget used in this plugin is located in the ManiVault gui namespace */
 using namespace mv::gui;
-
-/** Dataset reference used in this plugin is located in the ManiVault util namespace */
-using namespace mv::util;
-
 
 class QLabel;
 
@@ -53,26 +49,9 @@ public:
     /** This function is called by the core after the view plugin has been created */
     void init() override;
 
-    /**
-     * Invoked when a data event occurs
-     * @param dataEvent Data event which occurred
-     */
-    void onDataEvent(mv::DatasetEvent* dataEvent);
-
      bool validatePythonEnvironment();
 
-    QString& getPythonLibPath();
-
     void loadJupyterPythonKernel(const QString version);
-
-protected:
-    mv::Dataset<Points>     _points;                    /** Points smart pointer */
-    SettingsAction          _settingsAction;            /** Settings action */
-    QString                 _currentDatasetName;        /** Name of the current dataset */
-    QLabel*                 _currentDatasetNameLabel;   /** Label that show the current dataset name */
-    mv::BackgroundTask*     _serverBackgroundTask;      /** The background task monitoring the Jupyter Server */
-    QProcess                _serverProcess;             /** A detached process for tunning the Jupyter server */
-    QTimer*                 _serverPollTimer;           /** Poll the server process output at a regular interval */
 
 public slots:
     void jupyterServerError(QProcess::ProcessError error);
@@ -82,15 +61,12 @@ public slots:
     void shutdownJupyterServer();
 
 private:
-    QHash<QString, PluginFactory*>                      _pluginFactories;   /** All loaded plugin factories */
-    std::vector<std::unique_ptr<mv::plugin::Plugin>>    _plugins;           /** Vector of plugin instances */
     // TBD merge the two runPythonScript signatures
     /** Run a python script from the resources return the exit code and stderr and stdout */
     int runPythonScript(const QString scriptName, QString& sout, QString& serr, const QString version, const QStringList params = {}); 
     bool runPythonCommand(const QStringList params, const QString version);
 
     void setPythonEnv(const QString version);
-    void preparePythonProcess(QProcess &process, const QString version);
     bool installKernel(const QString version);
     bool optionallyInstallMVWheel(const QString version);
 
@@ -99,12 +75,22 @@ private:
     void logProcessOutput();
 
     const QString getVirtDir(const QString);
+    QString getPythonExePath();
+
+private:
+    QHash<QString, PluginFactory*>      _pluginFactories;           /** All loaded plugin factories */
+    std::vector<mv::plugin::Plugin*>    _plugins;                   /** Vector of plugin instances */
+    QString                             _connectionFilePath;
+    QString                             _currentDatasetName;        /** Name of the current dataset */
+    QLabel*                             _currentDatasetNameLabel;   /** Label that show the current dataset name */
+    mv::BackgroundTask*                 _serverBackgroundTask;      /** The background task monitoring the Jupyter Server */
+    QProcess                            _serverProcess;             /** A detached process for running the Jupyter server */
+    QTimer*                             _serverPollTimer;           /** Poll the server process output at a regular interval */
+
 };
 
 /**
- * Example view plugin factory class
- *
- * Note: Factory does not need to be altered (merely responsible for generating new plugins when requested)
+ * Jupyter Launcher view plugin factory class
  */
 class JupyterLauncherFactory : public ViewPluginFactory
 {
