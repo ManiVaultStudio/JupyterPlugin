@@ -286,7 +286,7 @@ bool JupyterLauncher::optionallyInstallMVWheel(const QString version)
         "mvstudio.kernel and mvstudio.data " + pluginVersion + " are needed in the python environment.\n Do you wish to install it now? ",
         QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes);
     if (reply == QMessageBox::Yes) {
-        auto MVWheelPath = QCoreApplication::applicationDirPath() + "/Plugins/JupyterPlugin/wheelhouse/";
+        auto MVWheelPath = QCoreApplication::applicationDirPath() + "/PluginDependencies/JupyterLauncher/py/";
         MVWheelPath = QDir::toNativeSeparators(MVWheelPath);
         auto kernelWheel = MVWheelPath + "mvstudio_kernel-" + pluginVersion + "-py3-none-any.whl";
         auto dataWheel = MVWheelPath + "mvstudio_data-" + pluginVersion + "-py3-none-any.whl";
@@ -423,7 +423,7 @@ bool JupyterLauncher::startJupyterServerProcess(const QString version)
 
     auto runEnvironment = QProcessEnvironment::systemEnvironment();
     runEnvironment.insert("PATH", pydir + pathSeparator() + runEnvironment.value("PATH"));
-    auto configPath = QCoreApplication::applicationDirPath() + "/Plugins/JupyterPlugin/jupyter_server_config.py";
+    auto configPath = QCoreApplication::applicationDirPath() + "/PluginDependencies/JupyterLauncher/py/jupyter_server_config.py";
 
     _serverBackgroundTask = new BackgroundTask(nullptr, "JupyterLab Server");
     _serverBackgroundTask->setProgressMode(Task::ProgressMode::Manual);
@@ -523,7 +523,7 @@ void JupyterLauncher::loadJupyterPythonKernel(const QString pyversion)
     qputenv("LD_LIBRARY_PATH", QString(sharedLibDir.absolutePath() + "/").toUtf8() + ":" + qgetenv("LD_LIBRARY_PATH");
 #endif
 
-    QString jupyterPluginPath = QCoreApplication::applicationDirPath() + "/Plugins/JupyterPlugin/JupyterPlugin";
+    QString jupyterPluginPath = QCoreApplication::applicationDirPath() + "/PluginDependencies/JupyterLauncher/bin/JupyterPlugin";
     QLibrary jupyterPluginLib(jupyterPluginPath);
     qDebug() << "Using python plugin at: " << jupyterPluginLib.fileName();
 

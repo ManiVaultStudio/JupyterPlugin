@@ -1,27 +1,7 @@
 cmake_minimum_required(VERSION 3.21)
 
-# -----------------------------------------------------------------------------
-# JupyterLauncher View Plugin
-# -----------------------------------------------------------------------------
 set(JUPYTERLAUNCHER "JupyterLauncher")
-PROJECT(${JUPYTERLAUNCHER})
-
-# -----------------------------------------------------------------------------
-# CMake Options
-# -----------------------------------------------------------------------------
-set(CMAKE_AUTOMOC ON)
-
-if(MSVC)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W3 /DWIN32 /EHsc /MP /permissive- /Zc:__cplusplus")
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /NODEFAULTLIB:LIBCMT")
-    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MDd")
-    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MD")
-endif(MSVC)
-
-# -----------------------------------------------------------------------------
-# Dependencies
-# -----------------------------------------------------------------------------
-find_package(Qt6 COMPONENTS Widgets WebEngineWidgets REQUIRED)
+message(STATUS "Plugin: ${JUPYTERLAUNCHER}")
 
 # -----------------------------------------------------------------------------
 # Source files
@@ -30,11 +10,11 @@ find_package(Qt6 COMPONENTS Widgets WebEngineWidgets REQUIRED)
 qt6_add_resources(RESOURCE_FILES res/jupyter_launcher_resources.qrc)
 
 set(SOURCES
-    src/JupyterLauncher.h
-    src/JupyterLauncher.cpp
-    src/JupyterLauncher.json
-    src/GlobalSettingsAction.h
-    src/GlobalSettingsAction.cpp
+    JupyterLauncher.h
+    JupyterLauncher.cpp
+    JupyterLauncher.json
+    GlobalSettingsAction.h
+    GlobalSettingsAction.cpp
 )
 
 set (RESOURCES
