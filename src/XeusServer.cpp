@@ -3,8 +3,6 @@
 #include <QDebug>
 #include <QTimer>
 
-#include <thread>
-
 XeusServer::XeusServer(zmq::context_t& context, const xeus::xconfiguration& config, nl::json::error_handler_t eh) :
     xserver_zmq(context, config, eh)
 {
@@ -45,7 +43,6 @@ void XeusServer::on_received_shell_msg(xeus::xmessage* pmsg)
 
 void XeusServer::stop_impl()
 {
-
     m_pollTimer->stop();
     this->stop_channels(); 
 }

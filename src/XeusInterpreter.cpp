@@ -50,7 +50,7 @@ nl::json XeusInterpreter::execute_request_impl(int execution_counter,
                                                nl::json user_expressions,
                                                bool allow_stdin) 
 {
-    qDebug() << "code: " << code.c_str();
+    qDebug() << "Python: " << code.c_str();
 
     return xpyt::interpreter::execute_request_impl(
         execution_counter,

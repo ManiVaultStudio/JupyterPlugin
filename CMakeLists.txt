@@ -141,11 +141,6 @@ target_link_libraries(${JUPYTERPLUGIN} PUBLIC libzmq-static cppzmq-static)
 target_link_libraries(${JUPYTERPLUGIN} PUBLIC pybind11::embed)
 target_link_libraries(${JUPYTERPLUGIN} PUBLIC nlohmann_json::nlohmann_json)
 
-if (MSVC)
-    target_compile_options(${JUPYTERPLUGIN} PUBLIC /wd4251 /wd4141)
-    target_compile_options(${JUPYTERPLUGIN} PUBLIC /wd4018 /wd4267 /wd4715 /wd4146 /wd4129)
-endif()
-
 # -----------------------------------------------------------------------------
 # Python MVJupyterPluginManager package
 # -----------------------------------------------------------------------------

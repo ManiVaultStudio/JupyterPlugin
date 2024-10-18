@@ -2,6 +2,7 @@
 #include "GlobalSettingsAction.h"
 
 #include <actions/WidgetAction.h>
+#include <Application.h>
 #include <CoreInterface.h>
 #include <PointData/PointData.h>
 
@@ -413,12 +414,13 @@ bool JupyterLauncher::startJupyterServerProcess(const QString version)
 
     auto pyinterp = QFileInfo(getPythonExePath());
     auto pydir = QDir::toNativeSeparators(pyinterp.absolutePath());
-    _serverProcess.setProcessChannelMode(QProcess::MergedChannels);
-    auto connectionPath = getPythonConfigPath();
+
     // In order to run python -m jupyter lab and access the MANIVAULT_JUPYTERPLUGIN_CONNECTION_FILE 
     // the env variable this must be set in the current process.
     // Setting it in the child QProcess does not work for reasons that are unclear.
+    auto connectionPath = getPythonConfigPath();
     qputenv("MANIVAULT_JUPYTERPLUGIN_CONNECTION_FILE", QDir::toNativeSeparators(connectionPath).toUtf8());
+
     auto runEnvironment = QProcessEnvironment::systemEnvironment();
     runEnvironment.insert("PATH", pydir + pathSeparator() + runEnvironment.value("PATH"));
     auto configPath = QCoreApplication::applicationDirPath() + "/Plugins/JupyterPlugin/jupyter_server_config.py";
@@ -427,9 +429,9 @@ bool JupyterLauncher::startJupyterServerProcess(const QString version)
     _serverBackgroundTask->setProgressMode(Task::ProgressMode::Manual);
     _serverBackgroundTask->setIdle();
 
+    _serverProcess.setProcessChannelMode(QProcess::MergedChannels);
     _serverProcess.setProcessEnvironment(runEnvironment);
     _serverProcess.setProgram(pydir + QString("/python"));
-    //_serverProcess.setArguments({ "-m", "MVJupyterPluginManager", "--config", configPath });
     _serverProcess.setArguments({ "-m", "jupyter", "lab", "--config", configPath});
 
     connect(&_serverProcess, &QProcess::stateChanged, this, &JupyterLauncher::jupyterServerStateChanged);
@@ -438,8 +440,7 @@ bool JupyterLauncher::startJupyterServerProcess(const QString version)
     connect(&_serverProcess, &QProcess::started, this, &JupyterLauncher::jupyterServerStarted);
     connect(&_serverProcess, &QProcess::finished, this, &JupyterLauncher::jupyterServerFinished);
 
-    auto app = Application::current();
-    connect(app, &QCoreApplication::aboutToQuit, this, &JupyterLauncher::shutdownJupyterServer);
+    connect(Application::current(), &QCoreApplication::aboutToQuit, this, &JupyterLauncher::shutdownJupyterServer);
 
     _serverProcess.start();
     _serverPollTimer = new QTimer();

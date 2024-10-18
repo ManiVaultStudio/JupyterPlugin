@@ -6,7 +6,6 @@
 #include <utility>
 
 #include <QThread>
-#include <QSharedData>
 
 #include <xeus/xserver.hpp>
 #include <xeus/xmessage.hpp>
