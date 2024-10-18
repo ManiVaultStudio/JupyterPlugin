@@ -1,14 +1,16 @@
+#include "MVData.h"
+
+#include <ClusterData/ClusterData.h>
+#include <ImageData/Images.h>
+#include <PointData/PointData.h>
+
 #include "pybind11/pybind11.h"
 #include "pybind11/numpy.h"
-#include "MVData.h"
-#include "xeus-python/xinterpreter.hpp"
-#include <PointData/PointData.h>
-#include <ClusterData/ClusterData.h>
-#include <QString>
-#include <ImageData/Images.h>
-#include <QDebug>
-#include <type_traits>
 
+#include <QString>
+#include <QDebug>
+
+#include <type_traits>
 
 namespace py = pybind11;
 

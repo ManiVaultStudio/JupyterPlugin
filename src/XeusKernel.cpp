@@ -4,18 +4,12 @@
 #include "XeusServer.h"
 
 #include <QCoreApplication>
-#include <QDir>
 #include <QStandardPaths>
 
 #include <nlohmann/json.hpp>
 
 #include <xeus/xhistory_manager.hpp>
-//#include <xeus-zmq/xserver_shell_main.hpp>
-#include <xeus-python/xinterpreter.hpp>
-#include <xeus-python/xdebugger.hpp>
-#include <xeus-python/xpaths.hpp>
 #include <xeus/xkernel.hpp>
-#include <zmq_addon.hpp>
 #include <zmq.hpp>
 
 #include <fstream>
@@ -98,21 +92,6 @@ bool XeusKernel::startJupyterLabServer(QString noteBookDirectory)
     auto searchPath = QStringList(QCoreApplication::applicationDirPath() + "/python");
     QString execString = QStandardPaths::findExecutable("python", searchPath);
     QStringList args;
-    //args << "-m" << "jupyter" << "lab" << "--no-browser ";
-    //args << "-m" << "jupyter" << "lab" << "--ServerApp.kernel_manager_class=MVJupyterPluginManager.ExternalMappingKernelManager" << "--no-browser";
-    //m_jupyterLabServer_process.setWorkingDirectory(searchPath[0]);
-    //m_jupyterLabServer_process.start(execString, args);
-
-    //
-    //m_jupyterLabServer_process.setProcessChannelMode(QProcess::MergedChannels);
-    /*
-    auto vbsExe = QDir::toNativeSeparators(QCoreApplication::applicationDirPath() + "/python/runjupyter.vbs");
-    QStringList args;
-    args << "/nologo" << vbsExe;
-    qInfo() << "Executing: " << vbsExe;
-    QString execString = QString("cscript");
-    m_jupyterLabServer_process.start(execString, args);
-    */
 
     auto success = m_jupyterLabServer_process.waitForStarted(60000);
     if (!success) {
