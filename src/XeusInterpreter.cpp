@@ -18,9 +18,11 @@
 
 namespace py = pybind11;
 
-XeusInterpreter::XeusInterpreter()
+XeusInterpreter::XeusInterpreter(const QString& pluginVersion):
+    xpyt::interpreter(),
+    _pluginVersion(pluginVersion)
 {
-    python_interpreter = new pybind11::scoped_interpreter;
+    _python_interpreter = new pybind11::scoped_interpreter();
 }
 
 void XeusInterpreter::configure_impl()
@@ -105,7 +107,7 @@ nl::json XeusInterpreter::kernel_info_request_impl()
 
     return xeus::create_info_reply(xeus::get_protocol_version(),
         "ManiVault JupyterPlugin",
-        JUPYTERPLUGIN_VERSION,
+        _pluginVersion.toStdString(),
         "python",
         "3.11",
         "text/x-python",

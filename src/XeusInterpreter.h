@@ -5,6 +5,8 @@
 #include <xeus-python/xinterpreter.hpp>
 #define slots Q_SLOTS
 
+#include <QString>
+
 #include <pybind11/embed.h>
 #include <pybind11/pybind11.h>
 
@@ -20,7 +22,7 @@
 class XeusInterpreter : public xpyt::interpreter
 {
 public:
-    XeusInterpreter();
+    XeusInterpreter(const QString& pluginVersion = "");
     virtual ~XeusInterpreter() = default;
 
 private:
@@ -47,6 +49,6 @@ private:
     void shutdown_request_impl() override;
 
 private:
-    pybind11::scoped_interpreter* python_interpreter = nullptr;
-    py::module comm_module = {};
+    pybind11::scoped_interpreter* _python_interpreter = nullptr;
+    QString _pluginVersion = "";
 };

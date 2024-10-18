@@ -21,9 +21,9 @@ public:
         _xeusKernel = std::make_unique<XeusKernel>();
     }
 
-    void startKernel(const QString& connection_path) 
+    void startKernel(const QString& connection_path, const QString& pluginVersion = "")
     {
-        _xeusKernel->startKernel(connection_path);
+        _xeusKernel->startKernel(connection_path, pluginVersion);
     }
 
 public:
@@ -48,7 +48,7 @@ void JupyterPlugin::init()
 {
     QString jupyter_configFilepath = _connectionFilePath.getFilePath();
     qDebug() << "JupyterPlugin::init with " << jupyter_configFilepath;
-    _pKernel->startKernel(jupyter_configFilepath);
+    _pKernel->startKernel(jupyter_configFilepath, getVersion());
 }
 
 ViewPlugin* JupyterPluginFactory::produce()

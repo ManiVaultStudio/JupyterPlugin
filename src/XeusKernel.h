@@ -31,7 +31,7 @@ public:
     virtual ~XeusKernel()=default;
 
     bool startJupyterLabServer(QString noteBookDirectory);
-    void startKernel(const QString& connection_path);
+    void startKernel(const QString& connection_path, const QString& pluginVersion = "");
     void stopKernel();
 
 private:

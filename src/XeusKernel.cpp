@@ -29,7 +29,7 @@ XeusKernel::XeusKernel()
     connect(&m_jupyterLabServer_process, &QProcess::readyReadStandardError, this, &XeusKernel::onReadyStandardError);
 }
 
-void XeusKernel::startKernel(const QString& connection_path)
+void XeusKernel::startKernel(const QString& connection_path, const QString& pluginVersion)
 {
     auto searchPath = QStringList(QCoreApplication::applicationDirPath() + "/python");
     QString pythonExecutable = QStandardPaths::findExecutable("python", searchPath);
@@ -43,7 +43,7 @@ void XeusKernel::startKernel(const QString& connection_path)
     using context_type = xeus::xcontext_impl<zmq::context_t>;
     using context_ptr = std::unique_ptr<context_type>;
     context_ptr context = context_ptr(new context_type());
-    std::unique_ptr<XeusInterpreter> interpreter = std::unique_ptr<XeusInterpreter>(new XeusInterpreter());
+    std::unique_ptr<XeusInterpreter> interpreter = std::make_unique<XeusInterpreter>(pluginVersion);
     std::unique_ptr<xeus::xhistory_manager> hist = xeus::make_in_memory_history_manager();
     m_kernel = new xeus::xkernel(
         /*config: noy used here */
