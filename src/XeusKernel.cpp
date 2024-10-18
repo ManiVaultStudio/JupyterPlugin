@@ -69,7 +69,8 @@ void XeusKernel::startKernel(const QString& connection_path)
     jsonObj["key"] = set_config.m_key.c_str();
     jsonObj["kernel_name"] = "ManiVaultStudio";
 
-    std::ofstream configFile(connection_path.toUtf8()); // "D:\\TempProj\\DevBundle\\Jupyter\\install\\Debug\\external_kernels\\ManiVault\\connection.json");
+    qDebug() << "Writing connection config to " << connection_path;
+    std::ofstream configFile(connection_path.toUtf8());
     configFile << jsonObj;
 
     //const auto& config = m_kernel->get_config();
