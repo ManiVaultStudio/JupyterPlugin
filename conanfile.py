@@ -100,33 +100,31 @@ class JupyterPluginConan(ConanFile):
             generator = "Xcode"
         if self.settings.os == "Linux":
             generator = "Ninja Multi-Config"
-        # Use the Qt provided .cmake files
-        qtpath = pathlib.Path(self.deps_cpp_info["qt"].rootpath)
-        qt_root = str(list(qtpath.glob("**/Qt6Config.cmake"))[0].parents[3].as_posix())
 
         tc = CMakeToolchain(self, generator=generator)
-        if self.settings.os == "Windows" and self.options.shared:
-            tc.variables["CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS"] = True
-        if self.settings.os == "Linux" or self.settings.os == "Macos":
-            tc.variables["CMAKE_CXX_STANDARD_REQUIRED"] = "ON"
-        prefix_path = qt_root
-        if os_info.is_macos:
-            proc = subprocess.run("brew --prefix libomp",  shell=True, capture_output=True)
-            prefix_path = prefix_path + f";{proc.stdout.decode('UTF-8').strip()}"
-        tc.variables["CMAKE_PREFIX_PATH"] = prefix_path
-        
-        # Set the installation directory for ManiVault based on the MV_INSTALL_DIR environment variable
-        # or if none is specified, set it to the build/install dir.
-        if not os.environ.get("MV_INSTALL_DIR", None):
-            os.environ["MV_INSTALL_DIR"] = os.path.join(self.build_folder, "install")
-        print("MV_INSTALL_DIR: ", os.environ["MV_INSTALL_DIR"])
-        self.install_dir = pathlib.Path(os.environ["MV_INSTALL_DIR"]).as_posix()
-        # Give the installation directory to CMake
-        tc.variables["MV_INSTALL_DIR"] = self.install_dir
 
-        qtpath = pathlib.Path(self.deps_cpp_info["qt"].rootpath)
-        qt_root = str(list(qtpath.glob("**/Qt6Config.cmake"))[0].parents[3].as_posix())
-        tc.variables["Qt6_ROOT"] = f"{qt_root}"
+        tc.variables["CMAKE_CXX_STANDARD_REQUIRED"] = "ON"
+
+        # Use the Qt provided .cmake files
+        qt_path = pathlib.Path(self.deps_cpp_info["qt"].rootpath)
+        qt_cfg = list(qt_path.glob("**/Qt6Config.cmake"))[0]
+        qt_dir = qt_cfg.parents[0].as_posix()
+        qt_root = qt_cfg.parents[3].as_posix()
+
+        # for Qt >= 6.4.2
+        #tc.variables["Qt6_DIR"] = qt_dir
+
+        # for Qt < 6.4.2
+        tc.variables["CMAKE_PREFIX_PATH"] = qt_root
+
+        # Use the ManiVault .cmake file to find ManiVault with find_package
+        mv_core_root = self.deps_cpp_info["hdps-core"].rootpath
+        manivault_dir = pathlib.Path(mv_core_root, "cmake", "mv").as_posix()
+        print("ManiVault_DIR: ", manivault_dir)
+        tc.variables["ManiVault_DIR"] = manivault_dir
+
+        # Set some build options
+        tc.variables["MV_UNITY_BUILD"] = "ON"
         
         tc.generate()
 
