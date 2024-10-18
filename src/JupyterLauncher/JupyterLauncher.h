@@ -53,14 +53,6 @@ public:
 
     void loadJupyterPythonKernel(const QString version);
 
-protected:
-    mv::Dataset<Points>     _points;                    /** Points smart pointer */
-    QString                 _currentDatasetName;        /** Name of the current dataset */
-    QLabel*                 _currentDatasetNameLabel;   /** Label that show the current dataset name */
-    mv::BackgroundTask*     _serverBackgroundTask;      /** The background task monitoring the Jupyter Server */
-    QProcess                _serverProcess;             /** A detached process for running the Jupyter server */
-    QTimer*                 _serverPollTimer;           /** Poll the server process output at a regular interval */
-
 public slots:
     void jupyterServerError(QProcess::ProcessError error);
     void jupyterServerFinished(int exitCode, QProcess::ExitStatus exitStatus);
@@ -69,8 +61,6 @@ public slots:
     void shutdownJupyterServer();
 
 private:
-    QHash<QString, PluginFactory*>                      _pluginFactories;   /** All loaded plugin factories */
-    std::vector<mv::plugin::Plugin*>                    _plugins;           /** Vector of plugin instances */
     // TBD merge the two runPythonScript signatures
     /** Run a python script from the resources return the exit code and stderr and stdout */
     int runPythonScript(const QString scriptName, QString& sout, QString& serr, const QString version, const QStringList params = {}); 
@@ -86,7 +76,17 @@ private:
 
     const QString getVirtDir(const QString);
     QString getPythonExePath();
-    QString getPythonConfigPath();
+
+private:
+    QHash<QString, PluginFactory*>      _pluginFactories;           /** All loaded plugin factories */
+    std::vector<mv::plugin::Plugin*>    _plugins;                   /** Vector of plugin instances */
+    QString                             _connectionFilePath;
+    QString                             _currentDatasetName;        /** Name of the current dataset */
+    QLabel*                             _currentDatasetNameLabel;   /** Label that show the current dataset name */
+    mv::BackgroundTask*                 _serverBackgroundTask;      /** The background task monitoring the Jupyter Server */
+    QProcess                            _serverProcess;             /** A detached process for running the Jupyter server */
+    QTimer*                             _serverPollTimer;           /** Poll the server process output at a regular interval */
+
 };
 
 /**

@@ -33,14 +33,23 @@ Q_PLUGIN_METADATA(IID "nl.BioVault.JupyterLauncher")
 
 JupyterLauncher::JupyterLauncher(const PluginFactory* factory) :
     ViewPlugin(factory),
-    _points(),
     _currentDatasetName(),
     _currentDatasetNameLabel(new QLabel()),
     _serverBackgroundTask(nullptr),
-    _serverPollTimer(nullptr)
+    _serverPollTimer(nullptr),
+    _connectionFilePath(QDir::toNativeSeparators(QCoreApplication::applicationDirPath() + "/PluginDependencies/JupyterLauncher/py/connection.json"))
 {
     setObjectName("Jupyter kernel plugin launcher");
     _currentDatasetNameLabel->setAlignment(Qt::AlignCenter);
+
+    QFile jsonFile(_connectionFilePath);
+    if (jsonFile.open(QIODevice::WriteOnly)) {
+        jsonFile.close();
+    }
+    else {
+        qWarning() << "JupyterLauncher: Could not create connection file at " << _connectionFilePath;
+    }
+
 }
 
 JupyterLauncher::~JupyterLauncher()
@@ -81,11 +90,6 @@ const QString JupyterLauncher::getVirtDir(const QString pydir)
 QString JupyterLauncher::getPythonExePath()
 {
     return mv::settings().getPluginGlobalSettingsGroupAction<GlobalSettingsAction>(this)->getDefaultPythonPathAction().getFilePath();
-}
-
-QString JupyterLauncher::getPythonConfigPath()
-{
-    return mv::settings().getPluginGlobalSettingsGroupAction<GlobalSettingsAction>(this)->getDefaultConnectionPathAction().getFilePath();
 }
 
 // Emulate the environment changes from a venv activate script
@@ -418,12 +422,10 @@ bool JupyterLauncher::startJupyterServerProcess(const QString version)
     // In order to run python -m jupyter lab and access the MANIVAULT_JUPYTERPLUGIN_CONNECTION_FILE 
     // the env variable this must be set in the current process.
     // Setting it in the child QProcess does not work for reasons that are unclear.
-    auto connectionPath = getPythonConfigPath();
-    qputenv("MANIVAULT_JUPYTERPLUGIN_CONNECTION_FILE", QDir::toNativeSeparators(connectionPath).toUtf8());
+    qputenv("MANIVAULT_JUPYTERPLUGIN_CONNECTION_FILE", _connectionFilePath.toUtf8());
 
     auto runEnvironment = QProcessEnvironment::systemEnvironment();
     runEnvironment.insert("PATH", pydir + pathSeparator() + runEnvironment.value("PATH"));
-    auto configPath = QCoreApplication::applicationDirPath() + "/PluginDependencies/JupyterLauncher/py/jupyter_server_config.py";
 
     _serverBackgroundTask = new BackgroundTask(nullptr, "JupyterLab Server");
     _serverBackgroundTask->setProgressMode(Task::ProgressMode::Manual);
@@ -432,7 +434,7 @@ bool JupyterLauncher::startJupyterServerProcess(const QString version)
     _serverProcess.setProcessChannelMode(QProcess::MergedChannels);
     _serverProcess.setProcessEnvironment(runEnvironment);
     _serverProcess.setProgram(pydir + QString("/python"));
-    _serverProcess.setArguments({ "-m", "jupyter", "lab", "--config", configPath});
+    _serverProcess.setArguments({ "-m", "jupyter", "lab", "--config", _connectionFilePath });
 
     connect(&_serverProcess, &QProcess::stateChanged, this, &JupyterLauncher::jupyterServerStateChanged);
     connect(&_serverProcess, &QProcess::errorOccurred, this, &JupyterLauncher::jupyterServerError);
@@ -562,8 +564,7 @@ void JupyterLauncher::loadJupyterPythonKernel(const QString pyversion)
     if (connectionFileAction != nullptr)
     {
         FilePickerAction* connectionFilePickerAction = static_cast<FilePickerAction*>(connectionFileAction);
-        auto connectionPath = getPythonConfigPath();
-        connectionFilePickerAction->setFilePath(connectionPath);
+        connectionFilePickerAction->setFilePath(_connectionFilePath);
     }
 
     // Load the plugin but first set the environment to get 
