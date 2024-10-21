@@ -106,10 +106,9 @@ class JupyterPluginConan(ConanFile):
         #tc.variables["Qt6_DIR"] = qt_dir
 
         # for Qt < 6.4.2
-        print("Set CMAKE_PREFIX_PATH to qt_root: ", qt_root)
-        tc.variables["CMAKE_PREFIX_PATH"] = qt_root
+        tc.variables["Qt6_ROOT"] = qt_root
 
-        # Use the ManiVault .cmake file to find ManiVault with find_package
+        # Use the ManiVault .cmake files
         mv_core_root = self.deps_cpp_info["hdps-core"].rootpath
         manivault_dir = pathlib.Path(mv_core_root, "cmake", "mv").as_posix()
         print("ManiVault_DIR: ", manivault_dir)
