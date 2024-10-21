@@ -525,7 +525,7 @@ void JupyterLauncher::loadJupyterPythonKernel(const QString pyversion)
     qputenv("LD_LIBRARY_PATH", QString(sharedLibDir.absolutePath() + "/").toUtf8() + ":" + qgetenv("LD_LIBRARY_PATH");
 #endif
 
-    QString jupyterPluginPath = QCoreApplication::applicationDirPath() + "/PluginDependencies/JupyterLauncher/bin/JupyterPlugin";
+    QString jupyterPluginPath = QCoreApplication::applicationDirPath() + "/PluginDependencies/JupyterLauncher/bin/JupyterPlugin" + QString(pyversion).remove(".");
     QLibrary jupyterPluginLib(jupyterPluginPath);
     qDebug() << "Using python plugin at: " << jupyterPluginLib.fileName();
 

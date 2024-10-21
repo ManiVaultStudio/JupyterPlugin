@@ -33,9 +33,8 @@
 
 # Other
 build
-src/MVJupyterPlugin/Manager/MVJupyterPluginManager.egg-info/**/*.*
-src/MVJupyterPluginManager.egg-info/**/*.*
+.vscode
 poetry.lock
 *.whl
-python/mvstudio_data/dist/
-python/mvstudio_kernel/dist/
+src/mvstudio_data/dist/
+src/mvstudio_kernel/dist/

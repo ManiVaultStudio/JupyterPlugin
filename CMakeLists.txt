@@ -56,13 +56,12 @@ set(xeus-zmq_VERSION "1.3.0") # 3.1.0
 set(pybind11_VERSION "v2.13.6")
 set(pybind11_json_VERSION "0.2.14")
 set(xeus-python_VERSION "0.16.0")
-set(Python_VERSION "3.11")
 
 find_package(Qt6 COMPONENTS Widgets WebEngineWidgets REQUIRED)
 find_package(ManiVault COMPONENTS Core PointData ClusterData ImageData CONFIG QUIET)
-find_package(Python ${Python_VERSION} COMPONENTS Development Interpreter REQUIRED)
+find_package(Python COMPONENTS Development Interpreter REQUIRED)
 
-message(STATUS "Python root dir: ${Python_ROOT_DIR}")
+message(STATUS "*** Python version ${Python_VERSION}")
 message(STATUS "*** Python libraries : ${Python_LIBRARIES}")
 message(STATUS "*** Python include dirs ${Python_INCLUDE_DIRS}")
 
@@ -75,4 +74,5 @@ include(cmake/dependencies.cmake)
 add_subdirectory(src/JupyterPlugin)
 add_subdirectory(src/JupyterLauncher)
 
-add_dependencies(JupyterLauncher JupyterPlugin)
+# we'd like to always build the python bridge plugin when building the launcher plugin
+add_dependencies(JupyterLauncher ${JupyterPluginTarget})
