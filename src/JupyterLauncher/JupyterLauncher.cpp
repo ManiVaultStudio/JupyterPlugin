@@ -460,6 +460,16 @@ bool JupyterLauncher::validatePythonEnvironment()
 // There  must be a JupyterPlugin (a kernel provider) that matches the python version for this to work.
 void JupyterLauncher::loadJupyterPythonKernel(const QString& pyversion)
 {
+    // 0. Check if the user set a python interpreter path
+    if (getPythonInterpreterPath() == "")
+    {
+        QMessageBox::StandardButton reply = QMessageBox::information(
+            nullptr,
+            "No Python interpreter",
+            "Please provide a path to a python interpreter in the plugin settings.\n Go to File -> Settings -> Plugin: Jupyter Launcher -> Python interpreter");
+        return;
+    }
+
     QString serr;
     QString sout;
     // 1. Check the path to see if the correct version of mvstudio is installed
@@ -467,7 +477,7 @@ void JupyterLauncher::loadJupyterPythonKernel(const QString& pyversion)
     if (exitCode == 2) {
         qDebug() << serr << sout;
         // TODO display error message box
-        return ;
+        return;
     }
     if (exitCode == 1) {
         if (!optionallyInstallMVWheel(pyversion)) {
@@ -541,7 +551,6 @@ void JupyterLauncher::loadJupyterPythonKernel(const QString& pyversion)
     auto jupyterPluginInstance = _plugins.emplace_back(jupyterPluginFactory->produce());
 
     // Communicate the connection file path via the child action in the JupyterPlugin
-    // TODO: just create a file instead of having to point here
     auto connectionFileAction = jupyterPluginInstance->findChildByPath("Connection file");
     if (connectionFileAction != nullptr)
     {
