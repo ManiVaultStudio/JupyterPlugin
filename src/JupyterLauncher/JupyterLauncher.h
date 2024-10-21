@@ -14,6 +14,7 @@
 #include <QWidget>
 #include <QProcess>
 
+#include <utility>
 #include <vector>
 
 using namespace mv::plugin;
@@ -51,7 +52,7 @@ public:
 
      bool validatePythonEnvironment();
 
-    void loadJupyterPythonKernel(const QString version);
+    void loadJupyterPythonKernel(const QString& version);
 
 public slots:
     void jupyterServerError(QProcess::ProcessError error);
@@ -63,20 +64,23 @@ public slots:
 private:
     // TBD merge the two runPythonScript signatures
     /** Run a python script from the resources return the exit code and stderr and stdout */
-    int runPythonScript(const QString scriptName, QString& sout, QString& serr, const QString version, const QStringList params = {}); 
-    bool runPythonCommand(const QStringList params, const QString version);
+    int runPythonScript(const QString& scriptName, QString& sout, QString& serr, const QString& version, const QStringList& params = {}); 
+    bool runPythonCommand(const QStringList& params, const QString& version);
 
-    void setPythonEnv(const QString version);
-    bool installKernel(const QString version);
-    bool optionallyInstallMVWheel(const QString version);
+    void setPythonEnv(const QString& version);
+    bool installKernel(const QString& version);
+    bool optionallyInstallMVWheel(const QString& version);
 
-    bool startJupyterServerProcess(const QString version);
+    bool startJupyterServerProcess(const QString& version);
 
     void logProcessOutput();
 
-    const QString getVirtDir(const QString);
-    QString getPythonExePath();
+    // Python interpreter path
+    QString getPythonInterpreterPath();
 
+    // Distinguish between python in a regular or conda directory and python in a venv
+    std::pair<bool, QString> getPythonHomePath(const QString& pyInterpreterPath);
+    
 private:
     QHash<QString, PluginFactory*>      _pluginFactories;           /** All loaded plugin factories */
     std::vector<mv::plugin::Plugin*>    _plugins;                   /** Vector of plugin instances */
