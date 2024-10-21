@@ -43,14 +43,6 @@ target_include_directories(${JUPYTERPLUGIN} PRIVATE  "${ManiVault_INCLUDE_DIR}")
 # Request C++17
 target_compile_features(${JUPYTERPLUGIN} PRIVATE cxx_std_17)
 
-include(GenerateExportHeader)
-generate_export_header(${JUPYTERPLUGIN})
-
-# Retrieve the file name of the generated export header.
-file(GLOB EXPORT_HEADER_FILE_NAME 
-    RELATIVE ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_BINARY_DIR}/*_export.h)
-list(APPEND IMAGE_DATA_HEADERS ${CMAKE_CURRENT_BINARY_DIR}/${EXPORT_HEADER_FILE_NAME})
-
 # -----------------------------------------------------------------------------
 # Target library linking
 # -----------------------------------------------------------------------------

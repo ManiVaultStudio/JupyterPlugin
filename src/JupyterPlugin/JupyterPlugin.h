@@ -7,8 +7,6 @@
 
 #include <memory>
 
-#include "jupyterplugin_export.h"
-
 using namespace mv::plugin;
 using namespace mv::gui;
 
@@ -25,7 +23,7 @@ using namespace mv::gui;
  *
  * @authors B. van Lew
  */
-class JUPYTERPLUGIN_EXPORT JupyterPlugin : public ViewPlugin
+class JupyterPlugin : public ViewPlugin
 {
     Q_OBJECT
 
