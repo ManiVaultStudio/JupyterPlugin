@@ -112,6 +112,7 @@ CPMAddPackage(
     EXCLUDE_FROM_ALL YES
 )
 
+# remove this after updating xeus-python
 if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.30")
     set(xeus_python_patch "${CMAKE_CURRENT_LIST_DIR}/xeus-python.patch")
     message(STATUS "Apply xeus-python patch: ${xeus_python_patch}")
