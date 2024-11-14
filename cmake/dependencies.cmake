@@ -113,18 +113,18 @@ CPMAddPackage(
 )
 
 if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.30")
-    set(xeus_patch "${CMAKE_CURRENT_LIST_DIR}/xeus-python.patch")
+    set(xeus_python_patch "${CMAKE_CURRENT_LIST_DIR}/xeus-python.patch")
+    message(STATUS "Apply xeus-python patch: ${xeus_python_patch}")
 else()
-    set(xeus_patch "")
+    set(xeus_python_patch "")
 endif()
 
 CPMAddPackage(
     NAME xeus-python
-    GITHUB_REPOSITORY "jupyter-xeus/xeus-python"
-    GIT_TAG ${xeus-python_VERSION}
+    URL "https://github.com/jupyter-xeus/xeus-python/archive/refs/tags/${xeus-python_VERSION}.tar.gz"
     EXCLUDE_FROM_ALL YES
     CPM_USE_LOCAL_PACKAGES ON
-    PATCHES ${xeus_patch}
+    PATCHES "${xeus_python_patch}" 
     OPTIONS "XPYT_BUILD_TESTS OFF"
             "XPYT_BUILD_SHARED OFF"
             "XPYT_BUILD_STATIC ON"
