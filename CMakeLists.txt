@@ -37,9 +37,15 @@ if(UNIX)
     set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 endif()
 
-set(MV_JUPYTER_USE_VCPKG OFF)
-if(DEFINED VCPKG_TARGET_TRIPLET)
-    set(MV_JUPYTER_USE_VCPKG ON)
+if(DEFINED MV_JUPYTER_USE_VCPKG AND NOT MV_JUPYTER_USE_VCPKG)
+    # vcpkg is used together with conan on ci
+    if(DEFINED VCPKG_TARGET_TRIPLET)
+        set(MV_JUPYTER_USE_VCPKG ON)
+    else()
+        set(MV_JUPYTER_USE_VCPKG OFF)
+    endif()
+else()
+    set(MV_JUPYTER_USE_VCPKG OFF)
 endif()
 
 # Cmake internal functions for generating a summary of enabled/disabled features.
