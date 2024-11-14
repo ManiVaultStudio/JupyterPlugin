@@ -77,6 +77,11 @@ message(STATUS "*** Python include dirs ${Python_INCLUDE_DIRS}")
 
 include(cmake/dependencies.cmake)
 
+set_target_properties(xeus-static libzmq-static cppzmq xeus-zmq-static 
+    PROPERTIES 
+    FOLDER JupyterPluginDependencies
+)
+
 # -----------------------------------------------------------------------------
 # Plugins
 # -----------------------------------------------------------------------------

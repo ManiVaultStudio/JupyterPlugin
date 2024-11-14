@@ -43,6 +43,8 @@ target_include_directories(${JUPYTERPLUGIN} PRIVATE  "${ManiVault_INCLUDE_DIR}")
 # Request C++17
 target_compile_features(${JUPYTERPLUGIN} PRIVATE cxx_std_17)
 
+set_target_properties(${JUPYTERPLUGIN} PROPERTIES FOLDER JupyterPlugin)
+
 # -----------------------------------------------------------------------------
 # Target library linking
 # -----------------------------------------------------------------------------

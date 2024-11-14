@@ -43,6 +43,8 @@ target_compile_features(${JUPYTERLAUNCHER} PRIVATE cxx_std_17)
 include(GenerateExportHeader)
 generate_export_header(${JUPYTERLAUNCHER})
 
+set_target_properties(${JUPYTERLAUNCHER} PROPERTIES FOLDER JupyterPlugin)
+
 # -----------------------------------------------------------------------------
 # Target library linking
 # -----------------------------------------------------------------------------
