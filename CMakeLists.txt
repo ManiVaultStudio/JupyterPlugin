@@ -19,6 +19,8 @@ PROJECT("JupyterPlugins"
     DESCRIPTION "Jupyter plugin for ManiVault"
     LANGUAGES CXX)
 
+# the version number corresponds to the files in mvstudio_data and mvstudio_kernel
+
 # -----------------------------------------------------------------------------
 # CMake Options
 # -----------------------------------------------------------------------------
