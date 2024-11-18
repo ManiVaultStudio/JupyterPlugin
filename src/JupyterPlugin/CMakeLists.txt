@@ -117,7 +117,7 @@ install(FILES
 )
 
 install(FILES 
-    ${PROJECT_SOURCE_DIR}/examples/mvstudio_demo.ipynb
+    ${PROJECT_SOURCE_DIR}/examples/demo_data_loading.ipynb
     DESTINATION examples/JupyterPlugin 
     COMPONENT PLUGINS
 )
