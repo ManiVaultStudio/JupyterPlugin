@@ -30,7 +30,7 @@ class Hierarchy:
 
     def getItem(self, guid: str) -> Item:
         """Return the Item corresponding
-        to the guid 
+        to the data hierarchy guid 
         """
         for item in self.children():
             result = item.getItem(guid)
@@ -38,9 +38,19 @@ class Hierarchy:
                 return result
         return None
 
+    def getItemByID(self, datasetId: str) -> Item:
+        """Return the Item corresponding
+        to the data set datasetId 
+        """
+        for item in self.children():
+            result = item.getItemByID(datasetId)
+            if result is not None:
+                return result
+        return None
+
     def getItemByName(self, name: str) -> Item:
         """Return the Item corresponding
-        to the guid 
+        to the data name 
         """
         for item in self.children():
             result = item.getItemByName(name)
@@ -76,13 +86,13 @@ class Hierarchy:
             data: The numpy array contain the point data 
             name: A name for the 
         """
-        guid = mvstudio_core.add_new_data(data, name)
-        if len(guid) == 0:
+        datasetId = mvstudio_core.add_new_data(data, name)
+        if len(datasetId) == 0:
             warnings.warn("Could not add item", RuntimeWarning)
             return None
         else:
             self._refresh()
-            return self.getItem(guid)
+            return self.getItemByID(datasetId)
         
     def addImageItem(self, data: np.ndarray, name: str) -> Item|None:
         """Add an image data item at the root
@@ -94,13 +104,13 @@ class Hierarchy:
         Returns:
             Item|None: _description_
         """
-        guid = mvstudio_core.add_new_image(data, name)
-        if len(guid) == 0:
+        datasetId = mvstudio_core.add_new_image(data, name)
+        if len(datasetId) == 0:
             warnings.warn("Could not add item", RuntimeWarning)
             return None
         else:
             self._refresh()
-            return self.getItem(guid)
+            return self.getItemByID(datasetId)
 
     def addClusterItem(self, index: list[int]):
         pass

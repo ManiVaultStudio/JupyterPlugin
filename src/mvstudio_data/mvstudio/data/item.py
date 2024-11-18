@@ -71,13 +71,26 @@ class Item:
 
     def getItem(self, guid) -> Self | None:
         """Return the DataHierarchy Item corresponding
-        to the guid. It can be the current item or a child item.
+        to the data hierarchy guid. It can be the current item or a child item.
         """
-        if self._guid == guid:
+        if self.guid == guid:
             return self
         
         for child in self.children():
             item = child.getItem(guid)
+            if item is not None:
+                return item
+        return None
+    
+    def getItemByID(self, datasetId) -> Self | None:
+        """Return the DataHierarchy Item corresponding
+        to the dataset ID. It can be the current item or a child item.
+        """
+        if self.datasetId == datasetId:
+            return self
+        
+        for child in self.children():
+            item = child.getItem(datasetId)
             if item is not None:
                 return item
         return None
