@@ -387,6 +387,7 @@ static std::string add_mvimage(const py::array& data, std::string dataSetName)
 
         qDebug() << "add_mvimage: " << guid;
     }
+    else
     {
         auto warnings = pybind11::module::import("warnings");
         auto builtins = pybind11::module::import("builtins");

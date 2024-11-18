@@ -82,7 +82,7 @@ class Hierarchy:
             return None
         else:
             self._refresh()
-            return self.getItemByIndex(guid)
+            return self.getItem(guid)
         
     def addImageItem(self, data: np.ndarray, name: str) -> Item|None:
         """Add an image data item at the root
@@ -100,11 +100,10 @@ class Hierarchy:
             return None
         else:
             self._refresh()
-            return self.getItemByIndex(guid)
+            return self.getItem(guid)
 
     def addClusterItem(self, index: list[int]):
         pass
-
 
     def children(self) -> Generator[Item, None, None]:
             """Generator for iterating over any children of this DataHierarchyItem.
