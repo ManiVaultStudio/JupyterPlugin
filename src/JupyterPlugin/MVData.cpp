@@ -168,7 +168,7 @@ void orient_multiband_imagedata_as_bip(const U* data_in, std::vector<size_t> sha
 
 // when conversion is needed
 template<typename T, typename U>
-void conv_points_from_numpy_array(const void* data_in, std::vector<size_t> shape, mv::Dataset<Points> points, bool flip = false)
+void conv_points_from_numpy_array(const void* data, std::vector<size_t> shape, mv::Dataset<Points> points, bool flip = false)
 {
     auto band_size = shape[0] * shape[1];
     auto num_bands = shape.size() == 3 ? shape[2] : 1;
@@ -176,8 +176,8 @@ void conv_points_from_numpy_array(const void* data_in, std::vector<size_t> shape
     auto builtins = pybind11::module::import("builtins");
     warnings.attr("warn")(
         "This numpy dtype was converted to float to match the ManiVault data model.",
-        builtins.attr("UserWarning"));    
-    auto indata = static_cast<const U *>(data_in);
+        builtins.attr("UserWarning"));
+    auto data_in = static_cast<const U *>(data_in);
     auto data_out = std::vector<T>();
     data_out.resize(band_size * num_bands);
     if (num_bands == 1 && !flip) {
@@ -186,7 +186,7 @@ void conv_points_from_numpy_array(const void* data_in, std::vector<size_t> shape
         }
     }
     else {
-        orient_multiband_imagedata_as_bip<T,U>(static_cast<const U*>(data_in), shape, data_out, flip);
+        orient_multiband_imagedata_as_bip<T,U>(data_in, shape, data_out, flip);
     }
     points->setData(std::move(data_out), num_bands);
 }
