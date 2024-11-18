@@ -21,7 +21,8 @@ class ImageMixin:
         id = mvstudio_core.find_image_dataset(self.datasetId)
         if len(id) > 0:
             array =  mvstudio_core.get_image_item(self.datasetId)
-            return array
+
+            return np.flipud(array)
         return np.empty([0]) 
 
 class ImageItem(ImageMixin, Item):
