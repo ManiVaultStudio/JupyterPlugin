@@ -50,15 +50,15 @@ print(h)
 
 This plugin kernel based on the Xeus kernel is compatible with Jupyter software. As such we use the unmodified Jupyter logo to make this clear to end users. This usage follows the rules set out in the [Jupyter documentation](https://jupyter.org/governance/trademarks.html#uses-that-never-require-approval).
 
-### Kernel architecture
+## Kernel architecture
 
 The kernel relies on Jupyter-Xeus components to expose a python 3.11 environment. 
 
-The architecture of the kernel is based on Slicer/SlicerJupyter.  The correspondance is shown in the table below.
+The architecture of the kernel is based on [Slicer/SlicerJupyter](https://github.com/Slicer/SlicerJupyter). The correspondence is shown in the table below.
 
-ManiVault JupyterPlugin | Slicer SlicerJupyter extension | Manivault Example
----| --- | ---
-JupyterXeusKernel | qSlicerJupyterKernelModule | n.a.
-JupyterPlugin | qSlicerJupyterKernelModuleWidget | ExampleViewPlugin
+ManiVault JupyterPlugin | Slicer SlicerJupyter extension
+---| --- 
+JupyterXeusKernel | qSlicerJupyterKernelModule 
+JupyterPlugin | qSlicerJupyterKernelModuleWidget
 
 
