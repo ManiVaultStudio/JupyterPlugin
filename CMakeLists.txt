@@ -1,10 +1,14 @@
 cmake_minimum_required(VERSION 3.21)
 
 # vcpkg library settings
-if(DEFINED CMAKE_TOOLCHAIN_FILE AND CMAKE_TOOLCHAIN_FILE MATCHES "vcpkg" AND WIN32)
-    set(VCPKG_HOST_TRIPLET "x64-windows-static-md" CACHE STRING "")
-    set(VCPKG_TARGET_TRIPLET "x64-windows-static-md" CACHE STRING "")
-    set(VCPKG_LIBRARY_LINKAGE "static" CACHE STRING "")
+if(DEFINED MV_JUPYTER_USE_VCPKG AND MV_JUPYTER_USE_VCPKG)
+    if(DEFINED CMAKE_TOOLCHAIN_FILE AND CMAKE_TOOLCHAIN_FILE MATCHES "vcpkg" AND WIN32)
+        set(VCPKG_HOST_TRIPLET "x64-windows-static-md" CACHE STRING "")
+        set(VCPKG_TARGET_TRIPLET "x64-windows-static-md" CACHE STRING "")
+        set(VCPKG_LIBRARY_LINKAGE "static" CACHE STRING "")
+    endif()
+else()
+    set(MV_JUPYTER_USE_VCPKG OFF)
 endif()
 
 # -----------------------------------------------------------------------------
@@ -35,17 +39,6 @@ endif(MSVC)
 
 if(UNIX)
     set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-endif()
-
-if(DEFINED MV_JUPYTER_USE_VCPKG AND NOT MV_JUPYTER_USE_VCPKG)
-    # vcpkg is used together with conan on ci
-    if(DEFINED VCPKG_TARGET_TRIPLET)
-        set(MV_JUPYTER_USE_VCPKG ON)
-    else()
-        set(MV_JUPYTER_USE_VCPKG OFF)
-    endif()
-else()
-    set(MV_JUPYTER_USE_VCPKG OFF)
 endif()
 
 # Cmake internal functions for generating a summary of enabled/disabled features.
