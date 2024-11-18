@@ -110,9 +110,15 @@ install(TARGETS ${JUPYTERPLUGIN}
 
 install(FILES 
     res/jupyter_server_config.py 
-    ${PROJECT_SOURCE_DIR}/src/mvstudio_data/dist/mvstudio_data-${PROJECT_VERSION}-py3-none-any.whl
-    ${PROJECT_SOURCE_DIR}/src/mvstudio_kernel/dist/mvstudio_kernel-${PROJECT_VERSION}-py3-none-any.whl
+    ${PROJECT_SOURCE_DIR}/src/mvstudio_data/dist/mvstudio_data-${PROJECT_VERSION}-py3-none-any.whl 
+    ${PROJECT_SOURCE_DIR}/src/mvstudio_kernel/dist/mvstudio_kernel-${PROJECT_VERSION}-py3-none-any.whl 
     DESTINATION PluginDependencies/JupyterLauncher/py 
+    COMPONENT PLUGINS
+)
+
+install(FILES 
+    ${PROJECT_SOURCE_DIR}/examples/mvstudio_demo.ipynb
+    DESTINATION examples/JupyterLauncher 
     COMPONENT PLUGINS
 )
 
