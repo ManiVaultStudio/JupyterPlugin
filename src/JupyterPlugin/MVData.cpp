@@ -240,7 +240,7 @@ void set_points_from_numpy_array_impl(std::true_type, const void* data_in, std::
         return;
     }
     auto num_points = shape[0] * shape[1];
-    auto data_out = std::vector<T>();
+    std::vector<T> data_out = {};
     data_out.resize(num_points);
     std::memcpy(data_out.data(), static_cast<const T*>(data_in), num_points * sizeof(T));
     points->setData(std::move(data_out), shape[1]);
@@ -263,6 +263,7 @@ static std::string add_new_mvdata(const py::array& data, std::string dataSetName
     void* ptr = buf_info.ptr;
     std::vector<size_t> shape(buf_info.shape.begin(), buf_info.shape.end());
 
+    std::string guid = "";
     const auto dtype = data.dtype();
     
     void (*point_setter)(const void* data_in, std::vector<size_t> shape, mv::Dataset<Points> points, bool flip) = nullptr;
@@ -270,24 +271,28 @@ static std::string add_new_mvdata(const py::array& data, std::string dataSetName
     // PointData is limited in its type support - hopefully the commented types wil be added soon
     if (dtype.is(pybind11::dtype::of<std::uint8_t>()))
         point_setter = conv_points_from_numpy_array<std::uint8_t, std::uint8_t>;
-    if (dtype.is(pybind11::dtype::of<std::int8_t>()))
+    else if (dtype.is(pybind11::dtype::of<std::int8_t>()))
         point_setter = conv_points_from_numpy_array<std::int8_t, std::int8_t>;
-    if (dtype.is(pybind11::dtype::of<std::uint16_t>()))
+    else if (dtype.is(pybind11::dtype::of<std::uint16_t>()))
         point_setter = conv_points_from_numpy_array<std::uint16_t, std::uint16_t>;
-    if (dtype.is(pybind11::dtype::of<std::int16_t>()))
+    else if (dtype.is(pybind11::dtype::of<std::int16_t>()))
         point_setter = conv_points_from_numpy_array<std::int16_t, std::int16_t>;
     // 32 int are cast to float
-    if (dtype.is(pybind11::dtype::of<std::uint32_t>()))
+    else if (dtype.is(pybind11::dtype::of<std::uint32_t>()))
         point_setter = conv_points_from_numpy_array<float, std::uint32_t>;
-    if (dtype.is(pybind11::dtype::of<std::int32_t>()))
+    else if (dtype.is(pybind11::dtype::of<std::int32_t>()))
         point_setter = conv_points_from_numpy_array<float, std::int32_t>;
     //Unsupported <std::uint64_t> :
     //Unsupported <std::int64_t> :
-    if (dtype.is(pybind11::dtype::of<float>()))
+    else if (dtype.is(pybind11::dtype::of<float>()))
         point_setter = set_img_points_from_numpy_array<float>;
-    //Unsupported <double> :
-
-    std::string guid = "";
+    else if (dtype.is(pybind11::dtype::of<double>()))
+        point_setter = conv_points_from_numpy_array<float, double>;
+    else
+    {
+        qDebug() << "add_mvimage: type not supported (e.g. uint64_t or int64_t)" << guid;
+        return guid;
+    }
 
     if (point_setter != nullptr)
     {
@@ -338,7 +343,8 @@ static std::string add_mvimage(const py::array& data, std::string dataSetName)
     default:
         throw std::runtime_error("This function only supports a single 2d image with optional components");
     }
-    mv::Dataset<Points> points = mv::data().createDataset<Points>("Points", dataSetName.c_str(), nullptr);
+    
+    std::string guid = "";
     const auto dtype = data.dtype();
 
     void (*point_setter)(const void* data_in, std::vector<size_t> shape, mv::Dataset<Points> points, bool flip) = nullptr;
@@ -346,24 +352,27 @@ static std::string add_mvimage(const py::array& data, std::string dataSetName)
     // PointData is limited in its type support - hopefully the commented types wil be added soon
     if (dtype.is(pybind11::dtype::of<std::uint8_t>()))
         point_setter = conv_points_from_numpy_array<float, std::uint8_t>;
-    if (dtype.is(pybind11::dtype::of<std::int8_t>()))
+    else if (dtype.is(pybind11::dtype::of<std::int8_t>()))
         point_setter = conv_points_from_numpy_array<float, std::int8_t>;
-    if (dtype.is(pybind11::dtype::of<std::uint16_t>()))
+    else if (dtype.is(pybind11::dtype::of<std::uint16_t>()))
         point_setter = conv_points_from_numpy_array<float, std::uint16_t>;
-    if (dtype.is(pybind11::dtype::of<std::int16_t>()))
+    else if (dtype.is(pybind11::dtype::of<std::int16_t>()))
         point_setter = conv_points_from_numpy_array<float, std::int16_t>;
-    // 32 int are cast to float
-    if (dtype.is(pybind11::dtype::of<std::uint32_t>()))
+    else if (dtype.is(pybind11::dtype::of<std::uint32_t>()))
         point_setter = conv_points_from_numpy_array<float, std::uint32_t>;
-    if (dtype.is(pybind11::dtype::of<std::int32_t>()))
+    else if (dtype.is(pybind11::dtype::of<std::int32_t>()))
         point_setter = conv_points_from_numpy_array<float, std::int32_t>;
     //Unsupported <std::uint64_t> :
     //Unsupported <std::int64_t> :
-    if (dtype.is(pybind11::dtype::of<float>()))
+    else if (dtype.is(pybind11::dtype::of<float>()))
         point_setter = set_img_points_from_numpy_array<float>;
-    //Unsupported <double> :
-
-    std::string guid = "";
+    else if (dtype.is(pybind11::dtype::of<double>()))
+        point_setter = conv_points_from_numpy_array<float, double>;
+    else
+    {
+        qDebug() << "add_mvimage: type not supported (e.g. uint64_t or int64_t)" << guid;
+        return guid;
+    }
 
     if (point_setter != nullptr)
     {
