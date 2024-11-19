@@ -189,7 +189,6 @@ void conv_points_from_numpy_array(const void* data_in, std::vector<size_t> shape
         orient_multiband_imagedata_as_bip<T,U>(data_in_U, shape, data_out, flip);
     }
     points->setData(std::move(data_out), num_bands);
-    events().notifyDatasetDataChanged(points)
 }
 
 // when types are the same image
@@ -200,14 +199,12 @@ void set_img_points_from_numpy_array(const void* data_in, std::vector<size_t> sh
     auto num_bands = shape.size() == 3 ? shape[2] : 1;
     auto data_out = std::vector<T>();
     data_out.resize(band_size * num_bands);
-    if (num_bands = 1 && !flip) {
+    if (num_bands = 1 && !flip) 
         std::memcpy(data_out.data(), static_cast<const T*>(data_in), band_size * sizeof(T));
-        points->setData(std::move(data_out), num_bands);
-    }
-    else {
+    else
         orient_multiband_imagedata_as_bip<T,T>(static_cast<const T*>(data_in), shape, data_out, flip);
-        points->setData(std::move(data_out), num_bands);
-    }
+    
+    points->setData(std::move(data_out), num_bands);
 }
 
 
@@ -296,6 +293,8 @@ static std::string add_new_mvdata(const py::array& data, std::string dataSetName
     {
         mv::Dataset<Points> points = mv::data().createDataset<Points>("Points", dataSetName.c_str(), nullptr);
         point_setter(ptr, shape, points, false);
+        events().notifyDatasetDataChanged(points);
+
         guid = points.getDatasetId().toStdString();
 
         qDebug() << "add_new_mvdata: " << guid;
@@ -368,7 +367,10 @@ static std::string add_mvimage(const py::array& data, std::string dataSetName)
 
     if (point_setter != nullptr)
     {
+        mv::Dataset<Points> points = mv::data().createDataset<Points>("Points", dataSetName.c_str(), nullptr);
         point_setter(ptr, shape, points, true);
+        events().notifyDatasetDataChanged(points);
+
         auto imageDataset = mv::data().createDataset<Images>("Images", "numpy image", Dataset<DatasetImpl>(*points));
 
         int height = shape[0];
@@ -503,6 +505,8 @@ static std::string add_cluster(const py::tuple& tupleOfClusterLists, std::string
         clusters->addCluster(cluster);
 
     }
+
+    events().notifyDatasetDataChanged(clusters);
 
     return py::str(clusters.getDatasetId().toStdString());
 }
