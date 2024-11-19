@@ -271,13 +271,13 @@ static std::string add_new_mvdata(const py::array& data, std::string dataSetName
 
     // PointData is limited in its type support - hopefully the commented types wil be added soon
     if (dtype.is(pybind11::dtype::of<std::uint8_t>()))
-        point_setter = conv_points_from_numpy_array<float, std::uint8_t>;
+        point_setter = conv_points_from_numpy_array<std::uint8_t, std::uint8_t>;
     if (dtype.is(pybind11::dtype::of<std::int8_t>()))
-        point_setter = conv_points_from_numpy_array<float, std::int8_t>;
+        point_setter = conv_points_from_numpy_array<std::int8_t, std::int8_t>;
     if (dtype.is(pybind11::dtype::of<std::uint16_t>()))
-        point_setter = conv_points_from_numpy_array<float, std::uint16_t>;
+        point_setter = conv_points_from_numpy_array<std::uint16_t, std::uint16_t>;
     if (dtype.is(pybind11::dtype::of<std::int16_t>()))
-        point_setter = conv_points_from_numpy_array<float, std::int16_t>;
+        point_setter = conv_points_from_numpy_array<std::int16_t, std::int16_t>;
     // 32 int are cast to float
     if (dtype.is(pybind11::dtype::of<std::uint32_t>()))
         point_setter = conv_points_from_numpy_array<float, std::uint32_t>;
