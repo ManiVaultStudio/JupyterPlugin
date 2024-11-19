@@ -290,7 +290,7 @@ static std::string add_new_mvdata(const py::array& data, std::string dataSetName
         point_setter = conv_points_from_numpy_array<float, double>;
     else
     {
-        qDebug() << "add_mvimage: type not supported (e.g. uint64_t or int64_t)" << guid;
+        qDebug() << "add_mvimage: type not supported (e.g. uint64_t or int64_t)" << QString(guid.c_str());
         return guid;
     }
 
@@ -302,7 +302,7 @@ static std::string add_new_mvdata(const py::array& data, std::string dataSetName
 
         guid = points.getDatasetId().toStdString();
 
-        qDebug() << "add_new_mvdata: " << guid;
+        qDebug() << "add_new_mvdata: " << QString(guid.c_str());
     }
     else
     {
@@ -370,7 +370,7 @@ static std::string add_mvimage(const py::array& data, std::string dataSetName)
         point_setter = conv_points_from_numpy_array<float, double>;
     else
     {
-        qDebug() << "add_mvimage: type not supported (e.g. uint64_t or int64_t)" << guid;
+        qDebug() << "add_mvimage: type not supported (e.g. uint64_t or int64_t)" << QString(guid.c_str());
         return guid;
     }
 
@@ -397,7 +397,7 @@ static std::string add_mvimage(const py::array& data, std::string dataSetName)
 
         guid = points.getDatasetId().toStdString();
 
-        qDebug() << "add_mvimage: " << guid;
+        qDebug() << "add_mvimage: " << QString(guid.c_str());
     }
     else
     {
