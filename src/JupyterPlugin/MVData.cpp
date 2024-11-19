@@ -189,6 +189,7 @@ void conv_points_from_numpy_array(const void* data_in, std::vector<size_t> shape
         orient_multiband_imagedata_as_bip<T,U>(data_in_U, shape, data_out, flip);
     }
     points->setData(std::move(data_out), num_bands);
+    events().notifyDatasetDataChanged(points)
 }
 
 // when types are the same image
