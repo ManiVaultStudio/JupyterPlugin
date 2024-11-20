@@ -3,11 +3,11 @@
 #include "XeusInterpreter.h"
 #include "XeusServer.h"
 
-#include <QCoreApplication>
-#include <QStandardPaths>
+#include <QDebug>
 
-#include <nlohmann/json.hpp>
+#include <nlohmann/json_fwd.hpp>
 
+#include <xeus/xeus_context.hpp>
 #include <xeus/xhistory_manager.hpp>
 #include <xeus/xkernel.hpp>
 #include <zmq.hpp>
@@ -15,22 +15,14 @@
 #include <fstream>
 #include <memory>
 #include <string>
-#include <ostream>
 
 XeusKernel::XeusKernel()
 {
-    connect(&m_jupyterLabServer_process, &QProcess::readyReadStandardOutput, this, &XeusKernel::onReadyStandardOutput);
-    connect(&m_jupyterLabServer_process, &QProcess::readyReadStandardError, this, &XeusKernel::onReadyStandardError);
+
 }
 
 void XeusKernel::startKernel(const QString& connection_path, const QString& pluginVersion)
 {
-    auto searchPath = QStringList(QCoreApplication::applicationDirPath() + "/python");
-    QString pythonExecutable = QStandardPaths::findExecutable("python", searchPath);
-    static const std::string executable(pythonExecutable.toLatin1());
-    nl::json debugger_config;
-    debugger_config["python"] = executable;
-
     //// Test without configuration file (default zmq ports)
     //xeus::xconfiguration config = xeus::load_configuration("D:\\TempProj\\DevBundle\\Jupyter\\install\\Debug\\external_kernels\\ManiVault\\connection.json");
     //auto context =  xeus::make_context<zmq::context_t>();
@@ -87,36 +79,3 @@ void XeusKernel::stopKernel()
 
 }
 
-bool XeusKernel::startJupyterLabServer(QString noteBookDirectory)
-{
-    auto searchPath = QStringList(QCoreApplication::applicationDirPath() + "/python");
-    QString execString = QStandardPaths::findExecutable("python", searchPath);
-    QStringList args;
-
-    auto success = m_jupyterLabServer_process.waitForStarted(60000);
-    if (!success) {
-        qDebug() << "Error starting Jupyter Lab: " << m_jupyterLabServer_process.errorString();
-    }
-    else {
-        qInfo() << "Started Jupyter Lab ";
-        qInfo() << "Open http://localhost:8888/lab in the browser - if it has not already opened";
-    }
-    return success;
-}
-
-
-void XeusKernel::onReadyStandardOutput()
-{
-    m_jupyterLabServer_process.setReadChannel(QProcess::StandardOutput);
-    while (m_jupyterLabServer_process.canReadLine()) {
-        qInfo() << QString::fromLocal8Bit(m_jupyterLabServer_process.readLine());
-    }
-}
-
-void XeusKernel::onReadyStandardError()
-{
-    m_jupyterLabServer_process.setReadChannel(QProcess::StandardError);
-    while (m_jupyterLabServer_process.canReadLine()) {
-        qWarning() << QString::fromLocal8Bit(m_jupyterLabServer_process.readLine());
-    }
-}

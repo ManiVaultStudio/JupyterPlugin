@@ -1,10 +1,8 @@
 #pragma once
-#include <QObject>
-#include <QProcess>
+
 #include <xeus/xkernel.hpp>
-#include <xeus/xkernel_configuration.hpp>
-#include <string>
-#include <nlohmann/json.hpp>
+
+#include <QString>
 
 /**
  * Xeus kernel class 
@@ -22,23 +20,17 @@
  *  - 
  * @authors B. van Lew
 */
-class XeusKernel : public QObject
+class XeusKernel
 {
-    Q_OBJECT
 
 public: 
     XeusKernel();
-    virtual ~XeusKernel()=default;
+    virtual ~XeusKernel() = default;
 
-    bool startJupyterLabServer(QString noteBookDirectory);
     void startKernel(const QString& connection_path, const QString& pluginVersion = "");
     void stopKernel();
 
-private:
-    void onReadyStandardOutput();
-    void onReadyStandardError();
 
 private:
     xeus::xkernel *m_kernel = nullptr;
-    QProcess m_jupyterLabServer_process = QProcess{};
 };
