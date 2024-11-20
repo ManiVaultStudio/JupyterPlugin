@@ -171,7 +171,7 @@ template<typename T, typename U>
 void conv_points_from_numpy_array(const void* data_in, std::vector<size_t> shape, mv::Dataset<Points> points, bool flip = false)
 {
     auto band_size = shape[0] * shape[1];
-    auto num_bands = shape.size() == 3 ? shape[2] : 1;
+    auto num_bands = shape.size() == 3 ? shape[2] : shape[1];
     auto warnings = pybind11::module::import("warnings");
     auto builtins = pybind11::module::import("builtins");
     warnings.attr("warn")(
@@ -180,7 +180,7 @@ void conv_points_from_numpy_array(const void* data_in, std::vector<size_t> shape
     auto data_in_U = static_cast<const U *>(data_in);
     auto data_out = std::vector<T>();
     data_out.resize(band_size * num_bands);
-    if (num_bands == 1 && !flip) {
+    if (num_bands == shape[1] && !flip) {
         for (auto i = 0; i < band_size; ++i) {
             data_out[i] = static_cast<const T>(data_in_U[i]);
         }
@@ -196,10 +196,10 @@ template<class T>
 void set_img_points_from_numpy_array(const void* data_in, std::vector<size_t> shape, mv::Dataset<Points> points, bool flip=false)
 {
     auto band_size = shape[0] * shape[1];
-    auto num_bands = shape.size() == 3 ? shape[2] : 1;
+    auto num_bands = shape.size() == 3 ? shape[2] : shape[1];
     auto data_out = std::vector<T>();
     data_out.resize(band_size * num_bands);
-    if (num_bands = 1 && !flip) 
+    if (num_bands == shape[1] && !flip)
         std::memcpy(data_out.data(), static_cast<const T*>(data_in), band_size * sizeof(T));
     else
         orient_multiband_imagedata_as_bip<T,T>(static_cast<const T*>(data_in), shape, data_out, flip);
