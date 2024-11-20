@@ -270,24 +270,24 @@ static std::string add_new_mvdata(const py::array& data, std::string dataSetName
 
     // PointData is limited in its type support - hopefully the commented types wil be added soon
     if (dtype.is(pybind11::dtype::of<std::uint8_t>()))
-        point_setter = conv_points_from_numpy_array<std::uint8_t, std::uint8_t>;
+        point_setter = set_points_from_numpy_array<std::uint8_t, std::uint8_t>;
     else if (dtype.is(pybind11::dtype::of<std::int8_t>()))
-        point_setter = conv_points_from_numpy_array<std::int8_t, std::int8_t>;
+        point_setter = set_points_from_numpy_array<std::int8_t, std::int8_t>;
     else if (dtype.is(pybind11::dtype::of<std::uint16_t>()))
-        point_setter = conv_points_from_numpy_array<std::uint16_t, std::uint16_t>;
+        point_setter = set_points_from_numpy_array<std::uint16_t, std::uint16_t>;
     else if (dtype.is(pybind11::dtype::of<std::int16_t>()))
-        point_setter = conv_points_from_numpy_array<std::int16_t, std::int16_t>;
+        point_setter = set_points_from_numpy_array<std::int16_t, std::int16_t>;
     // 32 int are cast to float
     else if (dtype.is(pybind11::dtype::of<std::uint32_t>()))
-        point_setter = conv_points_from_numpy_array<float, std::uint32_t>;
+        point_setter = set_points_from_numpy_array<float, std::uint32_t>;
     else if (dtype.is(pybind11::dtype::of<std::int32_t>()))
-        point_setter = conv_points_from_numpy_array<float, std::int32_t>;
+        point_setter = set_points_from_numpy_array<float, std::int32_t>;
     //Unsupported <std::uint64_t> :
     //Unsupported <std::int64_t> :
     else if (dtype.is(pybind11::dtype::of<float>()))
-        point_setter = set_img_points_from_numpy_array<float>;
+        point_setter = set_points_from_numpy_array<float, float>;
     else if (dtype.is(pybind11::dtype::of<double>()))
-        point_setter = conv_points_from_numpy_array<float, double>;
+        point_setter = set_points_from_numpy_array<float, double>;
     else
     {
         qDebug() << "add_mvimage: type not supported (e.g. uint64_t or int64_t)" << QString(guid.c_str());
