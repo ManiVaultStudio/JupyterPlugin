@@ -60,7 +60,7 @@ class JupyterPluginFactory : public ViewPluginFactory
 {
     Q_INTERFACES(mv::plugin::ViewPluginFactory mv::plugin::PluginFactory)
     Q_OBJECT
-    Q_PLUGIN_METADATA(IID   "nl.BioVault.JupyterPlugin"
+    Q_PLUGIN_METADATA(IID   "studio.manivault.JupyterPlugin"
                       FILE  "JupyterPlugin.json")
 
 public:

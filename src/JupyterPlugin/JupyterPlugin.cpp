@@ -10,7 +10,7 @@
 
 #include "XeusKernel.h"
 
-Q_PLUGIN_METADATA(IID "nl.BioVault.JupyterPlugin")
+Q_PLUGIN_METADATA(IID "studio.manivault.JupyterPlugin")
 
 using namespace mv;
 
