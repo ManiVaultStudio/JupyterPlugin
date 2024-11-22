@@ -1,0 +1,16 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 89f0a77..1ae7e38 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -36,11 +36,6 @@ if (NOT DEFINED XPYTHON_KERNELSPEC_PATH)
+     set(XPYTHON_KERNELSPEC_PATH "${CMAKE_INSTALL_FULL_BINDIR}/")
+ endif ()
+ 
+-# Running find_package(PythonInterp) to retrieve the Python version
+-# which is not exported by Pybind11's cmake.
+-# Cf. https://github.com/pybind/pybind11/issues/2268
+-find_package(PythonInterp ${PythonLibsNew_FIND_VERSION} REQUIRED)
+-
+ if(EMSCRIPTEN)
+     # the variables PYTHON_VERSION_MAJOR and PYTHON_VERSION_MINOR
+     # might be wrong for the EMSCRIPTEN case since it may contains
