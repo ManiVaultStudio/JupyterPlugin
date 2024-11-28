@@ -2,6 +2,10 @@
 # Wrapper around fetch content
 include(cmake/get_cpm.cmake)
 
+# re-applying patches is problematic without CPM_SOURCE_CACHE
+# see https://github.com/cpm-cmake/CPM.cmake/issues/577
+set(CPM_SOURCE_CACHE ${CMAKE_CURRENT_BINARY_DIR}/.cpm-cache)
+
 if (WIN32)
     if(${MV_JUPYTER_USE_VCPKG})
         find_package (OpenSSL REQUIRED)
@@ -42,7 +46,7 @@ CPMAddPackage(
     GIT_TAG ${xeus_VERSION}
     EXCLUDE_FROM_ALL YES
     CPM_USE_LOCAL_PACKAGES ON
-    PATCH_COMMAND git apply --ignore-space-change --ignore-whitespace --whitespace=nowarn ${CMAKE_CURRENT_SOURCE_DIR}/cmake/uuidopt.patch
+    PATCHES "${CMAKE_CURRENT_SOURCE_DIR}/cmake/uuidopt.patch"
     OPTIONS "BUILD_EXAMPLES OFF"
             "XEUS_BUILD_SHARED_LIBS OFF"
             "XEUS_BUILD_STATIC_LIBS ON"
@@ -84,7 +88,7 @@ CPMAddPackage(
     GIT_TAG ${xeus-zmq_VERSION}
     EXCLUDE_FROM_ALL YES
     CPM_USE_LOCAL_PACKAGES ON
-    PATCH_COMMAND git apply --ignore-space-change --ignore-whitespace --whitespace=nowarn ${CMAKE_CURRENT_SOURCE_DIR}/cmake/libsodiumopt.patch
+    PATCHES "${CMAKE_CURRENT_SOURCE_DIR}/cmake/libsodiumopt.patch"
     OPTIONS "XEUS_ZMQ_BUILD_TESTS OFF"
             "XEUS_ZMQ_BUILD_SHARED_LIBS OFF"
             "XEUS_ZMQ_BUILD_STATIC_LIBS ON"
