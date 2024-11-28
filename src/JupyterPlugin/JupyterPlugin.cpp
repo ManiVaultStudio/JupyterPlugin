@@ -4,7 +4,6 @@
 #include <PointData/PointData.h>
 
 #include <QDebug>
-#include <QProcess>
 #include <QDir>
 #include <QStandardPaths>
 
