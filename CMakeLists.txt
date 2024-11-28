@@ -1,14 +1,13 @@
 cmake_minimum_required(VERSION 3.21)
 
 # vcpkg library settings
-if(DEFINED MV_JUPYTER_USE_VCPKG AND MV_JUPYTER_USE_VCPKG)
-    if(DEFINED CMAKE_TOOLCHAIN_FILE AND CMAKE_TOOLCHAIN_FILE MATCHES "vcpkg" AND WIN32)
-        set(VCPKG_HOST_TRIPLET "x64-windows-static-md" CACHE STRING "")
-        set(VCPKG_TARGET_TRIPLET "x64-windows-static-md" CACHE STRING "")
-        set(VCPKG_LIBRARY_LINKAGE "static" CACHE STRING "")
-    endif()
-else()
+if(NOT DEFINED MV_JUPYTER_USE_VCPKG)
     set(MV_JUPYTER_USE_VCPKG OFF)
+elseif(MV_JUPYTER_USE_VCPKG AND WIN32)
+    message(STATUS "JupyterPlugins: Using vcpkg to install dependencies")
+    set(VCPKG_HOST_TRIPLET "x64-windows-static-md" CACHE STRING "")
+    set(VCPKG_TARGET_TRIPLET "x64-windows-static-md" CACHE STRING "")
+    set(VCPKG_LIBRARY_LINKAGE "static" CACHE STRING "")
 endif()
 
 # -----------------------------------------------------------------------------
@@ -81,8 +80,9 @@ set_target_properties(xeus-static libzmq-static cppzmq xeus-zmq-static
 # Plugins
 # -----------------------------------------------------------------------------
 
-add_subdirectory(src/JupyterPlugin)
 add_subdirectory(src/JupyterLauncher)
+add_subdirectory(src/JupyterPlugin)
 
 # we'd like to always build the python bridge plugin when building the launcher plugin
 add_dependencies(JupyterLauncher ${JupyterPluginTarget})
+
