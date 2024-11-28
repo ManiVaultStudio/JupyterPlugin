@@ -32,6 +32,15 @@ using namespace mv;
 
 Q_PLUGIN_METADATA(IID "nl.BioVault.JupyterLauncher")
 
+static inline bool setPythonPluginSearchPath(const QDir& sharedLibDir)
+{
+#ifdef WIN32
+    return SetDllDirectoryA(QString(sharedLibDir.absolutePath() + "/").toUtf8().data());
+#else
+    return qputenv("LD_LIBRARY_PATH", QString(sharedLibDir.absolutePath() + "/").toUtf8() + ":" + qgetenv("LD_LIBRARY_PATH"));
+#endif
+}
+
 JupyterLauncher::JupyterLauncher(const PluginFactory* factory) :
     ViewPlugin(factory),
     _currentDatasetName(),
@@ -512,10 +521,8 @@ void JupyterLauncher::loadJupyterPythonKernel(const QString& pyversion)
     //    qDebug() << "Failed to load python library";
 
     qDebug() << "Using python shared library " << pythonLibrary.fileName() << " at: " << sharedLibDir.absolutePath();
-    if (QOperatingSystemVersion::currentType() == QOperatingSystemVersion::Windows)
-        SetDllDirectoryA(QString(sharedLibDir.absolutePath() + "/").toUtf8().data());
-    else
-        qputenv("LD_LIBRARY_PATH", QString(sharedLibDir.absolutePath() + "/").toUtf8() + ":" + qgetenv("LD_LIBRARY_PATH"));
+    if(!setPythonPluginSearchPath(sharedLibDir))
+        qWarning() << "Failed set runtime path of python communication plugin given " << sharedLibDir.absolutePath() ;
 
     QString jupyterPluginPath = QCoreApplication::applicationDirPath() + "/PluginDependencies/JupyterLauncher/bin/JupyterPlugin" + QString(pyversion).remove(".");
     QLibrary jupyterPluginLib(jupyterPluginPath);
