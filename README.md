@@ -38,6 +38,11 @@ Linux:
 sudo apt install libtbb-dev libsodium-dev libssl-dev uuid-dev
 ```
 
+Mac:
+```
+brew --prefix libomp
+```
+
 ## Usage
 
 You can use any local python environment (currently restricted to 3.11) with this plugin to interact with ManiVault. 
