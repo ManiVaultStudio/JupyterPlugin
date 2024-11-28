@@ -79,7 +79,7 @@ class JupyterPluginConan(ConanFile):
             proc = subprocess.run("brew --prefix libomp",  shell=True, capture_output=True)
             subprocess.run(f"ln {proc.stdout.decode('UTF-8').strip()}/lib/libomp.dylib /usr/local/lib/libomp.dylib", shell=True)
         if self.settings.os == "Linux":
-            self.run("sudo apt update && sudo apt install -y libtbb2-dev libsodium-dev")
+            self.run("sudo apt update && sudo apt install -y libtbb2-dev libsodium-dev uuid-dev")
 
     def config_options(self):
         if self.settings.os == "Windows":
