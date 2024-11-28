@@ -108,7 +108,6 @@ execute_process(
 install(TARGETS ${JUPYTERPLUGIN}
     RUNTIME DESTINATION PluginDependencies/JupyterLauncher/bin COMPONENT PLUGINS # Windows .dll
     LIBRARY DESTINATION PluginDependencies/JupyterLauncher/bin COMPONENT PLUGINS # Linux/Mac .so
-    ARCHIVE DESTINATION lib                                    COMPONENT LINKLIB # Windows .lib 
 )
 
 install(FILES 

@@ -42,9 +42,6 @@ target_include_directories(${JUPYTERLAUNCHER} PRIVATE "${ManiVault_INCLUDE_DIR}"
 # -----------------------------------------------------------------------------
 target_compile_features(${JUPYTERLAUNCHER} PRIVATE cxx_std_17)
 
-include(GenerateExportHeader)
-generate_export_header(${JUPYTERLAUNCHER})
-
 set_target_properties(${JUPYTERLAUNCHER} PROPERTIES FOLDER JupyterPlugin)
 
 # -----------------------------------------------------------------------------
@@ -52,6 +49,7 @@ set_target_properties(${JUPYTERLAUNCHER} PROPERTIES FOLDER JupyterPlugin)
 # -----------------------------------------------------------------------------
 target_link_libraries(${JUPYTERLAUNCHER} PRIVATE Qt6::Widgets)
 target_link_libraries(${JUPYTERLAUNCHER} PRIVATE Qt6::WebEngineWidgets)
+
 target_link_libraries(${JUPYTERLAUNCHER} PRIVATE ManiVault::Core)
 target_link_libraries(${JUPYTERLAUNCHER} PRIVATE ManiVault::PointData)
 
@@ -61,7 +59,6 @@ target_link_libraries(${JUPYTERLAUNCHER} PRIVATE ManiVault::PointData)
 install(TARGETS ${JUPYTERLAUNCHER}
     RUNTIME DESTINATION Plugins COMPONENT PLUGINS # Windows .dll
     LIBRARY DESTINATION Plugins COMPONENT PLUGINS # Linux/Mac .so
-    ARCHIVE DESTINATION lib     COMPONENT LINKLIB # Windows .lib
 )
 
 add_custom_command(TARGET ${JUPYTERLAUNCHER} POST_BUILD
