@@ -42,6 +42,7 @@ CPMAddPackage(
     GIT_TAG ${xeus_VERSION}
     EXCLUDE_FROM_ALL YES
     CPM_USE_LOCAL_PACKAGES ON
+    PATCH_COMMAND git apply --ignore-space-change --ignore-whitespace --whitespace=nowarn ${CMAKE_CURRENT_SOURCE_DIR}/cmake/uuidopt.patch
     OPTIONS "BUILD_EXAMPLES OFF"
             "XEUS_BUILD_SHARED_LIBS OFF"
             "XEUS_BUILD_STATIC_LIBS ON"
@@ -83,6 +84,7 @@ CPMAddPackage(
     GIT_TAG ${xeus-zmq_VERSION}
     EXCLUDE_FROM_ALL YES
     CPM_USE_LOCAL_PACKAGES ON
+    PATCH_COMMAND git apply --ignore-space-change --ignore-whitespace --whitespace=nowarn ${CMAKE_CURRENT_SOURCE_DIR}/cmake/libsodiumopt.patch
     OPTIONS "XEUS_ZMQ_BUILD_TESTS OFF"
             "XEUS_ZMQ_BUILD_SHARED_LIBS OFF"
             "XEUS_ZMQ_BUILD_STATIC_LIBS ON"
