@@ -31,8 +31,8 @@ public:
 
 JupyterPlugin::JupyterPlugin(const PluginFactory* factory) :
     ViewPlugin(factory),
-    _connectionFilePath(this, "Connection file", QDir(QStandardPaths::standardLocations(QStandardPaths::HomeLocation)[0]).filePath("connection.json")),
-    _pKernel(std::make_unique<PrivateKernel>())
+    _pKernel(std::make_unique<PrivateKernel>()),
+    _connectionFilePath(this, "Connection file", QDir(QStandardPaths::standardLocations(QStandardPaths::HomeLocation)[0]).filePath("connection.json"))
 {
 }
 

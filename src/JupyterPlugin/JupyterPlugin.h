@@ -41,7 +41,7 @@ public:
 private:
     // shield the implementation dependencies
     class PrivateKernel;
-    std::unique_ptr<PrivateKernel> _pKernel;
+    std::unique_ptr<PrivateKernel>  _pKernel;
 
     FilePickerAction                _connectionFilePath;        /** Settings action */
 };
