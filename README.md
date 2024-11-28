@@ -35,9 +35,8 @@ This projects builds two ManiVault plugins, a communication bridge `JupyterPlugi
 
 Linux:
 ```
-sudo apt install libtbb-dev libsodium-dev libssl-dev
+sudo apt install libtbb-dev libsodium-dev libssl-dev uuid-dev
 ```
-
 
 ## Usage
 
