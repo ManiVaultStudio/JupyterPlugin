@@ -14,12 +14,7 @@ using namespace mv::gui;
  * Jupyter plugin class
  *
  * This view plugin class hosts a Xeus kernel and python interpreter.
- * On initialization the kernel is started followed by 
- *
- * To see the plugin in action, please follow the steps below:
- *
- * 1. Go to the visualization menu in HDPS
- * 2. Choose the Example view menu item, the view will be added to the layout
+ * We open this plugin via the jupyter launcher plugin.
  *
  * @authors B. van Lew
  */
@@ -46,15 +41,13 @@ public:
 private:
     // shield the implementation dependencies
     class PrivateKernel;
-    std::unique_ptr<PrivateKernel> _pKernel;
+    std::unique_ptr<PrivateKernel>  _pKernel;
 
     FilePickerAction                _connectionFilePath;        /** Settings action */
 };
 
 /**
- * Example view plugin factory class
- *
- * Note: Factory does not need to be altered (merely responsible for generating new plugins when requested)
+ * Jupyter plugin factory class
  */
 class JupyterPluginFactory : public ViewPluginFactory
 {

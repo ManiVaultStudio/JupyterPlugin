@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.21)
 
 set(JUPYTERPLUGIN "JupyterPlugin${Python_VERSION_MAJOR}${Python_VERSION_MINOR}")
-set(JupyterPluginTarget "${JUPYTERPLUGIN}" PARENT_SCOPE)
+set(JupyterPluginTarget "${JUPYTERPLUGIN}" PARENT_SCOPE) # for add_dependencies in parent scope
 message(STATUS "Plugin: ${JUPYTERPLUGIN}")
 
 # -----------------------------------------------------------------------------
@@ -45,25 +45,30 @@ target_compile_features(${JUPYTERPLUGIN} PRIVATE cxx_std_17)
 
 set_target_properties(${JUPYTERPLUGIN} PROPERTIES FOLDER JupyterPlugin)
 
+if(UNIX)
+    set_target_properties(${JUPYTERPLUGIN} PROPERTIES POSITION_INDEPENDENT_CODE ON)
+endif()
+
 # -----------------------------------------------------------------------------
 # Target library linking
 # -----------------------------------------------------------------------------
 # Link to Qt libraries
-target_link_libraries(${JUPYTERPLUGIN} PUBLIC Qt6::Widgets)
-target_link_libraries(${JUPYTERPLUGIN} PUBLIC Qt6::WebEngineWidgets)
+target_link_libraries(${JUPYTERPLUGIN} PRIVATE Qt6::Widgets)
+target_link_libraries(${JUPYTERPLUGIN} PRIVATE Qt6::WebEngineWidgets)
 
 target_link_libraries(${JUPYTERPLUGIN} PRIVATE ManiVault::Core)
 target_link_libraries(${JUPYTERPLUGIN} PRIVATE ManiVault::PointData)
 target_link_libraries(${JUPYTERPLUGIN} PRIVATE ManiVault::ImageData)
 target_link_libraries(${JUPYTERPLUGIN} PRIVATE ManiVault::ClusterData)
 
-target_link_libraries(${JUPYTERPLUGIN} PUBLIC xeus-static)
-target_link_libraries(${JUPYTERPLUGIN} PUBLIC xeus-zmq-static)
-target_link_libraries(${JUPYTERPLUGIN} PUBLIC xeus-python-static)
-target_link_libraries(${JUPYTERPLUGIN} PUBLIC xtl)
-target_link_libraries(${JUPYTERPLUGIN} PUBLIC libzmq-static cppzmq-static)
-target_link_libraries(${JUPYTERPLUGIN} PUBLIC pybind11::embed)
-target_link_libraries(${JUPYTERPLUGIN} PUBLIC nlohmann_json::nlohmann_json)
+target_link_libraries(${JUPYTERPLUGIN} PRIVATE xeus-static)
+target_link_libraries(${JUPYTERPLUGIN} PRIVATE xeus-zmq-static)
+target_link_libraries(${JUPYTERPLUGIN} PRIVATE xeus-python-static)
+target_link_libraries(${JUPYTERPLUGIN} PRIVATE xtl)
+target_link_libraries(${JUPYTERPLUGIN} PRIVATE libzmq-static)
+target_link_libraries(${JUPYTERPLUGIN} PRIVATE cppzmq-static)
+target_link_libraries(${JUPYTERPLUGIN} PRIVATE pybind11::embed)
+target_link_libraries(${JUPYTERPLUGIN} PRIVATE nlohmann_json::nlohmann_json)
 
 # -----------------------------------------------------------------------------
 # Python MVJupyterPluginManager package
@@ -105,7 +110,6 @@ execute_process(
 install(TARGETS ${JUPYTERPLUGIN}
     RUNTIME DESTINATION PluginDependencies/JupyterLauncher/bin COMPONENT PLUGINS # Windows .dll
     LIBRARY DESTINATION PluginDependencies/JupyterLauncher/bin COMPONENT PLUGINS # Linux/Mac .so
-    ARCHIVE DESTINATION lib                                    COMPONENT LINKLIB # Windows .lib 
 )
 
 install(FILES 

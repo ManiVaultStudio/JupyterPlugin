@@ -2,6 +2,10 @@
 # Wrapper around fetch content
 include(cmake/get_cpm.cmake)
 
+# re-applying patches is problematic without CPM_SOURCE_CACHE
+# see https://github.com/cpm-cmake/CPM.cmake/issues/577
+set(CPM_SOURCE_CACHE ${CMAKE_CURRENT_BINARY_DIR}/.cpm-cache)
+
 if (WIN32)
     if(${MV_JUPYTER_USE_VCPKG})
         find_package (OpenSSL REQUIRED)
@@ -42,16 +46,15 @@ CPMAddPackage(
     GIT_TAG ${xeus_VERSION}
     EXCLUDE_FROM_ALL YES
     CPM_USE_LOCAL_PACKAGES ON
+    PATCHES "${CMAKE_CURRENT_SOURCE_DIR}/cmake/uuidopt.patch"
     OPTIONS "BUILD_EXAMPLES OFF"
             "XEUS_BUILD_SHARED_LIBS OFF"
             "XEUS_BUILD_STATIC_LIBS ON"
             "XEUS_STATIC_DEPENDENCIES ON"
-            "CMAKE_POSITION_INDEPENDENT_CODE ON"
             "XEUS_DISABLE_ARCH_NATIVE ON"
             "XEUS_USE_DYNAMIC_UUID ON"
             "XEUS_ZMQ_BUILD_WITHOUT_LIBSODIUM ON"
 )
-
 
 # produces libzmq and libzmq-static depending on settings
 CPMAddPackage(
@@ -85,12 +88,12 @@ CPMAddPackage(
     GIT_TAG ${xeus-zmq_VERSION}
     EXCLUDE_FROM_ALL YES
     CPM_USE_LOCAL_PACKAGES ON
+    PATCHES "${CMAKE_CURRENT_SOURCE_DIR}/cmake/libsodiumopt.patch"
     OPTIONS "XEUS_ZMQ_BUILD_TESTS OFF"
             "XEUS_ZMQ_BUILD_SHARED_LIBS OFF"
             "XEUS_ZMQ_BUILD_STATIC_LIBS ON"
             "XEUS_ZMQ_STATIC_DEPENDENCIES ON"
             "XEUS_ZMQ_WITH_LIBSODIUM OFF"
-            "CMAKE_POSITION_INDEPENDENT_CODE ON"
 )
 
 install(TARGETS nlohmann_json EXPORT xeus-targets)
@@ -134,3 +137,11 @@ CPMAddPackage(
             "XPYT_USE_SHARED_XEUS OFF"
             "EMSCRIPTEN OFF"
 )
+
+if(UNIX)
+    set_target_properties(xeus-static PROPERTIES POSITION_INDEPENDENT_CODE ON)
+    set_target_properties(xeus-zmq-static PROPERTIES POSITION_INDEPENDENT_CODE ON)
+    set_target_properties(xeus-python-static PROPERTIES POSITION_INDEPENDENT_CODE ON)
+    set_target_properties(libzmq-static PROPERTIES POSITION_INDEPENDENT_CODE ON)
+    set_target_properties(cppzmq-static PROPERTIES POSITION_INDEPENDENT_CODE ON)
+endif()
