@@ -38,10 +38,6 @@ if(MSVC)
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MD")
 endif(MSVC)
 
-if(UNIX)
-    set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-endif()
-
 # Cmake internal functions for generating a summary of enabled/disabled features.
 include(FeatureSummary)
 

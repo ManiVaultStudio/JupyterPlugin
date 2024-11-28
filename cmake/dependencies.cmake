@@ -51,7 +51,6 @@ CPMAddPackage(
             "XEUS_ZMQ_BUILD_WITHOUT_LIBSODIUM ON"
 )
 
-
 # produces libzmq and libzmq-static depending on settings
 CPMAddPackage(
     NAME libzmq
@@ -132,3 +131,11 @@ CPMAddPackage(
             "XPYT_USE_SHARED_XEUS OFF"
             "EMSCRIPTEN OFF"
 )
+
+if(UNIX)
+    set_target_properties(xeus-static PROPERTIES POSITION_INDEPENDENT_CODE ON)
+    set_target_properties(xeus-zmq-static PROPERTIES POSITION_INDEPENDENT_CODE ON)
+    set_target_properties(xeus-python-static PROPERTIES POSITION_INDEPENDENT_CODE ON)
+    set_target_properties(libzmq-static PROPERTIES POSITION_INDEPENDENT_CODE ON)
+    set_target_properties(cppzmq-static PROPERTIES POSITION_INDEPENDENT_CODE ON)
+endif()

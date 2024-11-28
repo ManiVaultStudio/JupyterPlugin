@@ -4,8 +4,6 @@ set(JUPYTERPLUGIN "JupyterPlugin${Python_VERSION_MAJOR}${Python_VERSION_MINOR}")
 set(JupyterPluginTarget "${JUPYTERPLUGIN}" PARENT_SCOPE) # for add_dependencies in parent scope
 message(STATUS "Plugin: ${JUPYTERPLUGIN}")
 
-set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-
 # -----------------------------------------------------------------------------
 # Source files
 # -----------------------------------------------------------------------------
@@ -46,6 +44,10 @@ target_include_directories(${JUPYTERPLUGIN} PRIVATE  "${ManiVault_INCLUDE_DIR}")
 target_compile_features(${JUPYTERPLUGIN} PRIVATE cxx_std_17)
 
 set_target_properties(${JUPYTERPLUGIN} PROPERTIES FOLDER JupyterPlugin)
+
+if(UNIX)
+    set_target_properties(${JUPYTERPLUGIN} PROPERTIES POSITION_INDEPENDENT_CODE ON)
+endif()
 
 # -----------------------------------------------------------------------------
 # Target library linking

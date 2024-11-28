@@ -3,8 +3,6 @@ cmake_minimum_required(VERSION 3.21)
 set(JUPYTERLAUNCHER "JupyterLauncher")
 message(STATUS "Plugin: ${JUPYTERLAUNCHER}")
 
-set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-
 # -----------------------------------------------------------------------------
 # Source files
 # -----------------------------------------------------------------------------
@@ -43,6 +41,10 @@ target_include_directories(${JUPYTERLAUNCHER} PRIVATE "${ManiVault_INCLUDE_DIR}"
 target_compile_features(${JUPYTERLAUNCHER} PRIVATE cxx_std_17)
 
 set_target_properties(${JUPYTERLAUNCHER} PROPERTIES FOLDER JupyterPlugin)
+
+if(UNIX)
+    set_target_properties(${JUPYTERLAUNCHER} PROPERTIES POSITION_INDEPENDENT_CODE ON)
+endif()
 
 # -----------------------------------------------------------------------------
 # Target library linking
