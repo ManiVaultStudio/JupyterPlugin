@@ -31,6 +31,14 @@ conda create -n ManiVaultPythonPluginBuild python=3.11
 
 This projects builds two ManiVault plugins, a communication bridge `JupyterPlugin311` between the ManiVault application and Python as well as a `JupyterLauncher` plugin, which is used to launch a Python kernel and Jupyter notebook.
 
+## Dependencies
+
+Linux:
+```
+sudo apt install libtbb-dev libsodium-dev libssl-dev
+```
+
+
 ## Usage
 
 You can use any local python environment (currently restricted to 3.11) with this plugin to interact with ManiVault. 
