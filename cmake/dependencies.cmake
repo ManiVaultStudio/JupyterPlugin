@@ -46,7 +46,6 @@ CPMAddPackage(
             "XEUS_BUILD_SHARED_LIBS OFF"
             "XEUS_BUILD_STATIC_LIBS ON"
             "XEUS_STATIC_DEPENDENCIES ON"
-            "CMAKE_POSITION_INDEPENDENT_CODE ON"
             "XEUS_DISABLE_ARCH_NATIVE ON"
             "XEUS_USE_DYNAMIC_UUID ON"
             "XEUS_ZMQ_BUILD_WITHOUT_LIBSODIUM ON"
@@ -90,7 +89,6 @@ CPMAddPackage(
             "XEUS_ZMQ_BUILD_STATIC_LIBS ON"
             "XEUS_ZMQ_STATIC_DEPENDENCIES ON"
             "XEUS_ZMQ_WITH_LIBSODIUM OFF"
-            "CMAKE_POSITION_INDEPENDENT_CODE ON"
 )
 
 install(TARGETS nlohmann_json EXPORT xeus-targets)

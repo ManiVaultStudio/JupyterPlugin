@@ -3,6 +3,8 @@ cmake_minimum_required(VERSION 3.21)
 set(JUPYTERLAUNCHER "JupyterLauncher")
 message(STATUS "Plugin: ${JUPYTERLAUNCHER}")
 
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
 # -----------------------------------------------------------------------------
 # Source files
 # -----------------------------------------------------------------------------

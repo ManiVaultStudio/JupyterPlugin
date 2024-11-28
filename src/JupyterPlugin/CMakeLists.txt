@@ -1,8 +1,10 @@
 cmake_minimum_required(VERSION 3.21)
 
 set(JUPYTERPLUGIN "JupyterPlugin${Python_VERSION_MAJOR}${Python_VERSION_MINOR}")
-set(JupyterPluginTarget "${JUPYTERPLUGIN}" PARENT_SCOPE)
+set(JupyterPluginTarget "${JUPYTERPLUGIN}" PARENT_SCOPE) # for add_dependencies in parent scope
 message(STATUS "Plugin: ${JUPYTERPLUGIN}")
+
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 # -----------------------------------------------------------------------------
 # Source files
