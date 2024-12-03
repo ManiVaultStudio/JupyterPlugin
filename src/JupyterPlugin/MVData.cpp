@@ -210,7 +210,7 @@ void set_img_points_from_numpy_array(const void* data_in, const std::vector<size
 
 // when types are different, setting points
 template<typename T, typename U>
-void set_points_from_numpy_array_impl(std::false_type, const void* data_in, const std::vector<size_t>& shape, mv::Dataset<Points> points, bool flip)
+void set_points_from_numpy_array_diff_type(const void* data_in, const std::vector<size_t>& shape, mv::Dataset<Points> points, bool flip)
 {
     if (shape.size() != 2)
         return;
@@ -234,8 +234,8 @@ void set_points_from_numpy_array_impl(std::false_type, const void* data_in, cons
 }
 
 // when types are the same, setting points
-template<typename T, typename U>
-void set_points_from_numpy_array_impl(std::true_type, const void* data_in, const std::vector<size_t>& shape, mv::Dataset<Points> points, bool flip)
+template<typename T>
+void set_points_from_numpy_array_same_type(const void* data_in, const std::vector<size_t>& shape, mv::Dataset<Points> points, bool flip)
 {
     if (shape.size() != 2)
         return;
@@ -251,7 +251,10 @@ void set_points_from_numpy_array_impl(std::true_type, const void* data_in, const
 template<typename T, typename U>
 void set_points_from_numpy_array(const void* data_in, const std::vector<size_t>& shape, mv::Dataset<Points> points, bool flip = false)
 {
-    set_points_from_numpy_array_impl<T,U>(std::is_same<T,U>(), data_in, shape, points, flip);
+    if constexpr (std::is_same_v<T, U>)
+        set_points_from_numpy_array_same_type<T>(data_in, shape, points, flip);
+    else
+        set_points_from_numpy_array_diff_type<T, U>(data_in, shape, points, flip);
 }
 
 static py::buffer_info createBuffer(const py::array& data)
