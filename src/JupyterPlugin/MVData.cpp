@@ -47,16 +47,13 @@ static py::object get_top_level_item_names()
 }
 
 template<class T>
-py::array populate_pyarray(
-    mv::Dataset<Points> &inputPoints, 
-    unsigned int numPoints, 
-    unsigned int numDimensions)
+py::array populate_pyarray(mv::Dataset<Points> &inputPoints, unsigned int numPoints, unsigned int numDimensions)
 {
     std::vector<unsigned int> dim_indices(numDimensions);
     std::iota(dim_indices.begin(), dim_indices.end(), 0);
 
     std::vector<T> data;
-    auto size = numPoints * numDimensions;
+    size_t size = static_cast<size_t>(numPoints) * numDimensions;
     data.resize(size);
 
     inputPoints->populateDataForDimensions<std::vector<T>, std::vector<unsigned int>>(data, dim_indices);
@@ -64,7 +61,7 @@ py::array populate_pyarray(
     auto result = py::array_t<T>({numPoints, numDimensions});
     py::buffer_info result_info = result.request();
     T* output = static_cast<T*>(result_info.ptr);
-    for (auto i = 0; i < size; i++) {
+    for (size_t i = 0; i < size; i++) {
         output[i] = data[i];
     }
     return result;
@@ -104,7 +101,6 @@ static py::array get_data_for_item(const std::string& datasetGuid)
     auto inputPoints            = item->getDataset<Points>();
     unsigned int numDimensions  = inputPoints->getNumDimensions();
     unsigned int numPoints      = inputPoints->isFull() ? inputPoints->getNumPoints() : inputPoints->indices.size();
-    auto size                   = numPoints * numDimensions;
 
     // extract the source type 
     PointData::ElementTypeSpecifier dataSpec{};
@@ -118,7 +114,7 @@ static py::array get_data_for_item(const std::string& datasetGuid)
         }  
     });
 
-    qInfo() << "PointData::ElementTypeSpecifier is " << static_cast<int>(dataSpec);
+    qDebug() << "PointData::ElementTypeSpecifier is " << static_cast<int>(dataSpec);
     if (auto populate =
         (dataSpec == PointData::ElementTypeSpecifier::float32) ? populate_pyarray<float> :
         (dataSpec == PointData::ElementTypeSpecifier::uint16) ? populate_pyarray<std::uint16_t> :
@@ -138,14 +134,13 @@ static py::array get_data_for_item(const std::string& datasetGuid)
 // Each 2D band is complete before the next begins
 // The data_out is is Band Interleaved by Pixel
 template<typename T, typename U>
-void orient_multiband_imagedata_as_bip(const U* data_in, std::vector<size_t> shape, std::vector<T>& data_out, bool flip)
+void orient_multiband_imagedata_as_bip(const U* data_in, const std::vector<size_t>& shape, std::vector<T>& data_out, bool flip)
 {
     if (flip) {
         // C order with flip 
-
-        auto row_size = shape[1] * shape[2];
-        auto num_rows = shape[0];
-        auto total = row_size * num_rows;
+        size_t row_size = shape[1] * shape[2];
+        size_t num_rows = shape[0];
+        size_t total    = row_size * num_rows;
         // Copy starting at the last row of the data_in
         // to the first row of the data_out
         // and so flip up/down
@@ -158,9 +153,9 @@ void orient_multiband_imagedata_as_bip(const U* data_in, std::vector<size_t> sha
     }
     else {
         // Copy as is, numpy image is BIP 
-        auto total = shape[0] * shape[1] * shape[2];
+        size_t total = shape[0] * shape[1] * shape[2];
         // C order 
-        for (auto i = 0; i < total; ++i) {
+        for (size_t i = 0; i < total; ++i) {
             data_out[i] = static_cast<T>(data_in[i]);
         }
     }
@@ -168,37 +163,42 @@ void orient_multiband_imagedata_as_bip(const U* data_in, std::vector<size_t> sha
 
 // when conversion is needed
 template<typename T, typename U>
-void conv_points_from_numpy_array(const void* data_in, std::vector<size_t> shape, mv::Dataset<Points> points, bool flip = false)
+void conv_points_from_numpy_array(const void* data_in, const std::vector<size_t>& shape, mv::Dataset<Points> points, bool flip = false)
 {
-    auto band_size = shape[0] * shape[1];
-    auto num_bands = shape.size() == 3 ? shape[2] : shape[1];
+    size_t band_size = shape[0] * shape[1];
+    size_t num_bands = shape.size() == 3 ? shape[2] : shape[1];
+
     auto warnings = pybind11::module::import("warnings");
     auto builtins = pybind11::module::import("builtins");
     warnings.attr("warn")(
         "This numpy dtype was converted to float to match the ManiVault data model.",
         builtins.attr("UserWarning"));
+
     auto data_in_U = static_cast<const U *>(data_in);
-    auto data_out = std::vector<T>();
+    std::vector<T> data_out = {};
     data_out.resize(band_size * num_bands);
-    if (num_bands == shape[1] && !flip) {
-        for (auto i = 0; i < band_size; ++i) {
+
+    if (num_bands == shape[1] && !flip) 
+    {
+        for (size_t i = 0; i < band_size; ++i)
             data_out[i] = static_cast<const T>(data_in_U[i]);
-        }
     }
-    else {
+    else
         orient_multiband_imagedata_as_bip<T,U>(data_in_U, shape, data_out, flip);
-    }
+
     points->setData(std::move(data_out), num_bands);
 }
 
 // when types are the same image
 template<class T>
-void set_img_points_from_numpy_array(const void* data_in, std::vector<size_t> shape, mv::Dataset<Points> points, bool flip=false)
+void set_img_points_from_numpy_array(const void* data_in, const std::vector<size_t>& shape, mv::Dataset<Points> points, bool flip=false)
 {
-    auto band_size = shape[0] * shape[1];
-    auto num_bands = shape.size() == 3 ? shape[2] : shape[1];
-    auto data_out = std::vector<T>();
+    size_t band_size = shape[0] * shape[1];
+    size_t num_bands = shape.size() == 3 ? shape[2] : shape[1];
+
+    std::vector<T> data_out = {};
     data_out.resize(band_size * num_bands);
+
     if (num_bands == shape[1] && !flip)
         std::memcpy(data_out.data(), static_cast<const T*>(data_in), band_size * sizeof(T));
     else
@@ -210,44 +210,46 @@ void set_img_points_from_numpy_array(const void* data_in, std::vector<size_t> sh
 
 // when types are different, setting points
 template<typename T, typename U>
-void set_points_from_numpy_array_impl(std::false_type, const void* data_in, std::vector<size_t> shape, mv::Dataset<Points> points, bool flip)
+void set_points_from_numpy_array_impl(std::false_type, const void* data_in, const std::vector<size_t>& shape, mv::Dataset<Points> points, bool flip)
 {
-    if (shape.size() != 2) {
+    if (shape.size() != 2)
         return;
-    }
+
     auto warnings = pybind11::module::import("warnings");
     auto builtins = pybind11::module::import("builtins");
     warnings.attr("warn")(
         "This numpy dtype was converted to float to match the ManiVault data model.",
         builtins.attr("UserWarning"));
-    size_t num_points = shape[0] * shape[1];
-    const U* data_in_U = static_cast<const U*>(data_in);
+
+    size_t num_points       = shape[0] * shape[1];
+    const U* data_in_U      = static_cast<const U*>(data_in);
+
     std::vector<T> data_out = {};
     data_out.resize(num_points);
 
-    for (size_t i = 0; i < num_points; ++i) {
+    for (size_t i = 0; i < num_points; ++i)
         data_out[i] = static_cast<const T>(data_in_U[i]);
-    }
 
     points->setData(std::move(data_out), shape[1]);
 }
 
 // when types are the same, setting points
 template<typename T, typename U>
-void set_points_from_numpy_array_impl(std::true_type, const void* data_in, std::vector<size_t> shape, mv::Dataset<Points> points, bool flip)
+void set_points_from_numpy_array_impl(std::true_type, const void* data_in, const std::vector<size_t>& shape, mv::Dataset<Points> points, bool flip)
 {
-    if (shape.size() != 2) {
+    if (shape.size() != 2)
         return;
-    }
-    auto num_points = shape[0] * shape[1];
+
+    size_t num_points       = shape[0] * shape[1];
     std::vector<T> data_out = {};
     data_out.resize(num_points);
     std::memcpy(data_out.data(), static_cast<const T*>(data_in), num_points * sizeof(T));
+
     points->setData(std::move(data_out), shape[1]);
 }
 
 template<typename T, typename U>
-void set_points_from_numpy_array(const void* data_in, std::vector<size_t> shape, mv::Dataset<Points> points, bool flip = false)
+void set_points_from_numpy_array(const void* data_in, const std::vector<size_t>& shape, mv::Dataset<Points> points, bool flip = false)
 {
     set_points_from_numpy_array_impl<T,U>(std::is_same<T,U>(), data_in, shape, points, flip);
 }
@@ -281,12 +283,12 @@ static py::buffer_info createBuffer(const py::array& data)
 static std::string add_new_mvdata(const py::array& data, std::string dataSetName)
 {
     std::string guid            = "";
-    const auto dtype            = data.dtype();
+    const py::dtype dtype       = data.dtype();
     py::buffer_info buf_info    = createBuffer(data);
     void* ptr                   = buf_info.ptr;
-    auto shape                  = std::vector<size_t>(buf_info.shape.begin(), buf_info.shape.end());
+    std::vector<size_t> shape   = { buf_info.shape.begin(), buf_info.shape.end() };
 
-    void (*point_setter)(const void* data_in, std::vector<size_t> shape, mv::Dataset<Points> points, bool flip) = nullptr;
+    void (*point_setter)(const void* data_in, const std::vector<size_t>& shape, mv::Dataset<Points> points, bool flip) = nullptr;
 
     // PointData is limited in its type support - hopefully the commented types wil be added soon
     if (dtype.is(pybind11::dtype::of<std::uint8_t>()))
@@ -345,16 +347,16 @@ static std::string add_new_mvdata(const py::array& data, std::string dataSetName
 static std::string add_mvimage(const py::array& data, std::string dataSetName)
 {
     std::string guid            = "";
-    const auto dtype            = data.dtype();
+    const py::dtype dtype       = data.dtype();
     py::buffer_info buf_info    = createBuffer(data);
     void* ptr                   = buf_info.ptr;
-    auto shape                  = std::vector<size_t>(buf_info.shape.begin(), buf_info.shape.end());
+    std::vector<size_t> shape   = { buf_info.shape.begin(), buf_info.shape.end() };
 
     // Grey-scale image:
     if (shape.size() == 2)
         shape.push_back(1);
 
-    int num_bands = shape[2];
+    size_t num_bands = shape[2];
 
     if (shape.size() != 3)
     {
@@ -362,7 +364,7 @@ static std::string add_mvimage(const py::array& data, std::string dataSetName)
         return guid;
     }
     
-    void (*point_setter)(const void* data_in, std::vector<size_t> shape, mv::Dataset<Points> points, bool flip) = nullptr;
+    void (*point_setter)(const void* data_in, const std::vector<size_t>& shape, mv::Dataset<Points> points, bool flip) = nullptr;
 
     // PointData is limited in its type support - hopefully the commented types wil be added soon
     if (dtype.is(pybind11::dtype::of<std::uint8_t>()))
@@ -397,14 +399,14 @@ static std::string add_mvimage(const py::array& data, std::string dataSetName)
 
         auto imageDataset = mv::data().createDataset<Images>("Images", "numpy image", Dataset<DatasetImpl>(*points));
 
-        int width = shape[1];
-        int height = shape[0];
+        int width = static_cast<int>(shape[1]);
+        int height = static_cast<int>(shape[0]);
 
         imageDataset->setText(QString("Images (%2x%3)").arg(QString::number(width), QString::number(height)));
         imageDataset->setType(ImageData::Type::Stack);
         imageDataset->setNumberOfImages(1);
         imageDataset->setImageSize(QSize(width, height));
-        imageDataset->setNumberOfComponentsPerPixel(num_bands);
+        imageDataset->setNumberOfComponentsPerPixel(static_cast<uint32_t>(num_bands));
 
         events().notifyDatasetDataChanged(imageDataset);
 
@@ -428,15 +430,15 @@ static std::string add_mvimage(const py::array& data, std::string dataSetName)
 // An Image parent may be a Points or Cluster item
 static py::array get_mv_image(const std::string& imageGuid)
 {
-    auto item = mv::dataHierarchy().getItem(QString(imageGuid.c_str()));
-    auto images = item->getDataset<Images>();
-    auto numImages = images->getNumberOfImages();
-    auto numPixels = images->getNumberOfPixels();
-    auto numComponents = images->getNumberOfComponentsPerPixel();
-    auto imqSize = images->getImageSize();
-    unsigned int width = imqSize.width();
-    unsigned int height = imqSize.height();
-    auto pixcmpSize = numPixels * numComponents;
+    auto item               = mv::dataHierarchy().getItem(QString(imageGuid.c_str()));
+    auto images             = item->getDataset<Images>();
+    uint32_t numImages      = images->getNumberOfImages();
+    uint32_t numPixels      = images->getNumberOfPixels();
+    uint32_t numComponents  = images->getNumberOfComponentsPerPixel();
+    QSize imqSize           = images->getImageSize();
+    unsigned int width      = static_cast<unsigned int>(imqSize.width());
+    unsigned int height     = static_cast<unsigned int>(imqSize.height());
+    size_t pixcmpSize       = static_cast<size_t>(numPixels) * numComponents;
 
     // For further information on why the numpy array shapes are 
     // specified as shown see 
@@ -465,17 +467,17 @@ static py::array get_mv_image(const std::string& imageGuid)
         }
     }
 
-    auto result = py::array_t<float>(shape);
+    auto result                 = py::array_t<float>(shape);
     py::buffer_info result_info = result.request();
-    float* output = static_cast<float*>(result_info.ptr);
-    for (auto imIdx = 0; imIdx < numImages; ++imIdx) {
-        QVector<float> scalarData;
-        scalarData.resize(static_cast<size_t>(numPixels) * numComponents);
+    float* output               = static_cast<float*>(result_info.ptr);
+
+    for (uint32_t imIdx = 0; imIdx < numImages; ++imIdx) {
+        QVector<float> scalarData(static_cast<size_t>(numPixels) * numComponents);
         QPair<float, float> scalarDataRange;
         images->getImageScalarData(imIdx, scalarData, scalarDataRange);
-        for (auto pixcmpIdx = 0; pixcmpIdx < pixcmpSize; ++pixcmpIdx) {
+
+        for (size_t pixcmpIdx = 0; pixcmpIdx < pixcmpSize; ++pixcmpIdx)
             output[(imIdx * pixcmpSize) + pixcmpIdx] = scalarData[pixcmpIdx];
-        }
     }
 
     return result;
@@ -493,10 +495,11 @@ static std::string add_cluster(const py::tuple& tupleOfClusterLists, std::string
         return "";
     }
 
-    auto names_list = tupleOfClusterLists[0].cast<py::list>();
-    auto clusters_list = tupleOfClusterLists[1].cast<py::list>();
-    auto colors_list = tupleOfClusterLists[2].cast<py::list>();
-    auto ids_list = tupleOfClusterLists[3].cast<py::list>();
+    auto names_list     = tupleOfClusterLists[0].cast<py::list>();
+    auto clusters_list  = tupleOfClusterLists[1].cast<py::list>();
+    auto colors_list    = tupleOfClusterLists[2].cast<py::list>();
+    auto ids_list       = tupleOfClusterLists[3].cast<py::list>();
+
     if (!(names_list.size() + clusters_list.size() - ids_list.size() - colors_list.size() == 0)) {
         warnings.attr("warn")(
             "The lengths of the lists names, cluster indexes, ids and colors must be present.",
@@ -535,8 +538,8 @@ static py::list get_top_level_guids()
 {
     py::list results;
     for (const auto topLevelDataHierarchyItem : mv::dataHierarchy().getTopLevelItems()) {
-        auto dhiGuid = topLevelDataHierarchyItem->getId().toStdString();
-        auto dsGuid = topLevelDataHierarchyItem->getDataset()->getId().toStdString();
+        auto dhiGuid    = topLevelDataHierarchyItem->getId().toStdString();
+        auto dsGuid     = topLevelDataHierarchyItem->getDataset()->getId().toStdString();
         results.append(py::make_tuple(dhiGuid, dsGuid));
     }
     return results;
@@ -592,13 +595,13 @@ static py::list get_item_children(const std::string& datasetGuid)
 
     auto children = item->getChildren();
     py::list guidTupleList;
-    for (auto child : children) {
+    for (auto& child : children) {
         // The child might be a Dataset rather than an Item
         // however datasets hae 0 children and items have > 0 
 
-        auto childId = child->getId().toStdString();
+        auto childId        = child->getId().toStdString();
         auto childDatasetId = child->getDataset()->getId().toStdString();
-        auto guidTuple = py::make_tuple(childId, childDatasetId);
+        auto guidTuple      = py::make_tuple(childId, childDatasetId);
         guidTupleList.append(guidTuple);
     }
     return guidTupleList;
@@ -606,17 +609,17 @@ static py::list get_item_children(const std::string& datasetGuid)
 
 static mvstudio_core::DataItemType get_data_type(const std::string& datasetGuid) {
     qDebug() << "Get type for id: " << QString(datasetGuid.c_str());
-    auto dataset = mv::data().getDataset(QString(datasetGuid.c_str()));
-    auto datatype = dataset->getDataType();
-    if (datatype == ImageType) {
+    auto dataset    = mv::data().getDataset(QString(datasetGuid.c_str()));
+    auto datatype   = dataset->getDataType();
+
+    if (datatype == ImageType)
         return mvstudio_core::Image;
-    }
-    if (datatype == ClusterType) {
+
+    if (datatype == ClusterType)
         return mvstudio_core::Cluster;
-    }
-    if (datatype == PointType) {
+
+    if (datatype == PointType)
         return mvstudio_core::Points;
-    }
 }
 
 //bool add_mvimage_stack(const py::list& data, std::string dataSetName ) 
@@ -627,39 +630,43 @@ static mvstudio_core::DataItemType get_data_type(const std::string& datasetGuid)
 // Return the GUID of the image dataset
 static std::string find_image_dataset(const std::string& datasetGuid)
 {
+    std::string guid = "";
+
     auto item = mv::dataHierarchy().getItem(QString(datasetGuid.c_str()));
     for (auto childHierarchyItem : item->getChildren()) {
         if (childHierarchyItem->getDataType() == ImageType) {
-            return childHierarchyItem->getDataset()->getId().toStdString();
+            guid = childHierarchyItem->getDataset()->getId().toStdString();
+            break;
         }
     }
 
-    if (item->hasParent()) {
-        return find_image_dataset(item->getParent()->getDataset()->getId().toStdString());
-    }
-    return "";
+    if (item->hasParent())
+        guid = find_image_dataset(item->getParent()->getDataset()->getId().toStdString());
+ 
+    return guid;
 }
 
 static py::tuple get_image_dimensions(const std::string& datasetGuid)
 {
-    auto item = mv::dataHierarchy().getItem(QString(datasetGuid.c_str()));
-    auto images = item->getDataset<Images>();
-    auto numImages = images->getNumberOfImages();
-    auto size = images->getImageSize();
+    auto item       = mv::dataHierarchy().getItem(QString(datasetGuid.c_str()));
+    auto images     = item->getDataset<Images>();
+    auto numImages  = images->getNumberOfImages();
+    auto size       = images->getImageSize();
 
     return py::make_tuple(size.width(), size.height(), numImages);
 }
 
 static py::tuple get_cluster(const std::string& datasetGuid)
 {
-    auto clusterData = mv::data().getDataset<Clusters>(QString(datasetGuid.c_str()));
-    const auto& clusters = clusterData->getClusters();
+    auto clusterData        = mv::data().getDataset<Clusters>(QString(datasetGuid.c_str()));
+    const auto& clusters    = clusterData->getClusters();
     const auto clusterNames = clusterData->getClusterNames();
+
     py::list names;
-    py::list ids;
-    for (const auto& name : clusterNames) {
+    for (const auto& name : clusterNames)
         names.append(name.toStdString());
-    }
+
+    py::list ids;
     py::list colors;
     py::list indexes_list;
     for (const auto& cluster: clusters) {
