@@ -23,6 +23,7 @@
 
 #include <cstdint>
 #include <cstring>
+#include <numeric>
 #include <string>
 #include <stdexcept>
 #include <type_traits>
@@ -51,14 +52,15 @@ py::array populate_pyarray(
     unsigned int numPoints, 
     unsigned int numDimensions)
 {
+    std::vector<unsigned int> dim_indices(numDimensions);
+    std::iota(dim_indices.begin(), dim_indices.end(), 0);
+
     std::vector<T> data;
-    std::vector<unsigned int> indices;
     auto size = numPoints * numDimensions;
     data.resize(size);
-    for (int i = 0; i < numDimensions; i++) {
-        indices.push_back(i);
-    }
-    inputPoints->populateDataForDimensions<std::vector<T>, std::vector<unsigned int>>(data, indices);
+
+    inputPoints->populateDataForDimensions<std::vector<T>, std::vector<unsigned int>>(data, dim_indices);
+
     auto result = py::array_t<T>({numPoints, numDimensions});
     py::buffer_info result_info = result.request();
     T* output = static_cast<T*>(result_info.ptr);
