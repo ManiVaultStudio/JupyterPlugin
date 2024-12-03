@@ -512,25 +512,22 @@ static std::string add_cluster(const py::tuple& tupleOfClusterLists, std::string
     Dataset<Clusters> clusters = mv::data().createDataset("Cluster", dataSetName.c_str(), parent->getDataset<Points>());
 
     for (size_t i = 0; i < names_list.size(); ++i) {
-        auto indexes = clusters_list[i].cast<py::array>();
-        std::string name = names_list[i].cast<py::str>();
-        auto colorTup = colors_list[i].cast<py::tuple>();
-        std::string id = ids_list[i].cast<py::str>();
+        auto indexes        = clusters_list[i].cast<py::array>();
+        std::string name    = names_list[i].cast<py::str>();
+        auto colorTup       = colors_list[i].cast<py::tuple>();
+        std::string id      = ids_list[i].cast<py::str>();
+
         Cluster cluster;
-        cluster.setName(QString("cluster %1").arg(QString::number(i + 1)));
-        auto clusterIndices = indexes.cast<std::vector<std::uint32_t>>();
-        // cluster indexes
-        cluster.setIndices(clusterIndices);
-        // cluster color
-        auto a = (colorTup.size() == 4) ? colorTup[3].cast<float>() : 1.0;
-        auto clusterColor = QColor::fromRgbF(colorTup[0].cast<float>(), colorTup[1].cast<float>(), colorTup[2].cast<float>(), a);
-        cluster.setColor(clusterColor);
-        // cluster 
         cluster.setName(name.c_str());
-        // Use the auto generated id
+
+        auto clusterIndices = indexes.cast<std::vector<std::uint32_t>>();
+        cluster.setIndices(clusterIndices);
+
+        auto alpha = (colorTup.size() == 4) ? colorTup[3].cast<float>() : 1.0;
+        auto clusterColor = QColor::fromRgbF(colorTup[0].cast<float>(), colorTup[1].cast<float>(), colorTup[2].cast<float>(), alpha);
+        cluster.setColor(clusterColor);
 
         clusters->addCluster(cluster);
-
     }
 
     events().notifyDatasetDataChanged(clusters);
