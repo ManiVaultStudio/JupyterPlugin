@@ -10,6 +10,7 @@
 
 #include <pybind11/buffer_info.h>
 #include <pybind11/cast.h>
+#include <pybind11/detail/common.h>
 #include "pybind11/numpy.h"
 #include "pybind11/pybind11.h"
 #include <pybind11/pytypes.h>
@@ -252,6 +253,27 @@ void set_points_from_numpy_array(const void* data_in, std::vector<size_t> shape,
     set_points_from_numpy_array_impl<T,U>(std::is_same<T,U>(), data_in, shape, points, flip);
 }
 
+static py::buffer_info createBuffer(const py::array& data)
+{
+    py::buffer_info buf_info;
+
+    if (!data.base().is_none()) {
+        py::print("The numpy array is a view. Creating a local copy to handle striding correctly...");
+
+        pybind11::array::ShapeContainer shape(data.shape(), data.shape() + data.ndim());
+        pybind11::array::ShapeContainer strides(data.strides(), data.strides() + data.ndim());
+
+        py::array copied_arr = py::array(data.dtype(), shape, strides, data.data());
+
+        buf_info = copied_arr.request();
+    }
+    else {
+        buf_info = data.request();
+    }
+
+    return buf_info;
+}
+
 /**
  * Add new point data in the root of the hierarchy.
  * If successful returns a guid for the new point data
@@ -259,13 +281,12 @@ void set_points_from_numpy_array(const void* data_in, std::vector<size_t> shape,
  */
 static std::string add_new_mvdata(const py::array& data, std::string dataSetName)
 {
-    py::buffer_info buf_info = data.request();
-    void* ptr = buf_info.ptr;
-    std::vector<size_t> shape(buf_info.shape.begin(), buf_info.shape.end());
+    std::string guid            = "";
+    const auto dtype            = data.dtype();
+    py::buffer_info buf_info    = createBuffer(data);
+    void* ptr                   = buf_info.ptr;
+    auto shape                  = std::vector<size_t>(buf_info.shape.begin(), buf_info.shape.end());
 
-    std::string guid = "";
-    const auto dtype = data.dtype();
-    
     void (*point_setter)(const void* data_in, std::vector<size_t> shape, mv::Dataset<Points> points, bool flip) = nullptr;
 
     // PointData is limited in its type support - hopefully the commented types wil be added soon
@@ -316,37 +337,32 @@ static std::string add_new_mvdata(const py::array& data, std::string dataSetName
     return py::str(guid);
 }
 
+// The MV data model is Band Interlaced by Pixel.
+// This means that an image stack (which might be hyperspectral or simply RGB/RGBA)
+// is counted as having size(stack) bands called dimensions in the MV Image.
+// This function is meant to deal only with the 
+// single image case however multiple RGB or RGBA bands may be present
+// as given by the number of components
 static std::string add_mvimage(const py::array& data, std::string dataSetName)
 {
-    // The MV data model is Band Interlaced by Pixel.
-    // This means that an image stack (which might be hyperspectral or simply RGB/RGBA)
-    // is counted as having size(stack) bands called dimensions in the MV Image.
-    // This function is meant to deal only with the 
-    // single image case however multiple RGB or RGBA bands may be present
-    // as given by the number of components
-    py::buffer_info buf_info = data.request();
-    void* ptr = buf_info.ptr;
+    std::string guid            = "";
+    const auto dtype            = data.dtype();
+    py::buffer_info buf_info    = createBuffer(data);
+    void* ptr                   = buf_info.ptr;
+    auto shape                  = std::vector<size_t>(buf_info.shape.begin(), buf_info.shape.end());
 
-    std::vector<size_t> shape(buf_info.shape.begin(), buf_info.shape.end());
-    if (shape.size() == 2) {
+    // Grey-scale image:
+    if (shape.size() == 2)
         shape.push_back(1);
-    }
 
-    int num_bands = 1;
-    switch (shape.size()) {
-    case 3:
-        num_bands = shape[2];
-        if (!(num_bands == 1 || num_bands == 2 || num_bands == 3)) {
-            throw std::runtime_error("Image components must me 1, 3 or 4 corresponding to grayscale, RGB, RGBA");
-        }
-        break;
-    default:
-        throw std::runtime_error("This function only supports a single 2d image with optional components");
+    int num_bands = shape[2];
+
+    if (shape.size() != 3)
+    {
+        qDebug() << "add_mvimage: numpy image must be an image, i.e. of shape (x, y, dims). Instead got: " << shape;
+        return guid;
     }
     
-    std::string guid = "";
-    const auto dtype = data.dtype();
-
     void (*point_setter)(const void* data_in, std::vector<size_t> shape, mv::Dataset<Points> points, bool flip) = nullptr;
 
     // PointData is limited in its type support - hopefully the commented types wil be added soon
