@@ -89,9 +89,6 @@ PointData::ElementTypeSpecifier getTypeSpecifier() {
 // Get the point data associated with the names item and return it as a numpy array to python
 static py::array get_data_for_item(const std::string& datasetGuid)
 {
-    PointData::ElementTypeSpecifier dataSpec{};
-    unsigned int numDimensions;
-    unsigned int numPoints;
     auto item = mv::dataHierarchy().getItem(QString(datasetGuid.c_str()));
 
     // If this is not a point item we need the parent
@@ -104,16 +101,16 @@ static py::array get_data_for_item(const std::string& datasetGuid)
         }
     }
 
-    auto inputPoints = item->getDataset<Points>();
-    numDimensions = inputPoints->getNumDimensions();
-    numPoints = inputPoints->isFull() ? inputPoints->getNumPoints() : inputPoints->indices.size();
-    auto size = numPoints * numDimensions;
+    auto inputPoints            = item->getDataset<Points>();
+    unsigned int numDimensions  = inputPoints->getNumDimensions();
+    unsigned int numPoints      = inputPoints->isFull() ? inputPoints->getNumPoints() : inputPoints->indices.size();
+    auto size                   = numPoints * numDimensions;
 
     // extract the source type 
+    PointData::ElementTypeSpecifier dataSpec{};
     inputPoints->visitSourceData([&dataSpec](auto pointData) {
         for (auto pointView : pointData) {
             for (auto value : pointView) {
-                qInfo() << "checking point data";
                 dataSpec = getTypeSpecifier<decltype(value)>();
                 break;
             }
@@ -400,17 +397,15 @@ static std::string add_mvimage(const py::array& data, std::string dataSetName)
 
         auto imageDataset = mv::data().createDataset<Images>("Images", "numpy image", Dataset<DatasetImpl>(*points));
 
-        int height = shape[0];
         int width = shape[1];
+        int height = shape[0];
 
-        imageDataset->setText(QString("Images (%2x%3)").arg(QString::number(shape[0]), QString::number(shape[1])));
+        imageDataset->setText(QString("Images (%2x%3)").arg(QString::number(width), QString::number(height)));
         imageDataset->setType(ImageData::Type::Stack);
         imageDataset->setNumberOfImages(1);
         imageDataset->setImageSize(QSize(width, height));
         imageDataset->setNumberOfComponentsPerPixel(num_bands);
 
-        QStringList filePaths = { QString("Source is numpy array %1 via JupyterPlugin").arg(dataSetName.c_str()) };
-        imageDataset->setImageFilePaths(filePaths);
         events().notifyDatasetDataChanged(imageDataset);
 
         guid = points.getDatasetId().toStdString();
