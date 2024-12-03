@@ -10,6 +10,7 @@
 
 #include <pybind11/buffer_info.h>
 #include <pybind11/cast.h>
+#include <pybind11/detail/common.h>
 #include "pybind11/numpy.h"
 #include "pybind11/pybind11.h"
 #include <pybind11/pytypes.h>
@@ -22,6 +23,7 @@
 
 #include <cstdint>
 #include <cstring>
+#include <numeric>
 #include <string>
 #include <stdexcept>
 #include <type_traits>
@@ -50,14 +52,15 @@ py::array populate_pyarray(
     unsigned int numPoints, 
     unsigned int numDimensions)
 {
+    std::vector<unsigned int> dim_indices(numDimensions);
+    std::iota(dim_indices.begin(), dim_indices.end(), 0);
+
     std::vector<T> data;
-    std::vector<unsigned int> indices;
     auto size = numPoints * numDimensions;
     data.resize(size);
-    for (int i = 0; i < numDimensions; i++) {
-        indices.push_back(i);
-    }
-    inputPoints->populateDataForDimensions<std::vector<T>, std::vector<unsigned int>>(data, indices);
+
+    inputPoints->populateDataForDimensions<std::vector<T>, std::vector<unsigned int>>(data, dim_indices);
+
     auto result = py::array_t<T>({numPoints, numDimensions});
     py::buffer_info result_info = result.request();
     T* output = static_cast<T*>(result_info.ptr);
@@ -86,9 +89,6 @@ PointData::ElementTypeSpecifier getTypeSpecifier() {
 // Get the point data associated with the names item and return it as a numpy array to python
 static py::array get_data_for_item(const std::string& datasetGuid)
 {
-    PointData::ElementTypeSpecifier dataSpec{};
-    unsigned int numDimensions;
-    unsigned int numPoints;
     auto item = mv::dataHierarchy().getItem(QString(datasetGuid.c_str()));
 
     // If this is not a point item we need the parent
@@ -101,16 +101,16 @@ static py::array get_data_for_item(const std::string& datasetGuid)
         }
     }
 
-    auto inputPoints = item->getDataset<Points>();
-    numDimensions = inputPoints->getNumDimensions();
-    numPoints = inputPoints->isFull() ? inputPoints->getNumPoints() : inputPoints->indices.size();
-    auto size = numPoints * numDimensions;
+    auto inputPoints            = item->getDataset<Points>();
+    unsigned int numDimensions  = inputPoints->getNumDimensions();
+    unsigned int numPoints      = inputPoints->isFull() ? inputPoints->getNumPoints() : inputPoints->indices.size();
+    auto size                   = numPoints * numDimensions;
 
     // extract the source type 
+    PointData::ElementTypeSpecifier dataSpec{};
     inputPoints->visitSourceData([&dataSpec](auto pointData) {
         for (auto pointView : pointData) {
             for (auto value : pointView) {
-                qInfo() << "checking point data";
                 dataSpec = getTypeSpecifier<decltype(value)>();
                 break;
             }
@@ -252,6 +252,27 @@ void set_points_from_numpy_array(const void* data_in, std::vector<size_t> shape,
     set_points_from_numpy_array_impl<T,U>(std::is_same<T,U>(), data_in, shape, points, flip);
 }
 
+static py::buffer_info createBuffer(const py::array& data)
+{
+    py::buffer_info buf_info;
+
+    if (!data.base().is_none()) {
+        py::print("The numpy array is a view. Creating a local copy to handle striding correctly...");
+
+        pybind11::array::ShapeContainer shape(data.shape(), data.shape() + data.ndim());
+        pybind11::array::ShapeContainer strides(data.strides(), data.strides() + data.ndim());
+
+        py::array copied_arr = py::array(data.dtype(), shape, strides, data.data());
+
+        buf_info = copied_arr.request();
+    }
+    else {
+        buf_info = data.request();
+    }
+
+    return buf_info;
+}
+
 /**
  * Add new point data in the root of the hierarchy.
  * If successful returns a guid for the new point data
@@ -259,13 +280,12 @@ void set_points_from_numpy_array(const void* data_in, std::vector<size_t> shape,
  */
 static std::string add_new_mvdata(const py::array& data, std::string dataSetName)
 {
-    py::buffer_info buf_info = data.request();
-    void* ptr = buf_info.ptr;
-    std::vector<size_t> shape(buf_info.shape.begin(), buf_info.shape.end());
+    std::string guid            = "";
+    const auto dtype            = data.dtype();
+    py::buffer_info buf_info    = createBuffer(data);
+    void* ptr                   = buf_info.ptr;
+    auto shape                  = std::vector<size_t>(buf_info.shape.begin(), buf_info.shape.end());
 
-    std::string guid = "";
-    const auto dtype = data.dtype();
-    
     void (*point_setter)(const void* data_in, std::vector<size_t> shape, mv::Dataset<Points> points, bool flip) = nullptr;
 
     // PointData is limited in its type support - hopefully the commented types wil be added soon
@@ -290,7 +310,7 @@ static std::string add_new_mvdata(const py::array& data, std::string dataSetName
         point_setter = set_points_from_numpy_array<float, double>;
     else
     {
-        qDebug() << "add_mvimage: type not supported (e.g. uint64_t or int64_t)" << QString(guid.c_str());
+        qDebug() << "add_mvimage: type not supported (e.g. uint64_t or int64_t): " << QString(dtype.kind());
         return guid;
     }
 
@@ -316,37 +336,32 @@ static std::string add_new_mvdata(const py::array& data, std::string dataSetName
     return py::str(guid);
 }
 
+// The MV data model is Band Interlaced by Pixel.
+// This means that an image stack (which might be hyperspectral or simply RGB/RGBA)
+// is counted as having size(stack) bands called dimensions in the MV Image.
+// This function is meant to deal only with the 
+// single image case however multiple RGB or RGBA bands may be present
+// as given by the number of components
 static std::string add_mvimage(const py::array& data, std::string dataSetName)
 {
-    // The MV data model is Band Interlaced by Pixel.
-    // This means that an image stack (which might be hyperspectral or simply RGB/RGBA)
-    // is counted as having size(stack) bands called dimensions in the MV Image.
-    // This function is meant to deal only with the 
-    // single image case however multiple RGB or RGBA bands may be present
-    // as given by the number of components
-    py::buffer_info buf_info = data.request();
-    void* ptr = buf_info.ptr;
+    std::string guid            = "";
+    const auto dtype            = data.dtype();
+    py::buffer_info buf_info    = createBuffer(data);
+    void* ptr                   = buf_info.ptr;
+    auto shape                  = std::vector<size_t>(buf_info.shape.begin(), buf_info.shape.end());
 
-    std::vector<size_t> shape(buf_info.shape.begin(), buf_info.shape.end());
-    if (shape.size() == 2) {
+    // Grey-scale image:
+    if (shape.size() == 2)
         shape.push_back(1);
-    }
 
-    int num_bands = 1;
-    switch (shape.size()) {
-    case 3:
-        num_bands = shape[2];
-        if (!(num_bands == 1 || num_bands == 2 || num_bands == 3)) {
-            throw std::runtime_error("Image components must me 1, 3 or 4 corresponding to grayscale, RGB, RGBA");
-        }
-        break;
-    default:
-        throw std::runtime_error("This function only supports a single 2d image with optional components");
+    int num_bands = shape[2];
+
+    if (shape.size() != 3)
+    {
+        qDebug() << "add_mvimage: numpy image must be an image, i.e. of shape (x, y, dims). Instead got: " << shape;
+        return guid;
     }
     
-    std::string guid = "";
-    const auto dtype = data.dtype();
-
     void (*point_setter)(const void* data_in, std::vector<size_t> shape, mv::Dataset<Points> points, bool flip) = nullptr;
 
     // PointData is limited in its type support - hopefully the commented types wil be added soon
@@ -370,7 +385,7 @@ static std::string add_mvimage(const py::array& data, std::string dataSetName)
         point_setter = conv_points_from_numpy_array<float, double>;
     else
     {
-        qDebug() << "add_mvimage: type not supported (e.g. uint64_t or int64_t)" << QString(guid.c_str());
+        qDebug() << "add_mvimage: type not supported (e.g. uint64_t or int64_t): " << QString(dtype.kind());
         return guid;
     }
 
@@ -382,17 +397,15 @@ static std::string add_mvimage(const py::array& data, std::string dataSetName)
 
         auto imageDataset = mv::data().createDataset<Images>("Images", "numpy image", Dataset<DatasetImpl>(*points));
 
-        int height = shape[0];
         int width = shape[1];
+        int height = shape[0];
 
-        imageDataset->setText(QString("Images (%2x%3)").arg(QString::number(shape[0]), QString::number(shape[1])));
+        imageDataset->setText(QString("Images (%2x%3)").arg(QString::number(width), QString::number(height)));
         imageDataset->setType(ImageData::Type::Stack);
         imageDataset->setNumberOfImages(1);
         imageDataset->setImageSize(QSize(width, height));
         imageDataset->setNumberOfComponentsPerPixel(num_bands);
 
-        QStringList filePaths = { QString("Source is numpy array %1 via JupyterPlugin").arg(dataSetName.c_str()) };
-        imageDataset->setImageFilePaths(filePaths);
         events().notifyDatasetDataChanged(imageDataset);
 
         guid = points.getDatasetId().toStdString();
@@ -494,25 +507,22 @@ static std::string add_cluster(const py::tuple& tupleOfClusterLists, std::string
     Dataset<Clusters> clusters = mv::data().createDataset("Cluster", dataSetName.c_str(), parent->getDataset<Points>());
 
     for (size_t i = 0; i < names_list.size(); ++i) {
-        auto indexes = clusters_list[i].cast<py::array>();
-        std::string name = names_list[i].cast<py::str>();
-        auto colorTup = colors_list[i].cast<py::tuple>();
-        std::string id = ids_list[i].cast<py::str>();
+        auto indexes        = clusters_list[i].cast<py::array>();
+        std::string name    = names_list[i].cast<py::str>();
+        auto colorTup       = colors_list[i].cast<py::tuple>();
+        std::string id      = ids_list[i].cast<py::str>();
+
         Cluster cluster;
-        cluster.setName(QString("cluster %1").arg(QString::number(i + 1)));
-        auto clusterIndices = indexes.cast<std::vector<std::uint32_t>>();
-        // cluster indexes
-        cluster.setIndices(clusterIndices);
-        // cluster color
-        auto a = (colorTup.size() == 4) ? colorTup[3].cast<float>() : 1.0;
-        auto clusterColor = QColor::fromRgbF(colorTup[0].cast<float>(), colorTup[1].cast<float>(), colorTup[2].cast<float>(), a);
-        cluster.setColor(clusterColor);
-        // cluster 
         cluster.setName(name.c_str());
-        // Use the auto generated id
+
+        auto clusterIndices = indexes.cast<std::vector<std::uint32_t>>();
+        cluster.setIndices(clusterIndices);
+
+        auto alpha = (colorTup.size() == 4) ? colorTup[3].cast<float>() : 1.0;
+        auto clusterColor = QColor::fromRgbF(colorTup[0].cast<float>(), colorTup[1].cast<float>(), colorTup[2].cast<float>(), alpha);
+        cluster.setColor(clusterColor);
 
         clusters->addCluster(cluster);
-
     }
 
     events().notifyDatasetDataChanged(clusters);
