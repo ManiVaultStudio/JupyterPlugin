@@ -79,12 +79,14 @@ class Hierarchy:
         return item
     
     def addPointsItem(self, data: np.ndarray, name: str) ->Item|None:
-        """Add a points data item and return the corresponding Item 
-            or None if the operation is unsuccessful
+        """Add a points data item
 
         Args: 
             data: The numpy array contain the point data 
-            name: A name for the 
+            name: A name for the point data set
+
+        Returns:
+            string: a unique ID for the data item in ManiVault
         """
         datasetId = mvstudio_core.add_new_data(data, name)
         if len(datasetId) == 0:
@@ -95,14 +97,14 @@ class Hierarchy:
             return self.getItemByID(datasetId)
         
     def addImageItem(self, data: np.ndarray, name: str) -> Item|None:
-        """Add an image data item at the root
+        """Add an image data item
 
         Args:
             data (np.ndarray): A numpy array representing the image
-            namestr (_type_): A string name for the points item.
+            names: A name for the image item.
 
         Returns:
-            Item|None: _description_
+            Item|None: a unique ID for the data item in ManiVault
         """
         datasetId = mvstudio_core.add_new_image(data, name)
         if len(datasetId) == 0:
@@ -112,8 +114,29 @@ class Hierarchy:
             self._refresh()
             return self.getItemByID(datasetId)
 
-    def addClusterItem(self, index: list[int]):
-        pass
+    def addClusterItem(self, parent: str, indices: list[np.ndarray], name: str, **kwargs):
+        """Add an cluster data set
+
+        Args:
+            indices: A list of arrays containing the data indices of each clusters
+            parent: GUID of the parent data set
+            names (optional): A list of string containing names for each cluster
+            name: A name for the cluster item
+            colors (optional): A list of arrays containing colors of each clusters
+        Returns:
+            Item|None: a unique ID for the data item in ManiVault
+        """
+        names = kwargs.get('names', [])
+        colors = kwargs.get('colors', [])
+    
+        datasetId = mvstudio_core.add_new_cluster(parent, indices, names, colors, name)
+
+        if len(datasetId) == 0:
+            warnings.warn("Could not add item", RuntimeWarning)
+            return None
+        else:
+            self._refresh()
+            return self.getItemByID(datasetId)
 
     def children(self) -> Generator[Item, None, None]:
             """Generator for iterating over any children of this DataHierarchyItem.
