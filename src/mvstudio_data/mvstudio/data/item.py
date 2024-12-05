@@ -69,28 +69,28 @@ class Item:
             yield self._children[index]
             index += 1
 
-    def getItem(self, guid) -> Self | None:
-        """Return the DataHierarchy Item corresponding
-        to the data hierarchy guid. It can be the current item or a child item.
+    def getItem(self, itemId) -> Self | None:
+        """Return the DataHierarchy Item corresponding to the given
+        hierarchy item ID. It can be the current item or a child item.
         """
-        if self.guid == guid:
+        if self.itemId == itemId:
             return self
         
         for child in self.children():
-            item = child.getItem(guid)
+            item = child.getItem(itemId)
             if item is not None:
                 return item
         return None
     
-    def getItemByID(self, datasetId) -> Self | None:
-        """Return the DataHierarchy Item corresponding
-        to the dataset ID. It can be the current item or a child item.
+    def getItemByDataID(self, datasetId) -> Self | None:
+        """Return the DataHierarchy Item corresponding to the given
+        dataset ID. It can be the current item or a child item.
         """
         if self.datasetId == datasetId:
             return self
         
         for child in self.children():
-            item = child.getItem(datasetId)
+            item = child.getItemByDataID(datasetId)
             if item is not None:
                 return item
         return None
@@ -161,7 +161,7 @@ class Item:
         return self._type
 
     @property
-    def guid(self) -> str:
+    def itemId(self) -> str:
         return self._guid_tuple[0]
     
     @property

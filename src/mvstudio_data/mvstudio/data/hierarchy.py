@@ -28,22 +28,22 @@ class Hierarchy:
         """
         self._refresh()
 
-    def getItem(self, guid: str) -> Item:
+    def getItem(self, itemId: str) -> Item:
         """Return the Item corresponding
         to the data hierarchy guid 
         """
         for item in self.children():
-            result = item.getItem(guid)
+            result = item.getItem(itemId)
             if result is not None:
                 return result
         return None
 
-    def getItemByID(self, datasetId: str) -> Item:
+    def getItemByDataID(self, datasetId: str) -> Item:
         """Return the Item corresponding
-        to the data set datasetId 
+        to the data set guid 
         """
         for item in self.children():
-            result = item.getItemByID(datasetId)
+            result = item.getItemByDataID(datasetId)
             if result is not None:
                 return result
         return None
@@ -86,7 +86,7 @@ class Hierarchy:
             name: A name for the point data set
 
         Returns:
-            string: a unique ID for the data item in ManiVault
+            Item|None: Data hierarchy item reference ManiVault
         """
         datasetId = mvstudio_core.add_new_data(data, name)
         if len(datasetId) == 0:
@@ -94,7 +94,7 @@ class Hierarchy:
             return None
         else:
             self._refresh()
-            return self.getItemByID(datasetId)
+            return self.getItemByDataID(datasetId)
         
     def addImageItem(self, data: np.ndarray, name: str) -> Item|None:
         """Add an image data item
@@ -104,7 +104,7 @@ class Hierarchy:
             names: A name for the image item.
 
         Returns:
-            Item|None: a unique ID for the data item in ManiVault
+            Item|None: Data hierarchy item reference ManiVault
         """
         datasetId = mvstudio_core.add_new_image(data, name)
         if len(datasetId) == 0:
@@ -112,7 +112,7 @@ class Hierarchy:
             return None
         else:
             self._refresh()
-            return self.getItemByID(datasetId)
+            return self.getItemByDataID(datasetId)
 
     def addClusterItem(self, parent: str, indices: list[np.ndarray], name: str, **kwargs):
         """Add an cluster data set
@@ -124,7 +124,7 @@ class Hierarchy:
             name: A name for the cluster item
             colors (optional): A list of arrays containing colors of each clusters
         Returns:
-            Item|None: a unique ID for the data item in ManiVault
+            Item|None: Data hierarchy item reference ManiVault
         """
         names = kwargs.get('names', [])
         colors = kwargs.get('colors', [])
@@ -136,7 +136,7 @@ class Hierarchy:
             return None
         else:
             self._refresh()
-            return self.getItemByID(datasetId)
+            return self.getItemByDataID(datasetId)
 
     def children(self) -> Generator[Item, None, None]:
             """Generator for iterating over any children of this DataHierarchyItem.
