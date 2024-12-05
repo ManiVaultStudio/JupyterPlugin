@@ -93,14 +93,30 @@ if (NOT ${EXIT_CODE} EQUAL 0)
     endif()
 endif()
 
-add_custom_target(mvstudio_kernel ALL
+add_custom_target(mvstudio_kernel 
     COMMAND ${Python_EXECUTABLE} -m poetry build --no-interaction --format=wheel
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/src/mvstudio_kernel
 )
 
-add_custom_target(mvstudio_data ALL
+target_sources(mvstudio_kernel PRIVATE
+    ../mvstudio_kernel/mvstudio/kernel/__init__.py
+    ../mvstudio_kernel/mvstudio/kernel/manager.py
+    ../mvstudio_kernel/mvstudio/kernel/provisioning.py
+)
+
+add_custom_target(mvstudio_data 
     COMMAND ${Python_EXECUTABLE} -m poetry build --no-interaction --format=wheel
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/src/mvstudio_data
+)
+
+target_sources(mvstudio_data PRIVATE
+    ../mvstudio_data/mvstudio/data/__init__.py
+    ../mvstudio_data/mvstudio/data/cluster.py
+    ../mvstudio_data/mvstudio/data/clusterbase.py
+    ../mvstudio_data/mvstudio/data/factory.py
+    ../mvstudio_data/mvstudio/data/hierarchy.py
+    ../mvstudio_data/mvstudio/data/image.py
+    ../mvstudio_data/mvstudio/data/item.py
 )
 
 add_dependencies(${JUPYTERPLUGIN} mvstudio_kernel mvstudio_data)
