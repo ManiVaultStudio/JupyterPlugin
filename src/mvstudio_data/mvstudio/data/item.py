@@ -69,28 +69,28 @@ class Item:
             yield self._children[index]
             index += 1
 
-    def getItem(self, guid) -> Self | None:
-        """Return the DataHierarchy Item corresponding
-        to the data hierarchy guid. It can be the current item or a child item.
+    def getItem(self, itemId) -> Self | None:
+        """Return the DataHierarchy Item corresponding to the given
+        hierarchy item ID. It can be the current item or a child item.
         """
-        if self.guid == guid:
+        if self.itemId == itemId:
             return self
         
         for child in self.children():
-            item = child.getItem(guid)
+            item = child.getItem(itemId)
             if item is not None:
                 return item
         return None
     
-    def getItemByID(self, datasetId) -> Self | None:
-        """Return the DataHierarchy Item corresponding
-        to the dataset ID. It can be the current item or a child item.
+    def getItemByDataID(self, datasetId) -> Self | None:
+        """Return the DataHierarchy Item corresponding to the given
+        dataset ID. It can be the current item or a child item.
         """
         if self.datasetId == datasetId:
             return self
         
         for child in self.children():
-            item = child.getItem(datasetId)
+            item = child.getItemByDataID(datasetId)
             if item is not None:
                 return item
         return None
@@ -128,30 +128,7 @@ class Item:
             if item is not None:
                 break
         return item
-    
-    def addClusterItem(self, cluster: Cluster, cluster_name: str) -> Self | None:
-        """Add a clusteritem as a child of this points item
-
-        Args:
-            cluster (Cluster): A set of clusters that matches the point items in terms of indexes
-
-        Returns:
-            Self | None: An ClusterItem is successful orherwise None
-        """
-        for index_list in cluster.clusters:
-            if not all(c < self.numpoints for c in index_list):
-                return None
         
-        guid = mvstudio_core.add_new_cluster(
-            (cluster.names, cluster.clusters, cluster.colors, cluster.ids),
-            cluster_name,
-            self.datasetId
-        )
-        if not guid:
-            return None
-        
-        return self._hierarchy.getItem(guid)
-    
     @property
     def points(self) -> np.ndarray:
         return mvstudio_core.get_data_for_item(self.datasetId)
@@ -161,7 +138,7 @@ class Item:
         return self._type
 
     @property
-    def guid(self) -> str:
+    def itemId(self) -> str:
         return self._guid_tuple[0]
     
     @property

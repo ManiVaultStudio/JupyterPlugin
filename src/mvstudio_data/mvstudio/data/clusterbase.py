@@ -35,11 +35,11 @@ class Cluster:
         return self._names
 
     @property
-    def clusters(self) -> list[np.uint32]:
+    def indices(self) -> list[np.uint32]:
         return self._clusters
     
     @property
-    def col_ids(self) -> list[str]:
+    def cluster_guids(self) -> list[str]:
         return self._ids
     
     @property

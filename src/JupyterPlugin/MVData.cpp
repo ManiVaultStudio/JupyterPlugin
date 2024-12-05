@@ -14,6 +14,7 @@
 #include "pybind11/numpy.h"
 #include "pybind11/pybind11.h"
 #include <pybind11/pytypes.h>
+#include <pybind11/stl.h>
 
 #include <QColor>
 #include <QSize>
@@ -21,6 +22,7 @@
 #include <QStringList>
 #include <QDebug>
 
+#include <algorithm>
 #include <cstdint>
 #include <cstring>
 #include <numeric>
@@ -261,7 +263,11 @@ static py::buffer_info createBuffer(const py::array& data)
 {
     py::buffer_info buf_info;
 
-    if (!data.base().is_none()) {
+    // https://numpy.org/doc/stable/user/basics.copies.html#how-to-tell-if-the-array-is-a-view-or-a-copy
+    if (data.base().is_none()) {
+        buf_info = data.request();
+    }
+    else {
         py::print("The numpy array is a view. Creating a local copy to handle striding correctly...");
 
         pybind11::array::ShapeContainer shape(data.shape(), data.shape() + data.ndim());
@@ -270,9 +276,6 @@ static py::buffer_info createBuffer(const py::array& data)
         py::array copied_arr = py::array(data.dtype(), shape, strides, data.data());
 
         buf_info = copied_arr.request();
-    }
-    else {
-        buf_info = data.request();
     }
 
     return buf_info;
@@ -338,7 +341,7 @@ static std::string add_new_mvdata(const py::array& data, std::string dataSetName
             builtins.attr("UserWarning"));
     }
 
-    return py::str(guid);
+    return guid;
 }
 
 // The MV data model is Band Interlaced by Pixel.
@@ -426,7 +429,7 @@ static std::string add_mvimage(const py::array& data, std::string dataSetName)
             builtins.attr("UserWarning"));
     }
 
-    return py::str(guid);
+    return guid;
 }
 
 // All images are float in ManiVault 1.x.
@@ -486,54 +489,78 @@ static py::array get_mv_image(const std::string& imageGuid)
     return result;
 }
 
-static std::string add_cluster(const py::tuple& tupleOfClusterLists, std::string dataSetName, const std::string& parentPointDatasetGuid)
+template <typename T>
+std::vector<T> py_array_to_vector(const py::array_t<T>& array) {
+    // Request a buffer (no copying) and ensure the array is contiguous
+    py::buffer_info buf = array.request();
+    if (buf.ndim != 1) {
+        throw std::runtime_error("Only 1D numpy arrays can be converted to std::vector");
+    }
+
+    // Convert the data pointer to a vector
+    T* data_ptr = static_cast<T*>(buf.ptr);
+    return std::vector<T>(data_ptr, data_ptr + buf.shape[0]);
+}
+
+static std::string add_cluster(const py::str& parentPointDatasetGuid, const std::vector<py::array>& clusterIndices, const std::vector<py::str>& clusterNames, const std::vector<py::array>& clusterColors, const py::str& datasetName)
 {
-    auto warnings = pybind11::module::import("warnings");
-    auto builtins = pybind11::module::import("builtins");
-    // validate the incoming tuple
-    if (tupleOfClusterLists.size() != 4) {
-        warnings.attr("warn")(
-            "Names, cluster indexes, ids and colors must be present.",
-            builtins.attr("UserWarning"));
-        return "";
+    auto warnings               = pybind11::module::import("warnings");
+    auto builtins               = pybind11::module::import("builtins");
+    std::string guid            = "";
+
+    QString parentGUID          = QString(parentPointDatasetGuid.cast<std::string>().c_str());
+    std::string clustersName    = datasetName.cast<std::string>();
+    size_t numClusters          = clusterIndices.size();
+
+    auto checkDatasetExists = [](const QString& guid ) -> bool {
+        QVector<Dataset<DatasetImpl>> datasets = mv::data().getAllDatasets(std::vector<DataType>({ PointType }));
+        return std::any_of(datasets.begin(), datasets.end(), [&guid](const Dataset<DatasetImpl>& dataset) { return dataset.getDatasetId() == guid; });
+        };
+
+    if (!checkDatasetExists(parentGUID))
+    {
+        qDebug() << "add_cluster: parent dataset not found. (ensure that is a PointData set)";
+        return guid;
     }
 
-    auto names_list     = tupleOfClusterLists[0].cast<py::list>();
-    auto clusters_list  = tupleOfClusterLists[1].cast<py::list>();
-    auto colors_list    = tupleOfClusterLists[2].cast<py::list>();
-    auto ids_list       = tupleOfClusterLists[3].cast<py::list>();
+    auto parentDataset          = mv::data().getDataset(parentGUID);
+    Dataset<Clusters> clusters  = mv::data().createDataset("Cluster", clustersName.c_str(), parentDataset);
+    guid                        = clusters.getDatasetId().toStdString();
 
-    if (!(names_list.size() + clusters_list.size() - ids_list.size() - colors_list.size() == 0)) {
-        warnings.attr("warn")(
-            "The lengths of the lists names, cluster indexes, ids and colors must be present.",
-            builtins.attr("UserWarning"));
-    }
+    bool hasNames               = clusterNames.size() == numClusters;
+    bool hasColors              = clusterColors.size() == numClusters;
 
-    auto parent = mv::dataHierarchy().getItem(QString(parentPointDatasetGuid.c_str()));
-    Dataset<Clusters> clusters = mv::data().createDataset("Cluster", dataSetName.c_str(), parent->getDataset<Points>());
-
-    for (size_t i = 0; i < names_list.size(); ++i) {
-        auto indexes        = clusters_list[i].cast<py::array>();
-        std::string name    = names_list[i].cast<py::str>();
-        auto colorTup       = colors_list[i].cast<py::tuple>();
-        std::string id      = ids_list[i].cast<py::str>();
-
+    for (size_t i = 0; i < numClusters; ++i) {
         Cluster cluster;
-        cluster.setName(name.c_str());
 
-        auto clusterIndices = indexes.cast<std::vector<std::uint32_t>>();
+        auto indices = clusterIndices[i].cast<py::array>();
+        auto clusterIndices = py_array_to_vector<std::uint32_t>(indices);
         cluster.setIndices(clusterIndices);
 
-        auto alpha = (colorTup.size() == 4) ? colorTup[3].cast<float>() : 1.0;
-        auto clusterColor = QColor::fromRgbF(colorTup[0].cast<float>(), colorTup[1].cast<float>(), colorTup[2].cast<float>(), alpha);
-        cluster.setColor(clusterColor);
+        QString clusterName = QString::fromStdString(std::to_string(i));
+
+        if (hasNames)
+            clusterName = QString::fromStdString(clusterNames[i].cast<std::string>());
+
+        cluster.setName(clusterName);
+
+        if (hasColors)
+        {
+            auto colors = clusterColors[i].cast<py::array>();
+            auto clusterColors = py_array_to_vector<float>(colors);
+            QColor clusterColor = QColor::fromRgbF(clusterColors[0], clusterColors[1], clusterColors[2], 1);
+            cluster.setColor(clusterColor);
+        }
 
         clusters->addCluster(cluster);
     }
 
+    if(!hasColors)
+        Cluster::colorizeClusters(clusters->getClusters());
+
     events().notifyDatasetDataChanged(clusters);
 
-    return py::str(clusters.getDatasetId().toStdString());
+    return guid;
 }
 
 // return Hierarchy Item and Data set guid in tuple
@@ -737,9 +764,11 @@ py::module get_MVData_module()
     MVData_module.def(
         "add_new_cluster",
         add_cluster,
-        py::arg("tupleOfClusterLists") = py::tuple(),
-        py::arg("clusterName") = py::str(),
-        py::arg("parentPointDatasetGuid") = py::str()
-    );
+        py::arg("parentPointDatasetGuid"),
+        py::arg("clusterIndices"),
+        py::arg("clusterNames"),
+        py::arg("clusterColors"),
+        py::arg("datasetName")
+        );
     return MVData_module;
 }

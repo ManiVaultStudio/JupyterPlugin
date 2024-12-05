@@ -71,7 +71,7 @@ target_link_libraries(${JUPYTERPLUGIN} PRIVATE pybind11::embed)
 target_link_libraries(${JUPYTERPLUGIN} PRIVATE nlohmann_json::nlohmann_json)
 
 # -----------------------------------------------------------------------------
-# Python MVJupyterPluginManager package
+# Python MVJupyterPluginManager packages
 # -----------------------------------------------------------------------------
 execute_process(
     COMMAND ${Python_EXECUTABLE} -m pip show poetry
@@ -93,15 +93,36 @@ if (NOT ${EXIT_CODE} EQUAL 0)
     endif()
 endif()
 
-message(STATUS "Building the mvstudio_kernel mvstudio_data python packages")
-execute_process(
+add_custom_target(mvstudio_kernel 
     COMMAND ${Python_EXECUTABLE} -m poetry build --no-interaction --format=wheel
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/src/mvstudio_kernel
-    COMMAND_ERROR_IS_FATAL ANY)
-execute_process(
+)
+
+target_sources(mvstudio_kernel PRIVATE
+    ../mvstudio_kernel/mvstudio/kernel/__init__.py
+    ../mvstudio_kernel/mvstudio/kernel/manager.py
+    ../mvstudio_kernel/mvstudio/kernel/provisioning.py
+)
+
+add_custom_target(mvstudio_data 
     COMMAND ${Python_EXECUTABLE} -m poetry build --no-interaction --format=wheel
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/src/mvstudio_data
-    COMMAND_ERROR_IS_FATAL ANY)
+)
+
+target_sources(mvstudio_data PRIVATE
+    ../mvstudio_data/mvstudio/data/__init__.py
+    ../mvstudio_data/mvstudio/data/cluster.py
+    ../mvstudio_data/mvstudio/data/clusterbase.py
+    ../mvstudio_data/mvstudio/data/factory.py
+    ../mvstudio_data/mvstudio/data/hierarchy.py
+    ../mvstudio_data/mvstudio/data/image.py
+    ../mvstudio_data/mvstudio/data/item.py
+)
+
+add_dependencies(${JUPYTERPLUGIN} mvstudio_kernel mvstudio_data)
+
+set_target_properties(${JUPYTERPLUGIN} PROPERTIES FOLDER mvstudio_kernel)
+set_target_properties(${JUPYTERPLUGIN} PROPERTIES FOLDER mvstudio_data)
 
 # -----------------------------------------------------------------------------
 # Target installation
