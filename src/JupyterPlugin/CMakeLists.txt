@@ -71,7 +71,7 @@ target_link_libraries(${JUPYTERPLUGIN} PRIVATE pybind11::embed)
 target_link_libraries(${JUPYTERPLUGIN} PRIVATE nlohmann_json::nlohmann_json)
 
 # -----------------------------------------------------------------------------
-# Python MVJupyterPluginManager package
+# Python MVJupyterPluginManager packages
 # -----------------------------------------------------------------------------
 execute_process(
     COMMAND ${Python_EXECUTABLE} -m pip show poetry
@@ -93,15 +93,20 @@ if (NOT ${EXIT_CODE} EQUAL 0)
     endif()
 endif()
 
-message(STATUS "Building the mvstudio_kernel mvstudio_data python packages")
-execute_process(
+add_custom_target(mvstudio_kernel ALL
     COMMAND ${Python_EXECUTABLE} -m poetry build --no-interaction --format=wheel
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/src/mvstudio_kernel
-    COMMAND_ERROR_IS_FATAL ANY)
-execute_process(
+)
+
+add_custom_target(mvstudio_data ALL
     COMMAND ${Python_EXECUTABLE} -m poetry build --no-interaction --format=wheel
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/src/mvstudio_data
-    COMMAND_ERROR_IS_FATAL ANY)
+)
+
+add_dependencies(${JUPYTERPLUGIN} mvstudio_kernel mvstudio_data)
+
+set_target_properties(${JUPYTERPLUGIN} PROPERTIES FOLDER mvstudio_kernel)
+set_target_properties(${JUPYTERPLUGIN} PROPERTIES FOLDER mvstudio_data)
 
 # -----------------------------------------------------------------------------
 # Target installation
