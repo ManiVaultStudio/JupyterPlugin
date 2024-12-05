@@ -1,16 +1,15 @@
 # Python integration into ManiVault
 
-This project provides [Python](https://en.wikipedia.org/wiki/Python_(programming_language)) integration into ManiVault. It allows to read and write from and to the ManiVault data hierarchy. 
+This project provides [Python](https://en.wikipedia.org/wiki/Python_(programming_language)) integration into [ManiVault](https://github.com/ManiVaultStudio/core). It allows users to push data from Python to and retrieve data from ManiVault. 
 
 [JupyterLab](https://jupyter.org/) is used to interact with ManiVault via Python. Upon starting the Python integration, a notebook is automatically opened.
 
-
-## Building
-
-0. Clone this repository
 ```bash
 git clone git@github.com:ManiVaultStudio/JupyterPlugin.git
 ```
+
+## Building
+
 1. Setup a python 3.11 environment, 
 - with [venv](https://docs.python.org/3.11/library/venv.html):
 ```bash
