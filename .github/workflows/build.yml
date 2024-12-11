@@ -79,7 +79,7 @@ jobs:
           git clone --branch 2024.11.16 --single-branch https://github.com/microsoft/vcpkg.git
 
       # Bootstrap vcpkg
-      - name: Bootstrap vcpkg 
+      - name: Bootstrap vcpkg (Windows)
         if: startsWith(matrix.os, 'windows')
         shell: pwsh
         run:  |
@@ -88,7 +88,7 @@ jobs:
           echo "VCPKG_EXE=${{ github.workspace }}\vcpkg\vcpkg.exe" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           echo "VCPKG_LIBRARY_LINKAGE=dynamic" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
-      - name: Bootstrap vcpkg
+      - name: Bootstrap vcpkg (Linux/Mac)
         if: startsWith(matrix.os, 'ubuntu') || startsWith(matrix.os, 'macos')
         shell: bash
         run: |
@@ -98,7 +98,7 @@ jobs:
           echo "VCPKG_LIBRARY_LINKAGE=dynamic" >> $GITHUB_ENV
 
       # Use cached vcpkg packages if possible
-      - name: Add NuGet sources
+      - name: Add NuGet sources (Windows)
         if: startsWith(matrix.os, 'windows')
         shell: pwsh
         run: |
@@ -113,7 +113,7 @@ jobs:
             setapikey "${{ secrets.GH_VCPKG_PACKAGES }}" `
             -Source "${{ env.FEED_URL }}"
 
-      - name: Add NuGet sources
+      - name: Add NuGet sources (Linux/Mac)
         if: startsWith(matrix.os, 'ubuntu') || startsWith(matrix.os, 'macos')
         shell: bash
         run: |
