@@ -129,6 +129,16 @@ class JupyterPluginConan(ConanFile):
                 print("vcpkg_exe: ", vcpkg_exe)
                 print("vcpkg_tc: ", vcpkg_tc)
 
+                vcpkg_triplet = "x64-windows-static-md"
+
+                print("vcpkg_dir: ", vcpkg_dir)
+                print("vcpkg_exe: ", vcpkg_exe)
+                print("vcpkg_tc: ", vcpkg_tc)
+                print("vcpkg_triplet: ", vcpkg_triplet)
+
+                tc.variables["VCPKG_LIBRARY_LINKAGE"]   = "static"
+                tc.variables["VCPKG_TARGET_TRIPLET"]    = vcpkg_triplet
+                tc.variables["VCPKG_HOST_TRIPLET"]      = vcpkg_triplet
                 tc.variables["VCPKG_ROOT"]              = vcpkg_dir.as_posix()
 
                 tc.variables["CMAKE_PROJECT_INCLUDE"] = vcpkg_tc.as_posix()
