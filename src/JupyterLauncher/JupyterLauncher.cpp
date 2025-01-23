@@ -626,7 +626,7 @@ void JupyterLauncherFactory::initialize()
     _statusBarAction->setPopupAction(&_statusBarPopupGroupAction);
 
     // Always show
-    //_statusBarAction->getConditionallyVisibleAction().setChecked(false);
+    _statusBarAction->getConditionallyVisibleAction().setChecked(false);
 
     // Position to the right of the status bar action
     _statusBarAction->setIndex(-1);
