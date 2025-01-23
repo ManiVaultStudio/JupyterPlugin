@@ -289,7 +289,7 @@ bool JupyterLauncher::installKernel(const QString& version)
 
 bool JupyterLauncher::optionallyInstallMVWheel(const QString& version)
 {
-    const QString& pluginVersion = getVersion();
+    const QString pluginVersion = QString::fromStdString(getVersion().getVersionString());
     QMessageBox::StandardButton reply = QMessageBox::question(
         nullptr, 
         "Python modules missing", 
@@ -481,8 +481,10 @@ void JupyterLauncher::loadJupyterPythonKernel(const QString& pyversion)
 
     QString serr;
     QString sout;
+
     // 1. Check the path to see if the correct version of mvstudio is installed
-    auto exitCode = runPythonScript(":/text/check_env.py", sout, serr, pyversion, QStringList{ getVersion() });
+    QString pluginVersion = QString::fromStdString(getVersion().getVersionString());
+    auto exitCode = runPythonScript(":/text/check_env.py", sout, serr, pyversion, QStringList{ pluginVersion });
     if (exitCode == 2) {
         qDebug() << serr << sout;
         // TODO display error message box
@@ -656,9 +658,8 @@ mv::gui::PluginTriggerActions JupyterLauncherFactory::getPluginTriggerActions(co
     const auto numberOfDatasets = datasets.count();
 
     if (numberOfDatasets >= 1 && PluginFactory::areAllDatasetsOfTheSameType(datasets, PointType)) {
-        auto pluginTriggerAction = new PluginTriggerAction(const_cast<JupyterLauncherFactory*>(this), this, "JupyterPlugin", "Open Jupyter Bridge", getIcon(), [this, getPluginInstance, datasets](PluginTriggerAction& pluginTriggerAction) -> void {
-            for (auto dataset : datasets)
-                getPluginInstance();
+        auto pluginTriggerAction = new PluginTriggerAction(const_cast<JupyterLauncherFactory*>(this), this, "JupyterPlugin", "Open Jupyter Bridge", getIcon(), [this, getPluginInstance](PluginTriggerAction& pluginTriggerAction) -> void {
+            getPluginInstance();
         });
 
         pluginTriggerActions << pluginTriggerAction;

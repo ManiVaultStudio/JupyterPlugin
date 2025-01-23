@@ -46,8 +46,9 @@ void JupyterPlugin::setConnectionPath(const QString& connection_path)
 void JupyterPlugin::init()
 {
     QString jupyter_configFilepath = _connectionFilePath.getFilePath();
+    QString pluginVersion = QString::fromStdString(getVersion().getVersionString());
     qDebug() << "JupyterPlugin::init with " << jupyter_configFilepath;
-    _pKernel->startKernel(jupyter_configFilepath, getVersion());
+    _pKernel->startKernel(jupyter_configFilepath, pluginVersion);
 }
 
 ViewPlugin* JupyterPluginFactory::produce()
