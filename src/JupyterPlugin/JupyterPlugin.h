@@ -53,10 +53,10 @@ class JupyterPluginFactory : public ViewPluginFactory
 public:
 
     /** Default constructor */
-    JupyterPluginFactory() {}
+    JupyterPluginFactory() = default;
 
     /** Destructor */
-    ~JupyterPluginFactory() override {}
+    ~JupyterPluginFactory() = default;
     
     /** Creates an instance of the example view plugin */
     ViewPlugin* produce() override;

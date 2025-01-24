@@ -103,7 +103,7 @@ public:
     JupyterLauncherFactory();
 
     /** Destructor */
-    ~JupyterLauncherFactory() override {}
+    ~JupyterLauncherFactory() = default;
 
     /** Perform post-construction initialization */
     void initialize() override;
