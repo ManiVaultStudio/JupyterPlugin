@@ -3,6 +3,7 @@
 #include <PluginGlobalSettingsGroupAction.h>
 
 #include <actions/FilePickerAction.h>
+#include <actions/ToggleAction.h>
 
 namespace mv {
     namespace plugin {
@@ -32,7 +33,9 @@ public:
 
 public: // Action getters
     mv::gui::FilePickerAction& getDefaultPythonPathAction() { return _defaultPythonPathAction; }
+    mv::gui::ToggleAction& getDoNotShowAgainButton() { return _doNotShowAgainButton; }
 
 private:
-    mv::gui::FilePickerAction   _defaultPythonPathAction;           /** Default python path */
+    mv::gui::FilePickerAction   _defaultPythonPathAction;       /** Default python path */
+    mv::gui::ToggleAction       _doNotShowAgainButton;          /** Whether to show the interpreter path picker on start */
 };

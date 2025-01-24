@@ -1,10 +1,11 @@
 #include "JupyterLauncher.h"
-#include "GlobalSettingsAction.h"
 
-#include <actions/WidgetAction.h>
+#include "GlobalSettingsAction.h"
 
 #include <Application.h>
 #include <CoreInterface.h>
+
+#include <actions/WidgetAction.h>
 
 #include <QByteArray>
 #include <QDebug>
@@ -41,24 +42,32 @@ static inline bool setPythonPluginSearchPath(const QDir& sharedLibDir)
 #endif
 }
 
+
+// =============================================================================
+// JupyterLauncher
+// =============================================================================
+
 JupyterLauncher::JupyterLauncher(const PluginFactory* factory) :
     ViewPlugin(factory),
-    _currentDatasetName(),
-    _currentDatasetNameLabel(new QLabel()),
     _serverBackgroundTask(nullptr),
     _serverPollTimer(nullptr),
-    _connectionFilePath(QDir::toNativeSeparators(QCoreApplication::applicationDirPath() + "/PluginDependencies/JupyterLauncher/py/connection.json"))
+    _serverProcess(this),
+    _currentInterpreterVersion(""),
+    _connectionFilePath(QDir::toNativeSeparators(QCoreApplication::applicationDirPath() + "/PluginDependencies/JupyterLauncher/py/connection.json")),
+    _launcherDialog(std::make_unique<LauncherDialog>(nullptr, this))
 {
     setObjectName("Jupyter kernel plugin launcher");
-    _currentDatasetNameLabel->setAlignment(Qt::AlignCenter);
 
     QFile jsonFile(_connectionFilePath);
-    if (jsonFile.open(QIODevice::WriteOnly)) {
+    if (jsonFile.open(QIODevice::WriteOnly))
         jsonFile.close();
-    }
-    else {
+    else 
         qWarning() << "JupyterLauncher: Could not create connection file at " << _connectionFilePath;
-    }
+
+    connect(_launcherDialog.get(), &LauncherDialog::accepted, this, &JupyterLauncher::launchJupyterKernelAndNotebookImpl);
+    connect(&_launcherDialog->getDoNotShowAgainButton(), &mv::gui::ToggleAction::toggled, this, [this](bool toggled) {
+        mv::settings().getPluginGlobalSettingsGroupAction<GlobalSettingsAction>(this)->getDoNotShowAgainButton().setChecked(toggled);
+        });
 
 }
 
@@ -107,6 +116,11 @@ QString JupyterLauncher::getPythonInterpreterPath()
     return mv::settings().getPluginGlobalSettingsGroupAction<GlobalSettingsAction>(this)->getDefaultPythonPathAction().getFilePath();
 }
 
+bool JupyterLauncher::getShowInterpreterPathDialog()
+{
+    return !mv::settings().getPluginGlobalSettingsGroupAction<GlobalSettingsAction>(this)->getDoNotShowAgainButton().isChecked();
+}
+
 // Emulate the environment changes from a venv activate script
 void JupyterLauncher::setPythonEnv(const QString& version)
 {
@@ -114,16 +128,10 @@ void JupyterLauncher::setPythonEnv(const QString& version)
 
     auto [isVenv, pythonPath] = getPythonHomePath(pyInterpreter);
 
-    if (isVenv)
-    {
-        // contains "pyvenv.cfg"
+    if (isVenv) // contains "pyvenv.cfg"
         qputenv("VIRTUAL_ENV", pythonPath.toUtf8());
-    }
-    else
-    {
-        // contains python interpreter executable
+    else  // contains python interpreter executable
         qputenv("PYTHONHOME", pythonPath.toUtf8());
-    }
 
     if(QOperatingSystemVersion::currentType() == QOperatingSystemVersion::Windows)
         pythonPath = pythonPath + "/Lib/site-packages";
@@ -131,7 +139,7 @@ void JupyterLauncher::setPythonEnv(const QString& version)
         pythonPath = pythonPath + "/lib/python" + version + "/site-packages";   // TODO: check if we need to remove a . here
 
     // Path to folder with installed packages
-     // PYTHONPATH is essential for xeusinterpreter to load as the xeus_python_shell
+    // PYTHONPATH is essential for xeusinterpreter to load as the xeus_python_shell
     qputenv("PYTHONPATH", QDir::toNativeSeparators(pythonPath).toUtf8());
 }
 
@@ -413,14 +421,14 @@ void JupyterLauncher::jupyterServerStarted()
     _serverBackgroundTask->setProgress(1.0f);
 }
 
-bool JupyterLauncher::startJupyterServerProcess(const QString& version)
+void JupyterLauncher::startJupyterServerProcess(const QString& version)
 {
     // In order to run python -m jupyter lab and access the MANIVAULT_JUPYTERPLUGIN_CONNECTION_FILE 
-    // the env variable this must be set in the current process.
+    // the env variable must be set in the current process.
     // Setting it in the child QProcess does not work for reasons that are unclear.
     qputenv("MANIVAULT_JUPYTERPLUGIN_CONNECTION_FILE", _connectionFilePath.toUtf8());
 
-    _serverBackgroundTask = new BackgroundTask(nullptr, "JupyterLab Server");
+    _serverBackgroundTask = new BackgroundTask(this, "JupyterLab Server");
     _serverBackgroundTask->setProgressMode(Task::ProgressMode::Manual);
     _serverBackgroundTask->setIdle();
 
@@ -437,37 +445,38 @@ bool JupyterLauncher::startJupyterServerProcess(const QString& version)
     connect(Application::current(), &QCoreApplication::aboutToQuit, this, &JupyterLauncher::shutdownJupyterServer);
 
     _serverProcess.start();
-    _serverPollTimer = new QTimer();
+    _serverPollTimer = new QTimer(this);
     _serverPollTimer->setInterval(20); // poll every 20ms
 
     QObject::connect(_serverPollTimer, &QTimer::timeout, [=]() { 
         logProcessOutput(); 
         });
+
     _serverPollTimer->start();
-    return true;
 }
 
 void JupyterLauncher::logProcessOutput()
 {
-    if (_serverProcess.canReadLine()) {
-        auto output = _serverProcess.readAll();
-        _serverBackgroundTask->setProgressDescription(output);
-    }
+    if (!_serverProcess.canReadLine())
+        return; 
+
+    auto output = _serverProcess.readAll();
+    _serverBackgroundTask->setProgressDescription(output);
 
 }
 
-bool JupyterLauncher::validatePythonEnvironment() 
+void JupyterLauncher::launchJupyterKernelAndNotebook(const QString& version)
 {
-    // TBD
-    return true;
+    _currentInterpreterVersion = version;
+
+    if (getShowInterpreterPathDialog())
+        _launcherDialog->show();
+    else
+        launchJupyterKernelAndNotebookImpl();
+
 }
 
-// The pyversion should correspond to a python major.minor version
-// e.g.
-// "3.11"
-// "3.12"
-// There  must be a JupyterPlugin (a kernel provider) that matches the python version for this to work.
-void JupyterLauncher::loadJupyterPythonKernel(const QString& pyversion)
+void JupyterLauncher::launchJupyterKernelAndNotebookImpl()
 {
     // 0. Check if the user set a python interpreter path
     if (getPythonInterpreterPath() == "")
@@ -484,32 +493,30 @@ void JupyterLauncher::loadJupyterPythonKernel(const QString& pyversion)
 
     // 1. Check the path to see if the correct version of mvstudio is installed
     QString pluginVersion = QString::fromStdString(getVersion().getVersionString());
-    auto exitCode = runPythonScript(":/text/check_env.py", sout, serr, pyversion, QStringList{ pluginVersion });
+    auto exitCode = runPythonScript(":/text/check_env.py", sout, serr, _currentInterpreterVersion, QStringList{ pluginVersion });
     if (exitCode == 2) {
         qDebug() << serr << sout;
         // TODO display error message box
         return;
     }
-    if (exitCode == 1) {
-        if (!optionallyInstallMVWheel(pyversion)) {
+    if (exitCode == 1)
+        if (!optionallyInstallMVWheel(_currentInterpreterVersion)) {
             return;
-        }
     }
-    else {
+    else 
         qDebug() << "ManiVault JupyterPythonKernel is already installed";
-    }
 
     // 2. Determine the path to the python library
-    exitCode = runPythonScript(":/text/find_libpython.py", sout, serr, pyversion); 
+    exitCode = runPythonScript(":/text/find_libpython.py", sout, serr, _currentInterpreterVersion);
     if (exitCode != 0) {
         qWarning() << serr << sout;
         // TODO display error message box
         return;
     }
 
-    auto pythonLibrary = QFileInfo(sout);
-    QString sharedLibFilePath = pythonLibrary.absoluteFilePath();
-    QDir sharedLibDir = pythonLibrary.dir();
+    auto pythonLibrary          = QFileInfo(sout);
+    QString sharedLibFilePath   = pythonLibrary.absoluteFilePath();
+    QDir sharedLibDir           = pythonLibrary.dir();
 
     // This seems cleaner but does not work
     //qDebug() << "Using python shared library at: " << sharedLibFilePath;
@@ -523,14 +530,14 @@ void JupyterLauncher::loadJupyterPythonKernel(const QString& pyversion)
     //    qDebug() << "Failed to load python library";
 
     qDebug() << "Using python shared library " << pythonLibrary.fileName() << " at: " << sharedLibDir.absolutePath();
-    if(!setPythonPluginSearchPath(sharedLibDir))
-        qWarning() << "Failed set runtime path of python communication plugin given " << sharedLibDir.absolutePath() ;
+    if (!setPythonPluginSearchPath(sharedLibDir))
+        qWarning() << "Failed set runtime path of python communication plugin given " << sharedLibDir.absolutePath();
 
-    QString jupyterPluginPath = QCoreApplication::applicationDirPath() + "/PluginDependencies/JupyterLauncher/bin/JupyterPlugin" + QString(pyversion).remove(".");
-    QLibrary jupyterPluginLib(jupyterPluginPath);
+    QString jupyterPluginPath           = QCoreApplication::applicationDirPath() + "/PluginDependencies/JupyterLauncher/bin/JupyterPlugin" + _currentInterpreterVersion.remove(".");
+    QLibrary jupyterPluginLib           = QLibrary(jupyterPluginPath);
+    QPluginLoader jupyterPluginLoader   = QPluginLoader(jupyterPluginLib.fileName());
+
     qDebug() << "Using python plugin at: " << jupyterPluginLib.fileName();
-
-    QPluginLoader jupyterPluginLoader(jupyterPluginLib.fileName());
 
     // Check if the plugin was loaded successfully
     if (!jupyterPluginLoader.load()) {
@@ -546,18 +553,8 @@ void JupyterLauncher::loadJupyterPythonKernel(const QString& pyversion)
         return;
     }
 
-    QJsonObject jupyterPluginMetaData = jupyterPluginLoader.metaData().value("MetaData").toObject();
-    QString pluginKind = jupyterPluginMetaData.value("name").toString();
-    QString menuName = jupyterPluginMetaData.value("menuName").toString();
-    QString version = jupyterPluginMetaData.value("version").toString();
-
-    // Loading of the plugin succeeded so cast it to its original class
-    _pluginFactories[pluginKind] = jupyterPluginFactory;
-    _pluginFactories[pluginKind]->setKind(pluginKind);
-    _pluginFactories[pluginKind]->setVersion(version);
-    _pluginFactories[pluginKind]->initialize();
-
-    auto jupyterPluginInstance = _plugins.emplace_back(jupyterPluginFactory->produce());
+    // Create the jupyter plugin
+    mv::plugin::Plugin* jupyterPluginInstance = jupyterPluginFactory->produce();
 
     // Communicate the connection file path via the child action in the JupyterPlugin
     auto connectionFileAction = jupyterPluginInstance->findChildByPath("Connection file");
@@ -569,10 +566,10 @@ void JupyterLauncher::loadJupyterPythonKernel(const QString& pyversion)
 
     // Load the plugin but first set the environment to get 
     // the correct python version
-    setPythonEnv(pyversion);
+    setPythonEnv(_currentInterpreterVersion);
     jupyterPluginInstance->init();
-    startJupyterServerProcess(pyversion);
-    return;
+    startJupyterServerProcess(_currentInterpreterVersion);
+
 }
 
 /// ////////////////////// ///
@@ -618,7 +615,7 @@ void JupyterLauncherFactory::initialize()
         else
             plugin = dynamic_cast<JupyterLauncher*>(openJupyterPlugins.front());
 
-        plugin->loadJupyterPythonKernel("3.11");
+        plugin->launchJupyterKernelAndNotebook("3.11");
     });
 
     _statusBarAction = new PluginStatusBarAction(this, "Jupyter Launcher", getKind());

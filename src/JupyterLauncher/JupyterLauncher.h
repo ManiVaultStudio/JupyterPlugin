@@ -1,19 +1,20 @@
 #pragma once
 
+#include "UserDialogActions.h"
+
 #include <BackgroundTask.h>
-#include <Dataset.h>
-#include <PluginFactory.h>
 #include <ViewPlugin.h>
 
 #include <actions/HorizontalGroupAction.h>
 #include <actions/StringAction.h>
 #include <actions/PluginStatusBarAction.h>
 
-#include <PointData/PointData.h>
-
-#include <QWidget>
+#include <QOperatingSystemVersion>
 #include <QProcess>
+#include <QStringList>
+#include <QTimer>
 
+#include <memory>
 #include <utility>
 #include <vector>
 
@@ -21,6 +22,17 @@ using namespace mv::plugin;
 using namespace mv::gui;
 
 class QLabel;
+
+inline QStringList pythonInterpreterFilters()
+{
+    QStringList pythonFilter = {};
+    if (QOperatingSystemVersion::currentType() == QOperatingSystemVersion::Windows)
+        pythonFilter = { "Python interpreter (python*.exe)" };
+    else
+        pythonFilter = { "Python interpreter (python*)" };
+
+    return pythonFilter;
+}
 
 /**
  * Transitive JupyterPlugin Loader
@@ -50,9 +62,23 @@ public:
     /** This function is called by the core after the view plugin has been created */
     void init() override;
 
-     bool validatePythonEnvironment();
+    // TBD
+    bool validatePythonEnvironment() {
+        return true;
+    }
 
-    void loadJupyterPythonKernel(const QString& version);
+    // The pyversion should correspond to a python major.minor version
+    // e.g.
+    // "3.11"
+    // "3.12"
+    // There  must be a JupyterPlugin (a kernel provider) that matches the python version for this to work.
+    void launchJupyterKernelAndNotebook(const QString& version);
+
+public: // Global settings
+    // Python interpreter path
+    QString getPythonInterpreterPath();
+
+    bool getShowInterpreterPathDialog();
 
 public slots:
     void jupyterServerError(QProcess::ProcessError error);
@@ -71,31 +97,32 @@ private:
     bool installKernel(const QString& version);
     bool optionallyInstallMVWheel(const QString& version);
 
-    bool startJupyterServerProcess(const QString& version);
+    void startJupyterServerProcess(const QString& version);
 
     void logProcessOutput();
-
-    // Python interpreter path
-    QString getPythonInterpreterPath();
 
     // Distinguish between python in a regular or conda directory and python in a venv
     std::pair<bool, QString> getPythonHomePath(const QString& pyInterpreterPath);
     
+private slots:
+    void launchJupyterKernelAndNotebookImpl();
+
 private:
-    QHash<QString, PluginFactory*>      _pluginFactories;           /** All loaded plugin factories */
-    std::vector<mv::plugin::Plugin*>    _plugins;                   /** Vector of plugin instances */
-    QString                             _connectionFilePath;
-    QString                             _currentDatasetName;        /** Name of the current dataset */
-    QLabel*                             _currentDatasetNameLabel;   /** Label that show the current dataset name */
-    mv::BackgroundTask*                 _serverBackgroundTask;      /** The background task monitoring the Jupyter Server */
-    QProcess                            _serverProcess;             /** A detached process for running the Jupyter server */
-    QTimer*                             _serverPollTimer;           /** Poll the server process output at a regular interval */
+    QString                         _connectionFilePath;
+    QString                         _currentInterpreterVersion;
+
+    mv::BackgroundTask*             _serverBackgroundTask;      /** The background task monitoring the Jupyter Server */
+    QProcess                        _serverProcess;             /** A detached process for running the Jupyter server */
+    QTimer*                         _serverPollTimer;           /** Poll the server process output at a regular interval */
+    std::unique_ptr<LauncherDialog> _launcherDialog;
 
 };
 
-/**
- * Jupyter Launcher view plugin factory class
- */
+
+// =============================================================================
+// Factory
+// =============================================================================
+
 class JupyterLauncherFactory : public ViewPluginFactory
 {
     Q_INTERFACES(mv::plugin::ViewPluginFactory mv::plugin::PluginFactory)
@@ -109,7 +136,7 @@ public:
     JupyterLauncherFactory();
 
     /** Destructor */
-    ~JupyterLauncherFactory() override {}
+    ~JupyterLauncherFactory() = default;
 
     /** Perform post-construction initialization */
     void initialize() override;

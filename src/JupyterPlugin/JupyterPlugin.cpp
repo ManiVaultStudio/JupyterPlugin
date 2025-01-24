@@ -22,17 +22,11 @@ JupyterPlugin::~JupyterPlugin()
     _pKernel->stopKernel();
 }
 
-void JupyterPlugin::setConnectionPath(const QString& connection_path)
-{
-    _connectionFilePath.setFilePath(connection_path);
-}
-
 void JupyterPlugin::init()
 {
     QString jupyter_configFilepath = _connectionFilePath.getFilePath();
     QString pluginVersion = QString::fromStdString(getVersion().getVersionString());
 
-    qDebug() << "JupyterPlugin::init with " << jupyter_configFilepath;
     _pKernel->startKernel(jupyter_configFilepath, pluginVersion);
 }
 
