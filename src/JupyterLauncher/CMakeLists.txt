@@ -53,7 +53,6 @@ target_link_libraries(${JUPYTERLAUNCHER} PRIVATE Qt6::Widgets)
 target_link_libraries(${JUPYTERLAUNCHER} PRIVATE Qt6::WebEngineWidgets)
 
 target_link_libraries(${JUPYTERLAUNCHER} PRIVATE ManiVault::Core)
-target_link_libraries(${JUPYTERLAUNCHER} PRIVATE ManiVault::PointData)
 
 # -----------------------------------------------------------------------------
 # Target installation

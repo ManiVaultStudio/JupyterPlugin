@@ -2,9 +2,9 @@
 #include "GlobalSettingsAction.h"
 
 #include <actions/WidgetAction.h>
+
 #include <Application.h>
 #include <CoreInterface.h>
-#include <PointData/PointData.h>
 
 #include <QByteArray>
 #include <QDebug>
@@ -30,7 +30,7 @@
 
 using namespace mv;
 
-Q_PLUGIN_METADATA(IID "nl.BioVault.JupyterLauncher")
+Q_PLUGIN_METADATA(IID "studio.manivault.JupyterLauncher")
 
 static inline bool setPythonPluginSearchPath(const QDir& sharedLibDir)
 {
@@ -644,26 +644,5 @@ QIcon JupyterLauncherFactory::getIcon(const QColor& color /*= Qt::black*/) const
 
 mv::DataTypes JupyterLauncherFactory::supportedDataTypes() const
 {
-    return { PointType };
-}
-
-mv::gui::PluginTriggerActions JupyterLauncherFactory::getPluginTriggerActions(const mv::Datasets& datasets) const
-{
-    PluginTriggerActions pluginTriggerActions;
-
-    const auto getPluginInstance = [this]() -> JupyterLauncher* {
-        return dynamic_cast<JupyterLauncher*>(plugins().requestViewPlugin(getKind()));
-    };
-
-    const auto numberOfDatasets = datasets.count();
-
-    if (numberOfDatasets >= 1 && PluginFactory::areAllDatasetsOfTheSameType(datasets, PointType)) {
-        auto pluginTriggerAction = new PluginTriggerAction(const_cast<JupyterLauncherFactory*>(this), this, "JupyterPlugin", "Open Jupyter Bridge", getIcon(), [this, getPluginInstance](PluginTriggerAction& pluginTriggerAction) -> void {
-            getPluginInstance();
-        });
-
-        pluginTriggerActions << pluginTriggerAction;
-    }
-
-    return pluginTriggerActions;
+    return { };
 }

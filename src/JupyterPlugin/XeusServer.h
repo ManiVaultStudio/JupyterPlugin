@@ -5,18 +5,19 @@
  * Creates and communicates the ZeroMQ channels
  * needs to communicate with the Jupyter server.
  * 
- * External dependencies are a xeus-zmq and zmq
- * 
  * see 
  * 1) https://github.com/Slicer/SlicerJupyter/blob/master/JupyterKernel/xSlicerServer.cxx
  * 2.1) https://github.com/jupyter-xeus/xeus-qt/blob/main/src/xq_server.cpp
  * 2.2) https://github.com/jupyter-xeus/xeus-qt/blob/main/src/xq_qt_poller.cpp
+ * 3) https://github.com/jupyter-xeus/xeus-zmq/blob/main/src/server/xserver_zmq_default.hpp
  * 
- * Slicer uses a QTimer to manage polling. 
  * The xeus-qt example uses a separate poller thread
  * 
- * For simplicity the initial implementation is done with the QTimer solution as Slicer
+ * For simplicity the initial implementation is done with a QTimer (as in Slicer)
  * The timer interval is hardcoded to 10ms
+ *
+ * External dependencies are a xeus and xeus-zmq
+ *
  *  - 
  * @authors B. van Lew
 */
@@ -25,7 +26,7 @@
 
 #include <xeus-zmq/xserver_zmq.hpp>
 #include <xeus/xkernel_configuration.hpp>
-#include <zmq.hpp>
+#include <xeus/xeus_context.hpp>
 
 #include <QObject>
 
@@ -38,16 +39,11 @@ public:
     Q_OBJECT
 
 public: 
-    XeusServer(zmq::context_t& context,
+    XeusServer(xeus::xcontext& context,
                const xeus::xconfiguration& config,
                nl::json::error_handler_t eh);
 
-    virtual ~XeusServer();
-
-    // The Slicer implementation gives the option
-    // to get and change the poll interval.
-    // May add this for advanced experimentation.
-
+    ~XeusServer();
 
 protected:
     void start_impl(xeus::xpub_message message) override;

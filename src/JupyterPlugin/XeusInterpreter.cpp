@@ -11,7 +11,6 @@
 #include <xeus/xinterpreter.hpp>
 #include <xeus-python/xinterpreter.hpp>
 
-#include <pybind11/embed.h>
 #include <pybind11/gil.h>
 #include <pybind11/pybind11.h>
 
@@ -23,25 +22,23 @@ XeusInterpreter::XeusInterpreter(const QString& pluginVersion):
     xpyt::interpreter(),
     _pluginVersion(pluginVersion)
 {
-    _python_interpreter = new pybind11::scoped_interpreter();
 }
 
 void XeusInterpreter::configure_impl()
 {
-    xpyt::interpreter::configure_impl();
     auto handle_comm_opened = [](xeus::xcomm&& comm, const xeus::xmessage&) {
         std::cerr << "Comm opened for target: " << comm.target().name() << std::endl;
     };
-    comm_manager().register_comm_target("echo_target", handle_comm_opened);
-    //	using function_type = std::function<void(xeus::xcomm&&, const xeus::xmessage&)>;
-#ifdef DEBUG
-    std::cerr << "JupyterPlugin configured" << std::endl;
-#endif
-
-    py::gil_scoped_acquire acquire;
-    py::module sys = py::module::import("sys");
 
     try {
+        _init_guard = std::make_unique<pybind11::scoped_interpreter>();
+
+        xpyt::interpreter::configure_impl();
+        comm_manager().register_comm_target("echo_target", handle_comm_opened);
+
+        py::gil_scoped_acquire acquire;
+        py::module sys = py::module::import("sys");
+
         py::module MVData_module = get_MVData_module();
         MVData_module.doc() = "Provides access to low level ManiVaultStudio core functions";
         sys.attr("modules")["mvstudio_core"] = MVData_module;
@@ -52,48 +49,19 @@ void XeusInterpreter::configure_impl()
     }
 }
 
-// Execute incoming code and publish the result
-nl::json XeusInterpreter::execute_request_impl(int execution_counter,
-                                               const std::string& code,
-                                               bool silent,
-                                               bool store_history,
-                                               nl::json user_expressions,
-                                               bool allow_stdin) 
+void XeusInterpreter::execute_request_impl(send_reply_callback cb,
+    int execution_counter,
+    const std::string& code,
+    xeus::execute_request_config config,
+    nl::json user_expressions)
 {
     qDebug() << "Python: " << code.c_str();
 
-    return xpyt::interpreter::execute_request_impl(
+    xpyt::interpreter::execute_request_impl(cb,
         execution_counter,
         code,
-        silent,
-        store_history,
-        user_expressions,
-        allow_stdin
-    );
-}
-
-nl::json XeusInterpreter::complete_request_impl(const std::string& code,
-                                int cursor_pos)
-{
-    return xpyt::interpreter::complete_request_impl(
-        code,
-        cursor_pos);
-}
-
-nl::json XeusInterpreter::inspect_request_impl(const std::string& code,
-                               int cursor_pos,
-                               int detail_level)
-{
-    return xpyt::interpreter::inspect_request_impl(
-        code,
-        cursor_pos,
-        detail_level
-    );
-}
-
-nl::json XeusInterpreter::is_complete_request_impl(const std::string& code)
-{
-    return xpyt::interpreter::is_complete_request_impl(code);
+        config,
+        user_expressions);
 }
 
 nl::json XeusInterpreter::kernel_info_request_impl()
@@ -126,11 +94,6 @@ nl::json XeusInterpreter::kernel_info_request_impl()
         banner);
 
     //return xpyt::interpreter::kernel_info_request_impl();
-}
-
-void XeusInterpreter::shutdown_request_impl()
-{
-    return xpyt::interpreter::shutdown_request_impl();
 }
 
 PYBIND11_MODULE(mvtest, m) {

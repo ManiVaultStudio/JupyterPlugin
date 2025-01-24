@@ -13,8 +13,6 @@ set(JUPYTERPLUGIN_SOURCES
     JupyterPlugin.cpp
     XeusKernel.h
     XeusKernel.cpp
-    XeusPoller.h
-    XeusPoller.cpp
     XeusServer.h
     XeusServer.cpp
     XeusInterpreter.h
@@ -64,7 +62,6 @@ target_link_libraries(${JUPYTERPLUGIN} PRIVATE ManiVault::ClusterData)
 target_link_libraries(${JUPYTERPLUGIN} PRIVATE xeus-static)
 target_link_libraries(${JUPYTERPLUGIN} PRIVATE xeus-zmq-static)
 target_link_libraries(${JUPYTERPLUGIN} PRIVATE xeus-python-static)
-target_link_libraries(${JUPYTERPLUGIN} PRIVATE xtl)
 target_link_libraries(${JUPYTERPLUGIN} PRIVATE libzmq-static)
 target_link_libraries(${JUPYTERPLUGIN} PRIVATE cppzmq-static)
 target_link_libraries(${JUPYTERPLUGIN} PRIVATE pybind11::embed)

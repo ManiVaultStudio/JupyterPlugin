@@ -31,14 +31,6 @@ CPMAddPackage(
     "JSON_BuildTests OFF"
 )
 
-CPMAddPackage(
-    NAME xtl
-    GITHUB_REPOSITORY "xtensor-stack/xtl"
-    GIT_TAG ${xtl_VERSION}
-    EXCLUDE_FROM_ALL YES
-    OPTIONS "BUILD_TESTS OFF"
-)
-
 # produces xeus and xeus-static
 CPMAddPackage(
     NAME xeus
@@ -46,14 +38,10 @@ CPMAddPackage(
     GIT_TAG ${xeus_VERSION}
     EXCLUDE_FROM_ALL YES
     CPM_USE_LOCAL_PACKAGES ON
-    PATCHES "${CMAKE_CURRENT_SOURCE_DIR}/cmake/uuidopt.patch"
     OPTIONS "BUILD_EXAMPLES OFF"
             "XEUS_BUILD_SHARED_LIBS OFF"
             "XEUS_BUILD_STATIC_LIBS ON"
-            "XEUS_STATIC_DEPENDENCIES ON"
-            "XEUS_DISABLE_ARCH_NATIVE ON"
-            "XEUS_USE_DYNAMIC_UUID ON"
-            "XEUS_ZMQ_BUILD_WITHOUT_LIBSODIUM ON"
+            "XEUS_STATIC_DEPENDENCIES OFF"
 )
 
 # produces libzmq and libzmq-static depending on settings
@@ -82,18 +70,17 @@ CPMAddPackage(
     OPTIONS "CPPZMQ_BUILD_TESTS OFF"
 )
 
+# XEUS_ZMQ_STATIC_DEPENDENCIES introduces libsodium dependency on linux
 CPMAddPackage(
     NAME xeus-zmq
     GITHUB_REPOSITORY "jupyter-xeus/xeus-zmq"
     GIT_TAG ${xeus-zmq_VERSION}
     EXCLUDE_FROM_ALL YES
     CPM_USE_LOCAL_PACKAGES ON
-    PATCHES "${CMAKE_CURRENT_SOURCE_DIR}/cmake/libsodiumopt.patch"
     OPTIONS "XEUS_ZMQ_BUILD_TESTS OFF"
             "XEUS_ZMQ_BUILD_SHARED_LIBS OFF"
             "XEUS_ZMQ_BUILD_STATIC_LIBS ON"
             "XEUS_ZMQ_STATIC_DEPENDENCIES ON"
-            "XEUS_ZMQ_WITH_LIBSODIUM OFF"
 )
 
 install(TARGETS nlohmann_json EXPORT xeus-targets)
@@ -115,20 +102,11 @@ CPMAddPackage(
     EXCLUDE_FROM_ALL YES
 )
 
-# remove this after updating xeus-python
-if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.30")
-    set(xeus_python_patch "${CMAKE_CURRENT_LIST_DIR}/xeus-python.patch")
-    message(STATUS "Apply xeus-python patch: ${xeus_python_patch}")
-else()
-    set(xeus_python_patch "")
-endif()
-
 CPMAddPackage(
     NAME xeus-python
     URL "https://github.com/jupyter-xeus/xeus-python/archive/refs/tags/${xeus-python_VERSION}.tar.gz"
     EXCLUDE_FROM_ALL YES
     CPM_USE_LOCAL_PACKAGES ON
-    PATCHES "${xeus_python_patch}" 
     OPTIONS "XPYT_BUILD_TESTS OFF"
             "XPYT_BUILD_SHARED OFF"
             "XPYT_BUILD_STATIC ON"

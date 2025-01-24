@@ -71,17 +71,36 @@ py::array populate_pyarray(mv::Dataset<Points> &inputPoints, unsigned int numPoi
 
 template<typename T>
 PointData::ElementTypeSpecifier getTypeSpecifier() {
-    if (std::is_same <T, float>::value) {
-        return PointData::ElementTypeSpecifier::float32;
-    } else if (std::is_same <T, std::int16_t>::value) {
-        return PointData::ElementTypeSpecifier::int16;
-    } else if (std::is_same <T, std::uint16_t>::value) {
-        return PointData::ElementTypeSpecifier::uint16;
-    } else if (std::is_same <T, std::int8_t>::value) {
-        return PointData::ElementTypeSpecifier::int8;
-    } else if (std::is_same <T, std::uint8_t>::value) {
-        return PointData::ElementTypeSpecifier::uint8;
+    PointData::ElementTypeSpecifier res = PointData::ElementTypeSpecifier::float32;
+
+    if (std::is_same_v <T, float>) {
+        res = PointData::ElementTypeSpecifier::float32;
     }
+    else if (std::is_same_v <T, biovault::bfloat16_t>) {
+        res = PointData::ElementTypeSpecifier::bfloat16;
+    }
+    else if (std::is_same_v <T, std::int32_t>) {
+        res = PointData::ElementTypeSpecifier::int32;
+    }
+    else if (std::is_same_v <T, std::uint32_t>) {
+        res = PointData::ElementTypeSpecifier::uint32;
+    }
+    else if (std::is_same_v <T, std::int16_t>) {
+        res = PointData::ElementTypeSpecifier::int16;
+    }
+    else if (std::is_same_v <T, std::uint16_t>) {
+        res = PointData::ElementTypeSpecifier::uint16;
+    }
+    else if (std::is_same_v <T, std::int8_t>) {
+        res = PointData::ElementTypeSpecifier::int8;
+    }
+    else if (std::is_same_v <T, std::uint8_t>) {
+        res = PointData::ElementTypeSpecifier::uint8;
+    }
+    else
+        qWarning() << "getTypeSpecifier: data type not implemented";
+
+    return res;
 }
 
 // only works on top level items as test
@@ -638,18 +657,24 @@ static py::list get_item_children(const std::string& datasetGuid)
 }
 
 static mvstudio_core::DataItemType get_data_type(const std::string& datasetGuid) {
-    qDebug() << "Get type for id: " << QString(datasetGuid.c_str());
-    auto dataset    = mv::data().getDataset(QString(datasetGuid.c_str()));
+    QString guid = QString(datasetGuid.c_str());
+
+    qDebug() << "Get type for id: " << guid;
+    auto dataset    = mv::data().getDataset(guid);
     auto datatype   = dataset->getDataType();
 
+    mvstudio_core::DataItemType res = mvstudio_core::NOT_IMPLEMENTED;
+
     if (datatype == ImageType)
-        return mvstudio_core::Image;
+        res = mvstudio_core::Image;
+    else if (datatype == ClusterType)
+        res = mvstudio_core::Cluster;
+    else if (datatype == PointType)
+        res = mvstudio_core::Points;
+    else 
+        qWarning() << "Datatype is not handled, it must be one of [Points, Image, Cluster].";
 
-    if (datatype == ClusterType)
-        return mvstudio_core::Cluster;
-
-    if (datatype == PointType)
-        return mvstudio_core::Points;
+    return res;
 }
 
 //bool add_mvimage_stack(const py::list& data, std::string dataSetName ) 

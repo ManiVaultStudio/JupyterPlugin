@@ -100,7 +100,7 @@ class JupyterLauncherFactory : public ViewPluginFactory
 {
     Q_INTERFACES(mv::plugin::ViewPluginFactory mv::plugin::PluginFactory)
     Q_OBJECT
-    Q_PLUGIN_METADATA(IID   "nl.BioVault.JupyterLauncher"
+    Q_PLUGIN_METADATA(IID   "studio.manivault.JupyterLauncher"
                       FILE  "JupyterLauncher.json")
 
 public:
@@ -122,13 +122,6 @@ public:
 
     /** Returns the data types that are supported by the example view plugin */
     mv::DataTypes supportedDataTypes() const override;
-
-    /**
-     * Get plugin trigger actions given \p datasets
-     * @param datasets Vector of input datasets
-     * @return Vector of plugin trigger actions
-     */
-    PluginTriggerActions getPluginTriggerActions(const mv::Datasets& datasets) const override;
 
 private:
     PluginStatusBarAction*  _statusBarAction;               /** For global action in a status bar */
