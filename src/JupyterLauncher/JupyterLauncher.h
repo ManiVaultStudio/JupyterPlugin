@@ -7,9 +7,12 @@
 #include <actions/StringAction.h>
 #include <actions/PluginStatusBarAction.h>
 
+#include <QOperatingSystemVersion>
 #include <QProcess>
+#include <QStringList>
 #include <QTimer>
 
+#include <memory>
 #include <utility>
 #include <vector>
 
@@ -17,6 +20,17 @@ using namespace mv::plugin;
 using namespace mv::gui;
 
 class QLabel;
+
+inline QStringList pythonInterpreterFilters()
+{
+    QStringList pythonFilter = {};
+    if (QOperatingSystemVersion::currentType() == QOperatingSystemVersion::Windows)
+        pythonFilter = { "Python interpreter (python*.exe)" };
+    else
+        pythonFilter = { "Python interpreter (python*)" };
+
+    return pythonFilter;
+}
 
 /**
  * Transitive JupyterPlugin Loader
