@@ -25,6 +25,7 @@
 
 #include <xeus-zmq/xserver_zmq.hpp>
 #include <xeus/xkernel_configuration.hpp>
+#include <xeus/xeus_context.hpp>
 #include <zmq.hpp>
 
 #include <QObject>
@@ -38,7 +39,7 @@ public:
     Q_OBJECT
 
 public: 
-    XeusServer(zmq::context_t& context,
+    XeusServer(xeus::xcontext& context,
                const xeus::xconfiguration& config,
                nl::json::error_handler_t eh);
 

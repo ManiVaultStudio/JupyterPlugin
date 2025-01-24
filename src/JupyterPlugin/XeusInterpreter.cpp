@@ -52,37 +52,29 @@ void XeusInterpreter::configure_impl()
     }
 }
 
-// Execute incoming code and publish the result
-nl::json XeusInterpreter::execute_request_impl(int execution_counter,
-                                               const std::string& code,
-                                               bool silent,
-                                               bool store_history,
-                                               nl::json user_expressions,
-                                               bool allow_stdin) 
+void XeusInterpreter::execute_request_impl(send_reply_callback cb,
+    int execution_counter,
+    const std::string& code,
+    xeus::execute_request_config config,
+    nl::json user_expressions)
 {
     qDebug() << "Python: " << code.c_str();
 
-    return xpyt::interpreter::execute_request_impl(
+    xpyt::interpreter::execute_request_impl(cb,
         execution_counter,
         code,
-        silent,
-        store_history,
-        user_expressions,
-        allow_stdin
-    );
+        config,
+        user_expressions);
 }
 
-nl::json XeusInterpreter::complete_request_impl(const std::string& code,
-                                int cursor_pos)
+nl::json XeusInterpreter::complete_request_impl(const std::string& code,int cursor_pos)
 {
     return xpyt::interpreter::complete_request_impl(
         code,
         cursor_pos);
 }
 
-nl::json XeusInterpreter::inspect_request_impl(const std::string& code,
-                               int cursor_pos,
-                               int detail_level)
+nl::json XeusInterpreter::inspect_request_impl(const std::string& code, int cursor_pos, int detail_level)
 {
     return xpyt::interpreter::inspect_request_impl(
         code,
