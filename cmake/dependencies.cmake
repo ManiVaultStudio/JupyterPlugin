@@ -70,6 +70,7 @@ CPMAddPackage(
     OPTIONS "CPPZMQ_BUILD_TESTS OFF"
 )
 
+# XEUS_ZMQ_STATIC_DEPENDENCIES introduces libsodium dependency on linux
 CPMAddPackage(
     NAME xeus-zmq
     GITHUB_REPOSITORY "jupyter-xeus/xeus-zmq"
