@@ -23,25 +23,23 @@ XeusInterpreter::XeusInterpreter(const QString& pluginVersion):
     xpyt::interpreter(),
     _pluginVersion(pluginVersion)
 {
-    _python_interpreter = new pybind11::scoped_interpreter();
 }
 
 void XeusInterpreter::configure_impl()
 {
-    xpyt::interpreter::configure_impl();
     auto handle_comm_opened = [](xeus::xcomm&& comm, const xeus::xmessage&) {
         std::cerr << "Comm opened for target: " << comm.target().name() << std::endl;
     };
-    comm_manager().register_comm_target("echo_target", handle_comm_opened);
-    //	using function_type = std::function<void(xeus::xcomm&&, const xeus::xmessage&)>;
-#ifdef DEBUG
-    std::cerr << "JupyterPlugin configured" << std::endl;
-#endif
-
-    py::gil_scoped_acquire acquire;
-    py::module sys = py::module::import("sys");
 
     try {
+        _init_guard = std::make_unique<pybind11::scoped_interpreter>();
+
+        xpyt::interpreter::configure_impl();
+        comm_manager().register_comm_target("echo_target", handle_comm_opened);
+
+        py::gil_scoped_acquire acquire;
+        py::module sys = py::module::import("sys");
+
         py::module MVData_module = get_MVData_module();
         MVData_module.doc() = "Provides access to low level ManiVaultStudio core functions";
         sys.attr("modules")["mvstudio_core"] = MVData_module;

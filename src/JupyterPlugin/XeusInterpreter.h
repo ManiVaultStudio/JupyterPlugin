@@ -5,13 +5,15 @@
 #include <xeus-python/xinterpreter.hpp>
 #define slots Q_SLOTS
 
+#include <memory>
+
 #include <QString>
 
-#include <pybind11/embed.h>
-#include <pybind11/pybind11.h>
+namespace pybind11 {
+    class scoped_interpreter;
+}
 
 /**
- * This class wraps the xeus python interpreter
  * In the slicer implementation (xSlicerInterpreter.cxx in SlicerJupyter)
  * the wrapping adds additional functionality.ine
  * In the first iteration this wrapper is effectively a noop 
@@ -49,6 +51,6 @@ private:
     void shutdown_request_impl() override;
 
 private:
-    pybind11::scoped_interpreter* _python_interpreter = nullptr;
-    QString _pluginVersion = "";
+    std::unique_ptr<pybind11::scoped_interpreter>   _init_guard = {};
+    QString                                         _pluginVersion = "";
 };
