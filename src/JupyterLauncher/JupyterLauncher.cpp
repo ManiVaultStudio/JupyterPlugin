@@ -409,7 +409,7 @@ void JupyterLauncher::jupyterServerStarted()
     _serverBackgroundTask->setProgress(1.0f);
 }
 
-bool JupyterLauncher::startJupyterServerProcess(const QString& version)
+void JupyterLauncher::startJupyterServerProcess(const QString& version)
 {
     // In order to run python -m jupyter lab and access the MANIVAULT_JUPYTERPLUGIN_CONNECTION_FILE 
     // the env variable must be set in the current process.
@@ -439,8 +439,8 @@ bool JupyterLauncher::startJupyterServerProcess(const QString& version)
     QObject::connect(_serverPollTimer, &QTimer::timeout, [=]() { 
         logProcessOutput(); 
         });
+
     _serverPollTimer->start();
-    return true;
 }
 
 void JupyterLauncher::logProcessOutput()

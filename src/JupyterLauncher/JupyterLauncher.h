@@ -84,7 +84,7 @@ private:
     bool installKernel(const QString& version);
     bool optionallyInstallMVWheel(const QString& version);
 
-    bool startJupyterServerProcess(const QString& version);
+    void startJupyterServerProcess(const QString& version);
 
     void logProcessOutput();
 
