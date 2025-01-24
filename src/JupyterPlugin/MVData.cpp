@@ -638,18 +638,24 @@ static py::list get_item_children(const std::string& datasetGuid)
 }
 
 static mvstudio_core::DataItemType get_data_type(const std::string& datasetGuid) {
-    qDebug() << "Get type for id: " << QString(datasetGuid.c_str());
-    auto dataset    = mv::data().getDataset(QString(datasetGuid.c_str()));
+    QString guid = QString(datasetGuid.c_str());
+
+    qDebug() << "Get type for id: " << guid;
+    auto dataset    = mv::data().getDataset(guid);
     auto datatype   = dataset->getDataType();
 
+    mvstudio_core::DataItemType res = mvstudio_core::NOT_IMPLEMENTED;
+
     if (datatype == ImageType)
-        return mvstudio_core::Image;
+        res = mvstudio_core::Image;
+    else if (datatype == ClusterType)
+        res = mvstudio_core::Cluster;
+    else if (datatype == PointType)
+        res = mvstudio_core::Points;
+    else 
+        qWarning() << "Datatype is not handled, it must be one of [Points, Image, Cluster].";
 
-    if (datatype == ClusterType)
-        return mvstudio_core::Cluster;
-
-    if (datatype == PointType)
-        return mvstudio_core::Points;
+    return res;
 }
 
 //bool add_mvimage_stack(const py::list& data, std::string dataSetName ) 

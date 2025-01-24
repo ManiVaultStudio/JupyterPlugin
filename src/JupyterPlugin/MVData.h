@@ -8,8 +8,9 @@ py::module get_MVData_module();
 
 namespace mvstudio_core {
     enum DataItemType {
-        Image,
-        Points,
-        Cluster
+        NOT_IMPLEMENTED = -1,
+        Image = 0,
+        Points = 1,
+        Cluster = 2
     };
 }
