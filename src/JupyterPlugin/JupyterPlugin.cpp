@@ -58,27 +58,5 @@ ViewPlugin* JupyterPluginFactory::produce()
 
 mv::DataTypes JupyterPluginFactory::supportedDataTypes() const
 {
-    return { PointType };
-}
-
-mv::gui::PluginTriggerActions JupyterPluginFactory::getPluginTriggerActions(const mv::Datasets& datasets) const
-{
-    PluginTriggerActions pluginTriggerActions;
-
-    const auto getPluginInstance = [this]() -> JupyterPlugin* {
-        return dynamic_cast<JupyterPlugin*>(mv::plugins().requestViewPlugin(getKind()));
-    };
-
-    const auto numberOfDatasets = datasets.count();
-
-    if (numberOfDatasets >= 1 && PluginFactory::areAllDatasetsOfTheSameType(datasets, PointType)) {
-        auto pluginTriggerAction = new PluginTriggerAction(const_cast<JupyterPluginFactory*>(this), this, "Jupyter Plugin", "Jupyter bridge", getIcon(), [this, getPluginInstance, datasets](PluginTriggerAction& pluginTriggerAction) -> void {
-            for (auto dataset : datasets)
-                getPluginInstance();
-        });
-
-        pluginTriggerActions << pluginTriggerAction;
-    }
-
-    return pluginTriggerActions;
+    return { };
 }
