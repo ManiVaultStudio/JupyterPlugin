@@ -18,21 +18,22 @@
 
 void XeusKernel::startKernel(const QString& connection_path, const QString& pluginVersion)
 {
-    //// Test without configuration file (default zmq ports)
+    // Test without configuration file (default zmq ports)
     //xeus::xconfiguration config = xeus::load_configuration("D:\\TempProj\\DevBundle\\Jupyter\\install\\Debug\\external_kernels\\ManiVault\\connection.json");
-    //auto context =  xeus::make_context<zmq::context_t>();
+
     using context_type = xeus::xcontext_impl<zmq::context_t>;
-    using context_ptr = std::unique_ptr<context_type>;
-    context_ptr context = context_ptr(new context_type());
-    std::unique_ptr<XeusInterpreter> interpreter = std::make_unique<XeusInterpreter>(pluginVersion);
-    std::unique_ptr<xeus::xhistory_manager> hist = xeus::make_in_memory_history_manager();
-    m_kernel = new xeus::xkernel(
+
+    std::unique_ptr<context_type>           context     = std::make_unique<context_type>();
+    std::unique_ptr<XeusInterpreter>        interpreter = std::make_unique<XeusInterpreter>(pluginVersion);
+    std::unique_ptr<xeus::xhistory_manager> history     = xeus::make_in_memory_history_manager();
+
+    m_kernel = std::make_unique<xeus::xkernel>(
         /*config: noy used here */
         /*user_name*/ xeus::get_user_name(),
         /*context*/ std::move(context),
         /*interpreter*/ std::move(interpreter),
         /*server_builder*/ make_XeusServer,
-        /*history_manager*/ std::move(hist),
+        /*history_manager*/ std::move(history),
         /*logger*/ nullptr
     );
 
@@ -71,6 +72,5 @@ void XeusKernel::startKernel(const QString& connection_path, const QString& plug
 
 void XeusKernel::stopKernel()
 {
-
+    m_kernel->stop();
 }
-

@@ -17,7 +17,10 @@ JupyterPlugin::JupyterPlugin(const PluginFactory* factory) :
 {
 }
 
-JupyterPlugin::~JupyterPlugin() = default;
+JupyterPlugin::~JupyterPlugin()
+{
+    _pKernel->stopKernel();
+}
 
 void JupyterPlugin::setConnectionPath(const QString& connection_path)
 {
