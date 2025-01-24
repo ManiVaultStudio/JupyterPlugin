@@ -13,8 +13,6 @@ set(JUPYTERPLUGIN_SOURCES
     JupyterPlugin.cpp
     XeusKernel.h
     XeusKernel.cpp
-    XeusPoller.h
-    XeusPoller.cpp
     XeusServer.h
     XeusServer.cpp
     XeusInterpreter.h
