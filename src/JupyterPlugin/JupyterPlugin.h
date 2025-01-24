@@ -10,6 +10,8 @@
 using namespace mv::plugin;
 using namespace mv::gui;
 
+class XeusKernel;
+
 /**
  * Jupyter plugin class
  *
@@ -39,9 +41,7 @@ public:
     void setConnectionPath(const QString& connection_path);
 
 private:
-    // shield the implementation dependencies
-    class PrivateKernel;
-    std::unique_ptr<PrivateKernel>  _pKernel;
+    std::unique_ptr<XeusKernel>     _pKernel;
 
     FilePickerAction                _connectionFilePath;        /** Settings action */
 };
