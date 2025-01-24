@@ -14,7 +14,7 @@ endif()
 # Jupyter Plugins
 # -----------------------------------------------------------------------------
 PROJECT("JupyterPlugins"
-    VERSION 0.1.0
+    VERSION 0.2.0
     DESCRIPTION "Jupyter plugin for ManiVault"
     LANGUAGES CXX)
 

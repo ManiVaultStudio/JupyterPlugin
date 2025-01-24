@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "mvstudio_data"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Baldur van Lew <b.van_lew@lumc.nl>"]
 readme = "README.md"
 description = 'Python data model for the ManiVaultStudio (mvstudio)'
