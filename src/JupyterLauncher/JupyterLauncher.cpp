@@ -6,6 +6,8 @@
 #include <Application.h>
 #include <CoreInterface.h>
 
+#include <actions/WidgetAction.h>
+
 #include <QByteArray>
 #include <QDebug>
 #include <QLibrary>
@@ -41,16 +43,18 @@ static inline bool setPythonPluginSearchPath(const QDir& sharedLibDir)
 #endif
 }
 
+
+// =============================================================================
+// JupyterLauncher
+// =============================================================================
+
 JupyterLauncher::JupyterLauncher(const PluginFactory* factory) :
     ViewPlugin(factory),
-    _currentDatasetName(),
-    _currentDatasetNameLabel(new QLabel()),
     _serverBackgroundTask(nullptr),
     _serverPollTimer(nullptr),
     _connectionFilePath(QDir::toNativeSeparators(QCoreApplication::applicationDirPath() + "/PluginDependencies/JupyterLauncher/py/connection.json"))
 {
     setObjectName("Jupyter kernel plugin launcher");
-    _currentDatasetNameLabel->setAlignment(Qt::AlignCenter);
 
     QFile jsonFile(_connectionFilePath);
     if (jsonFile.open(QIODevice::WriteOnly)) {
@@ -416,7 +420,7 @@ void JupyterLauncher::jupyterServerStarted()
 bool JupyterLauncher::startJupyterServerProcess(const QString& version)
 {
     // In order to run python -m jupyter lab and access the MANIVAULT_JUPYTERPLUGIN_CONNECTION_FILE 
-    // the env variable this must be set in the current process.
+    // the env variable must be set in the current process.
     // Setting it in the child QProcess does not work for reasons that are unclear.
     qputenv("MANIVAULT_JUPYTERPLUGIN_CONNECTION_FILE", _connectionFilePath.toUtf8());
 
@@ -546,18 +550,8 @@ void JupyterLauncher::loadJupyterPythonKernel(const QString& pyversion)
         return;
     }
 
-    QJsonObject jupyterPluginMetaData = jupyterPluginLoader.metaData().value("MetaData").toObject();
-    QString pluginKind = jupyterPluginMetaData.value("name").toString();
-    QString menuName = jupyterPluginMetaData.value("menuName").toString();
-    QString version = jupyterPluginMetaData.value("version").toString();
-
-    // Loading of the plugin succeeded so cast it to its original class
-    _pluginFactories[pluginKind] = jupyterPluginFactory;
-    _pluginFactories[pluginKind]->setKind(pluginKind);
-    _pluginFactories[pluginKind]->setVersion(version);
-    _pluginFactories[pluginKind]->initialize();
-
-    auto jupyterPluginInstance = _plugins.emplace_back(jupyterPluginFactory->produce());
+    // Create the jupyter plugin
+    mv::plugin::Plugin* jupyterPluginInstance = jupyterPluginFactory->produce();
 
     // Communicate the connection file path via the child action in the JupyterPlugin
     auto connectionFileAction = jupyterPluginInstance->findChildByPath("Connection file");
@@ -572,6 +566,7 @@ void JupyterLauncher::loadJupyterPythonKernel(const QString& pyversion)
     setPythonEnv(pyversion);
     jupyterPluginInstance->init();
     startJupyterServerProcess(pyversion);
+
     return;
 }
 

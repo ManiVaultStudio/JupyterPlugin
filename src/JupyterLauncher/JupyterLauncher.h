@@ -1,18 +1,14 @@
 #pragma once
 
 #include <BackgroundTask.h>
-#include <Dataset.h>
-#include <PluginFactory.h>
 #include <ViewPlugin.h>
 
 #include <actions/HorizontalGroupAction.h>
 #include <actions/StringAction.h>
 #include <actions/PluginStatusBarAction.h>
 
-#include <PointData/PointData.h>
-
-#include <QWidget>
 #include <QProcess>
+#include <QTimer>
 
 #include <utility>
 #include <vector>
@@ -82,20 +78,18 @@ private:
     std::pair<bool, QString> getPythonHomePath(const QString& pyInterpreterPath);
     
 private:
-    QHash<QString, PluginFactory*>      _pluginFactories;           /** All loaded plugin factories */
-    std::vector<mv::plugin::Plugin*>    _plugins;                   /** Vector of plugin instances */
-    QString                             _connectionFilePath;
-    QString                             _currentDatasetName;        /** Name of the current dataset */
-    QLabel*                             _currentDatasetNameLabel;   /** Label that show the current dataset name */
-    mv::BackgroundTask*                 _serverBackgroundTask;      /** The background task monitoring the Jupyter Server */
-    QProcess                            _serverProcess;             /** A detached process for running the Jupyter server */
-    QTimer*                             _serverPollTimer;           /** Poll the server process output at a regular interval */
+    QString                 _connectionFilePath;
+    mv::BackgroundTask*     _serverBackgroundTask;      /** The background task monitoring the Jupyter Server */
+    QProcess                _serverProcess;             /** A detached process for running the Jupyter server */
+    QTimer*                 _serverPollTimer;           /** Poll the server process output at a regular interval */
 
 };
 
-/**
- * Jupyter Launcher view plugin factory class
- */
+
+// =============================================================================
+// Factory
+// =============================================================================
+
 class JupyterLauncherFactory : public ViewPluginFactory
 {
     Q_INTERFACES(mv::plugin::ViewPluginFactory mv::plugin::PluginFactory)
