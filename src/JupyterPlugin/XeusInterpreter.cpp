@@ -65,27 +65,6 @@ void XeusInterpreter::execute_request_impl(send_reply_callback cb,
         user_expressions);
 }
 
-nl::json XeusInterpreter::complete_request_impl(const std::string& code,int cursor_pos)
-{
-    return xpyt::interpreter::complete_request_impl(
-        code,
-        cursor_pos);
-}
-
-nl::json XeusInterpreter::inspect_request_impl(const std::string& code, int cursor_pos, int detail_level)
-{
-    return xpyt::interpreter::inspect_request_impl(
-        code,
-        cursor_pos,
-        detail_level
-    );
-}
-
-nl::json XeusInterpreter::is_complete_request_impl(const std::string& code)
-{
-    return xpyt::interpreter::is_complete_request_impl(code);
-}
-
 nl::json XeusInterpreter::kernel_info_request_impl()
 {
     std::string banner = R"(
@@ -116,11 +95,6 @@ nl::json XeusInterpreter::kernel_info_request_impl()
         banner);
 
     //return xpyt::interpreter::kernel_info_request_impl();
-}
-
-void XeusInterpreter::shutdown_request_impl()
-{
-    return xpyt::interpreter::shutdown_request_impl();
 }
 
 PYBIND11_MODULE(mvtest, m) {

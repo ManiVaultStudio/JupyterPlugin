@@ -37,19 +37,7 @@ private:
                               xeus::execute_request_config config,
                               nl::json user_expressions) override;
 
-
-    nl::json complete_request_impl(const std::string& code,
-                                int cursor_pos) override;
-
-    nl::json inspect_request_impl(const std::string& code,
-                               int cursor_pos,
-                               int detail_level) override;
-
-    nl::json is_complete_request_impl(const std::string& code) override;
-
     nl::json kernel_info_request_impl() override;
-
-    void shutdown_request_impl() override;
 
 private:
     std::unique_ptr<pybind11::scoped_interpreter>   _init_guard = {};
