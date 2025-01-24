@@ -26,7 +26,6 @@
 #include <xeus-zmq/xserver_zmq.hpp>
 #include <xeus/xkernel_configuration.hpp>
 #include <xeus/xeus_context.hpp>
-#include <zmq.hpp>
 
 #include <QObject>
 
@@ -43,12 +42,7 @@ public:
                const xeus::xconfiguration& config,
                nl::json::error_handler_t eh);
 
-    virtual ~XeusServer();
-
-    // The Slicer implementation gives the option
-    // to get and change the poll interval.
-    // May add this for advanced experimentation.
-
+    ~XeusServer();
 
 protected:
     void start_impl(xeus::xpub_message message) override;
