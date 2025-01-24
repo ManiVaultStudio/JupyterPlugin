@@ -32,6 +32,11 @@ This projects builds two ManiVault plugins, a communication bridge `JupyterPlugi
 
 ## Dependencies
 
+Windows (if using as a subproject, i.e. the manifest file cannot be used for automatically installing dependencies):
+```
+.\vcpkg.exe install openssl:x64-windows-static-md
+```
+
 Linux:
 ```
 sudo apt install libtbb-dev libsodium-dev libssl-dev uuid-dev
@@ -45,9 +50,9 @@ brew --prefix libomp
 ## Usage
 
 You can use any local python environment (currently restricted to 3.11) with this plugin to interact with ManiVault. 
-You need to provide a path to a python interpreter in the ManiVault settings for this. Go to `File` -> `Settings` -> `Plugin: Jupyter Launcher` -> `Python interpreter` and navigate to your local python interpreter. (These can be the same as used for biulding or any other).
+You need to provide a path to a python interpreter in the ManiVault settings for this. Go to `File` -> `Settings` -> `Plugin: Jupyter Launcher` -> `Python interpreter` and navigate to your local python interpreter. (These can be the same as used for building or any other).
 
-Upon the first start with a given interpreter, two comminication modules are automatically installed, which will help translate between ManiVault's data hierarchy and your Python script.
+Upon the first start with a given interpreter, two communication modules are automatically installed, which will help translate between ManiVault's data hierarchy and your Python script.
 
 To access data from ManiVault:
 ```python
