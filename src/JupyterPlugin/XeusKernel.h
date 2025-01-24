@@ -24,7 +24,7 @@ class XeusKernel
 {
 
 public: 
-    XeusKernel();
+    XeusKernel() = default;
     virtual ~XeusKernel() = default;
 
     void startKernel(const QString& connection_path, const QString& pluginVersion = "");

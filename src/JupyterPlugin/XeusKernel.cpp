@@ -16,11 +16,6 @@
 #include <memory>
 #include <string>
 
-XeusKernel::XeusKernel()
-{
-
-}
-
 void XeusKernel::startKernel(const QString& connection_path, const QString& pluginVersion)
 {
     //// Test without configuration file (default zmq ports)
