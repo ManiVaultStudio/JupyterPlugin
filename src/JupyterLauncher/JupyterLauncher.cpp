@@ -461,11 +461,7 @@ void JupyterLauncher::logProcessOutput()
 
 }
 
-bool JupyterLauncher::validatePythonEnvironment() 
 {
-    // TBD
-    return true;
-}
 
 // The pyversion should correspond to a python major.minor version
 // e.g.

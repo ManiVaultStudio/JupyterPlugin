@@ -46,7 +46,10 @@ public:
     /** This function is called by the core after the view plugin has been created */
     void init() override;
 
-    bool validatePythonEnvironment();
+    // TBD
+    bool validatePythonEnvironment() {
+        return true;
+    }
 
     void loadJupyterPythonKernel(const QString& version);
 
