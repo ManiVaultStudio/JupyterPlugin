@@ -1,5 +1,7 @@
 #pragma once
 
+#include "UserDialogActions.h"
+
 #include <BackgroundTask.h>
 #include <ViewPlugin.h>
 
@@ -65,7 +67,18 @@ public:
         return true;
     }
 
-    void loadJupyterPythonKernel(const QString& version);
+    // The pyversion should correspond to a python major.minor version
+    // e.g.
+    // "3.11"
+    // "3.12"
+    // There  must be a JupyterPlugin (a kernel provider) that matches the python version for this to work.
+    void launchJupyterKernelAndNotebook(const QString& version);
+
+public: // Global settings
+    // Python interpreter path
+    QString getPythonInterpreterPath();
+
+    bool getShowInterpreterPathDialog();
 
 public slots:
     void jupyterServerError(QProcess::ProcessError error);
@@ -88,17 +101,20 @@ private:
 
     void logProcessOutput();
 
-    // Python interpreter path
-    QString getPythonInterpreterPath();
-
     // Distinguish between python in a regular or conda directory and python in a venv
     std::pair<bool, QString> getPythonHomePath(const QString& pyInterpreterPath);
     
+private slots:
+    void launchJupyterKernelAndNotebookImpl();
+
 private:
-    QString                 _connectionFilePath;
-    mv::BackgroundTask*     _serverBackgroundTask;      /** The background task monitoring the Jupyter Server */
-    QProcess                _serverProcess;             /** A detached process for running the Jupyter server */
-    QTimer*                 _serverPollTimer;           /** Poll the server process output at a regular interval */
+    QString                         _connectionFilePath;
+    QString                         _currentInterpreterVersion;
+
+    mv::BackgroundTask*             _serverBackgroundTask;      /** The background task monitoring the Jupyter Server */
+    QProcess                        _serverProcess;             /** A detached process for running the Jupyter server */
+    QTimer*                         _serverPollTimer;           /** Poll the server process output at a regular interval */
+    std::unique_ptr<LauncherDialog> _launcherDialog;
 
 };
 

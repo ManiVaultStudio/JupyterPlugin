@@ -15,6 +15,8 @@ set(SOURCES
     JupyterLauncher.json
     GlobalSettingsAction.h
     GlobalSettingsAction.cpp
+    UserDialogActions.h
+    UserDialogActions.cpp
 )
 
 set (RESOURCES
