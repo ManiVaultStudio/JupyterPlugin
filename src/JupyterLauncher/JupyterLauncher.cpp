@@ -57,12 +57,10 @@ JupyterLauncher::JupyterLauncher(const PluginFactory* factory) :
     setObjectName("Jupyter kernel plugin launcher");
 
     QFile jsonFile(_connectionFilePath);
-    if (jsonFile.open(QIODevice::WriteOnly)) {
+    if (jsonFile.open(QIODevice::WriteOnly))
         jsonFile.close();
-    }
-    else {
+    else 
         qWarning() << "JupyterLauncher: Could not create connection file at " << _connectionFilePath;
-    }
 
 }
 
@@ -118,16 +116,10 @@ void JupyterLauncher::setPythonEnv(const QString& version)
 
     auto [isVenv, pythonPath] = getPythonHomePath(pyInterpreter);
 
-    if (isVenv)
-    {
-        // contains "pyvenv.cfg"
+    if (isVenv) // contains "pyvenv.cfg"
         qputenv("VIRTUAL_ENV", pythonPath.toUtf8());
-    }
-    else
-    {
-        // contains python interpreter executable
+    else  // contains python interpreter executable
         qputenv("PYTHONHOME", pythonPath.toUtf8());
-    }
 
     if(QOperatingSystemVersion::currentType() == QOperatingSystemVersion::Windows)
         pythonPath = pythonPath + "/Lib/site-packages";
@@ -135,7 +127,7 @@ void JupyterLauncher::setPythonEnv(const QString& version)
         pythonPath = pythonPath + "/lib/python" + version + "/site-packages";   // TODO: check if we need to remove a . here
 
     // Path to folder with installed packages
-     // PYTHONPATH is essential for xeusinterpreter to load as the xeus_python_shell
+    // PYTHONPATH is essential for xeusinterpreter to load as the xeus_python_shell
     qputenv("PYTHONPATH", QDir::toNativeSeparators(pythonPath).toUtf8());
 }
 
