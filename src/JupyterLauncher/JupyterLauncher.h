@@ -123,13 +123,6 @@ public:
     /** Returns the data types that are supported by the example view plugin */
     mv::DataTypes supportedDataTypes() const override;
 
-    /**
-     * Get plugin trigger actions given \p datasets
-     * @param datasets Vector of input datasets
-     * @return Vector of plugin trigger actions
-     */
-    PluginTriggerActions getPluginTriggerActions(const mv::Datasets& datasets) const override;
-
 private:
     PluginStatusBarAction*  _statusBarAction;               /** For global action in a status bar */
     HorizontalGroupAction   _statusBarPopupGroupAction;     /** Popup group action for status bar action */
