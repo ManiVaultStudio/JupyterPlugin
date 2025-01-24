@@ -30,7 +30,7 @@
 
 using namespace mv;
 
-Q_PLUGIN_METADATA(IID "nl.BioVault.JupyterLauncher")
+Q_PLUGIN_METADATA(IID "studio.manivault.JupyterLauncher")
 
 static inline bool setPythonPluginSearchPath(const QDir& sharedLibDir)
 {
