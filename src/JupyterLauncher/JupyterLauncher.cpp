@@ -424,7 +424,7 @@ bool JupyterLauncher::startJupyterServerProcess(const QString& version)
     // Setting it in the child QProcess does not work for reasons that are unclear.
     qputenv("MANIVAULT_JUPYTERPLUGIN_CONNECTION_FILE", _connectionFilePath.toUtf8());
 
-    _serverBackgroundTask = new BackgroundTask(nullptr, "JupyterLab Server");
+    _serverBackgroundTask = new BackgroundTask(this, "JupyterLab Server");
     _serverBackgroundTask->setProgressMode(Task::ProgressMode::Manual);
     _serverBackgroundTask->setIdle();
 
@@ -441,7 +441,7 @@ bool JupyterLauncher::startJupyterServerProcess(const QString& version)
     connect(Application::current(), &QCoreApplication::aboutToQuit, this, &JupyterLauncher::shutdownJupyterServer);
 
     _serverProcess.start();
-    _serverPollTimer = new QTimer();
+    _serverPollTimer = new QTimer(this);
     _serverPollTimer->setInterval(20); // poll every 20ms
 
     QObject::connect(_serverPollTimer, &QTimer::timeout, [=]() { 
@@ -453,10 +453,11 @@ bool JupyterLauncher::startJupyterServerProcess(const QString& version)
 
 void JupyterLauncher::logProcessOutput()
 {
-    if (_serverProcess.canReadLine()) {
-        auto output = _serverProcess.readAll();
-        _serverBackgroundTask->setProgressDescription(output);
-    }
+    if (!_serverProcess.canReadLine())
+        return; 
+
+    auto output = _serverProcess.readAll();
+    _serverBackgroundTask->setProgressDescription(output);
 
 }
 
