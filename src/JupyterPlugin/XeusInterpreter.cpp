@@ -11,7 +11,6 @@
 #include <xeus/xinterpreter.hpp>
 #include <xeus-python/xinterpreter.hpp>
 
-#include <pybind11/embed.h>
 #include <pybind11/gil.h>
 #include <pybind11/pybind11.h>
 

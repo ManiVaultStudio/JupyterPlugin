@@ -9,9 +9,7 @@
 
 #include <QString>
 
-namespace pybind11 {
-    class scoped_interpreter;
-}
+#include <pybind11/embed.h>
 
 /**
  * This class wraps the xeus python interpreter 
@@ -26,7 +24,7 @@ class XeusInterpreter : public xpyt::interpreter
 {
 public:
     XeusInterpreter(const QString& pluginVersion = "");
-    virtual ~XeusInterpreter() = default;
+    ~XeusInterpreter() = default;
 
 private:
     void configure_impl() override;
