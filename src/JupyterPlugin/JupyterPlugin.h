@@ -3,8 +3,6 @@
 #include <ViewPlugin.h>
 
 #include <actions/FilePickerAction.h>
-#include <Dataset.h>
-
 #include <memory>
 
 using namespace mv::plugin;
@@ -31,24 +29,20 @@ public:
      * @param factory Pointer to the plugin factory
      */
     JupyterPlugin(const PluginFactory* factory);
-
-    /** Destructor */
     ~JupyterPlugin();
 
-    /** This function is called by the core after the view plugin has been created */
     void init() override;
-
-    void setConnectionPath(const QString& connection_path);
 
 private:
     std::unique_ptr<XeusKernel>     _pKernel;
-
     FilePickerAction                _connectionFilePath;        /** Settings action */
 };
 
-/**
- * Jupyter plugin factory class
- */
+
+// =============================================================================
+// Factory
+// =============================================================================
+
 class JupyterPluginFactory : public ViewPluginFactory
 {
     Q_INTERFACES(mv::plugin::ViewPluginFactory mv::plugin::PluginFactory)
