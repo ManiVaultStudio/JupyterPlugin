@@ -14,12 +14,13 @@ namespace pybind11 {
 }
 
 /**
- * In the slicer implementation (xSlicerInterpreter.cxx in SlicerJupyter)
- * the wrapping adds additional functionality.ine
- * In the first iteration this wrapper is effectively a noop 
- * but it provides a point for additional functionality when 
- * processing python code.
-*/
+ * This class wraps the xeus python interpreter 
+ * and initializes the pybind11 data module
+ * 
+ * Similar uses: 
+ * xSlicerInterpreter.cxx in SlicerJupyter
+ * https://github.com/Slicer/SlicerJupyter/blob/724809ab27667793a0438af6e087ff7decd7d1fe/JupyterKernel/xSlicerInterpreter.h
+ */
 
 class XeusInterpreter : public xpyt::interpreter
 {

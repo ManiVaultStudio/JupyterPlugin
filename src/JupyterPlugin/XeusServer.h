@@ -5,18 +5,19 @@
  * Creates and communicates the ZeroMQ channels
  * needs to communicate with the Jupyter server.
  * 
- * External dependencies are a xeus-zmq and zmq
- * 
  * see 
  * 1) https://github.com/Slicer/SlicerJupyter/blob/master/JupyterKernel/xSlicerServer.cxx
  * 2.1) https://github.com/jupyter-xeus/xeus-qt/blob/main/src/xq_server.cpp
  * 2.2) https://github.com/jupyter-xeus/xeus-qt/blob/main/src/xq_qt_poller.cpp
+ * 3) https://github.com/jupyter-xeus/xeus-zmq/blob/main/src/server/xserver_zmq_default.hpp
  * 
- * Slicer uses a QTimer to manage polling. 
  * The xeus-qt example uses a separate poller thread
  * 
- * For simplicity the initial implementation is done with the QTimer solution as Slicer
+ * For simplicity the initial implementation is done with a QTimer (as in Slicer)
  * The timer interval is hardcoded to 10ms
+ *
+ * External dependencies are a xeus and xeus-zmq
+ *
  *  - 
  * @authors B. van Lew
 */
