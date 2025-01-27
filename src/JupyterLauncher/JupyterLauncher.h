@@ -78,6 +78,8 @@ public: // Global settings
     // Python interpreter path
     QString getPythonInterpreterPath();
 
+    void setPythonInterpreterPath(const QString& p);
+
     bool getShowInterpreterPathDialog();
 
 public slots:

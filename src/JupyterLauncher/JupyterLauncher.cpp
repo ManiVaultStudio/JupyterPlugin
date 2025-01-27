@@ -116,6 +116,11 @@ QString JupyterLauncher::getPythonInterpreterPath()
     return mv::settings().getPluginGlobalSettingsGroupAction<GlobalSettingsAction>(this)->getDefaultPythonPathAction().getFilePath();
 }
 
+void JupyterLauncher::setPythonInterpreterPath(const QString& p)
+{
+    mv::settings().getPluginGlobalSettingsGroupAction<GlobalSettingsAction>(this)->getDefaultPythonPathAction().setFilePath(p);
+}
+
 bool JupyterLauncher::getShowInterpreterPathDialog()
 {
     return !mv::settings().getPluginGlobalSettingsGroupAction<GlobalSettingsAction>(this)->getDoNotShowAgainButton().isChecked();

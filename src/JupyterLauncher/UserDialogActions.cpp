@@ -76,6 +76,8 @@ LauncherDialog::LauncherDialog(QWidget* parent, JupyterLauncher* launcherLaunche
         adjustSize();
         });
 
+    connect(&_interpreterFileAction, &mv::gui::FilePickerAction::filePathChanged, _launcherLauncher, &JupyterLauncher::setPythonInterpreterPath);
+
     _moduleInfoGroup.collapse();
 
     setFixedWidth(_dialogPreferredWidth);
