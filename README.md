@@ -29,6 +29,10 @@ conda create -n ManiVaultPythonPluginBuild python=3.11
 3. (On Windows) Use [vcpkg](https://github.com/microsoft/vcpkg) and define `DCMAKE_TOOLCHAIN_FILE="[YOURPATHTO]/vcpkg/scripts/buildsystems/vcpkg.cmake"` to install the OpenSSL dependency
 
 This projects builds two ManiVault plugins, a communication bridge `JupyterPlugin311` between the ManiVault application and Python as well as a `JupyterLauncher` plugin, which is used to launch a Python kernel and Jupyter notebook.
+Additionally two python modules are build `mvstudio_data` and `mvstudio_kernel` that used two pass data between Python and ManiVault. 
+
+It is advisable to use a different environment during building these plugins and during runtime.
+Building the two python modules requires `poetry` which is automatically installed alongside other module dependencies in the `Python_EXECUTABLE` environment.
 
 ## Dependencies
 
@@ -50,7 +54,9 @@ brew --prefix libomp
 ## Usage
 
 You can use any local python environment (currently restricted to 3.11) with this plugin to interact with ManiVault. 
-You need to provide a path to a python interpreter in the ManiVault settings for this. Go to `File` -> `Settings` -> `Plugin: Jupyter Launcher` -> `Python interpreter` and navigate to your local python interpreter. (These can be the same as used for building or any other).
+You need to provide a path to a python interpreter in the ManiVault settings for this. 
+When starting the plugin (via the toolbar on the bottom), you are asked to provide a path the the python environment.
+Alternatively, go to `File` -> `Settings` -> `Plugin: Jupyter Launcher` -> `Python interpreter` and navigate to your local python interpreter. (These can be the same as used for building or any other).
 
 Upon the first start with a given interpreter, two communication modules are automatically installed, which will help translate between ManiVault's data hierarchy and your Python script.
 
@@ -60,7 +66,6 @@ import mvstudio.data
 h = mvstudio.data.Hierarchy()
 print(h)
 ```
-
 
 ## Use of Jupyter logo
 
