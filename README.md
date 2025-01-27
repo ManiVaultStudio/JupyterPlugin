@@ -24,7 +24,7 @@ conda create -n ManiVaultPythonPluginBuild python=3.11
     - Define `ManiVault_DIR` pointing to the ManiVault cmake file folder, e.g. `YOUR_LOCAL_PATH/install/cmake/mv`
     - Define `Python_EXECUTABLE` pointing to the python exe, e.g. 
         - venv: `YOUR_LOCAL_PATH/AppData/Local/Programs/Python/ManiVaultPythonPluginBuild/Scripts/python.exe`
-        - Conda: `YOUR_LOCAL_PATH/AppData/Local/miniconda3/envs/ManiVaultPythonPluginBuild/python.exe`
+        - Conda: `YOUR_LOCAL_PATH/AppData/Local/miniconda3/envs/ManiVaultPythonPluginBuild/python.exe` (Windows) or `/home/USERNAME/miniconda3/envs/mv_python_build/bin/python` (Linux)
 
 3. (On Windows) Use [vcpkg](https://github.com/microsoft/vcpkg) and define `DCMAKE_TOOLCHAIN_FILE="[YOURPATHTO]/vcpkg/scripts/buildsystems/vcpkg.cmake"` to install the OpenSSL dependency
 
