@@ -22,6 +22,8 @@ LauncherDialog::LauncherDialog(QWidget* parent, JupyterLauncher* launcherLaunche
     _interpreterFileAction.getFilePathAction().setText("Python interpreter");
     _interpreterFileAction.setFilePath(_launcherLauncher->getPythonInterpreterPath());
 
+    _doNotShowAgainButton.setToolTip("You can always change this\nback in the global settings.");
+
     _moduleInfoText.setDefaultWidgetFlags(mv::gui::StringAction::WidgetFlag::Label);
 
     _moduleInfoText.setString(
