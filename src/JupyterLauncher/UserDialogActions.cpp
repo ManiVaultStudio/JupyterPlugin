@@ -14,7 +14,7 @@ LauncherDialog::LauncherDialog(QWidget* parent, JupyterLauncher* launcherLaunche
     _moduleInfoGroups(this, "Info section container"),
     _launcherLauncher(launcherLauncher)
 {
-    setWindowTitle(tr("Jupyter Launcher Dialog"));
+    setWindowTitle(tr("Jupyter Launcher"));
 
     const auto pythonFilter = pythonInterpreterFilters();
     _interpreterFileAction.setNameFilters(pythonFilter);
