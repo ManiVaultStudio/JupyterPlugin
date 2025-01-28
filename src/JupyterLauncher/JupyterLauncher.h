@@ -113,9 +113,9 @@ private:
     QString                         _connectionFilePath;
     QString                         _currentInterpreterVersion;
 
-    mv::BackgroundTask*             _serverBackgroundTask;      /** The background task monitoring the Jupyter Server */
+    mv::BackgroundTask*             _serverBackgroundTask = nullptr;      /** The background task monitoring the Jupyter Server */
     QProcess                        _serverProcess;             /** A detached process for running the Jupyter server */
-    QTimer*                         _serverPollTimer;           /** Poll the server process output at a regular interval */
+    QTimer*                         _serverPollTimer = nullptr;           /** Poll the server process output at a regular interval */
     std::unique_ptr<LauncherDialog> _launcherDialog;
 
 };

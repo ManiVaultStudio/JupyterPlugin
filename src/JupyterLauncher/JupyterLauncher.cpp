@@ -49,11 +49,9 @@ static inline bool setPythonPluginSearchPath(const QDir& sharedLibDir)
 
 JupyterLauncher::JupyterLauncher(const PluginFactory* factory) :
     ViewPlugin(factory),
-    _serverBackgroundTask(nullptr),
-    _serverPollTimer(nullptr),
-    _serverProcess(this),
-    _currentInterpreterVersion(""),
     _connectionFilePath(QDir::toNativeSeparators(QCoreApplication::applicationDirPath() + "/PluginDependencies/JupyterLauncher/py/connection.json")),
+    _currentInterpreterVersion(""),
+    _serverProcess(this),
     _launcherDialog(std::make_unique<LauncherDialog>(nullptr, this))
 {
     setObjectName("Jupyter kernel plugin launcher");
