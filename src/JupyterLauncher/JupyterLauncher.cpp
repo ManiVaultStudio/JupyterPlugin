@@ -489,7 +489,7 @@ void JupyterLauncher::launchJupyterKernelAndNotebookImpl()
     // 0. Check if the user set a python interpreter path
     if (getPythonInterpreterPath() == "")
     {
-        QMessageBox::StandardButton reply = QMessageBox::information(
+        [[maybe_unused]] QMessageBox::StandardButton reply = QMessageBox::information(
             nullptr,
             "No Python interpreter",
             "Please provide a path to a python interpreter in the plugin settings.\n Go to File -> Settings -> Plugin: Jupyter Launcher -> Python interpreter");
