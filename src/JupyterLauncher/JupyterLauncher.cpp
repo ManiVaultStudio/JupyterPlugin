@@ -339,8 +339,9 @@ bool JupyterLauncher::optionallyInstallMVWheel(const QString& version)
 void JupyterLauncher::shutdownJupyterServer()
 {
     switch (_serverProcess.state()) {
-    case QProcess::Starting:
+    case QProcess::Starting: [[fallthrough]] 		
     case QProcess::Running:
+    {
         // Use the shutdown api with our fixed Authorization token to close the server
         auto url = QUrl("http://127.0.0.1:8888/api/shutdown");
         auto request = QNetworkRequest(url);
@@ -358,6 +359,10 @@ void JupyterLauncher::shutdownJupyterServer()
             std::cerr << ".";
             wait -= 1;
         }
+        break;
+    }
+    case QProcess::NotRunning:
+        break; // nothing to do
     }
 }
 
