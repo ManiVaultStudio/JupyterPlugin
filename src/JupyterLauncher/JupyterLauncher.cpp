@@ -502,23 +502,36 @@ void JupyterLauncher::launchJupyterKernelAndNotebookImpl()
     // 1. Check the path to see if the correct version of mvstudio is installed
     QString pluginVersion = QString::fromStdString(getVersion().getVersionString());
     auto exitCode = runPythonScript(":/text/check_env.py", sout, serr, _currentInterpreterVersion, QStringList{ pluginVersion });
-    if (exitCode == 2) {
-        qDebug() << serr << sout;
-        // TODO display error message box
-        return;
-    }
-    if (exitCode == 1)
-        if (!optionallyInstallMVWheel(_currentInterpreterVersion)) {
+
+    if (exitCode > 0)
+    {
+        qDebug() << "JupyterLauncher::launchJupyterKernelAndNotebookImpl: Checking environment failed";
+        qDebug() << sout;
+        qDebug() << serr;
+
+        // error like time out or other failed connection
+        if (exitCode >= 2)
             return;
+
+        // we might just miss the communication modules
+        if (exitCode == 1)
+        {
+            bool couldInstallModules = optionallyInstallMVWheel(_currentInterpreterVersion);
+
+            if(!couldInstallModules)
+            {
+                qDebug() << "Could not install ManiVault JupyterPythonKernel modules";
+                return;
+            }
+        }
     }
-    else 
-        qDebug() << "ManiVault JupyterPythonKernel is already installed";
 
     // 2. Determine the path to the python library
     exitCode = runPythonScript(":/text/find_libpython.py", sout, serr, _currentInterpreterVersion);
     if (exitCode != 0) {
-        qWarning() << serr << sout;
-        // TODO display error message box
+        qDebug() << "JupyterLauncher::launchJupyterKernelAndNotebookImpl: Finding python library failed";
+        qDebug() << sout;
+        qDebug() << serr;
         return;
     }
 
