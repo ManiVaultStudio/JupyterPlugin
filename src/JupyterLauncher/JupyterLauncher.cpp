@@ -134,21 +134,43 @@ bool JupyterLauncher::getShowInterpreterPathDialog()
 }
 
 // Emulate the environment changes from a venv activate script
+// https://docs.python.org/3/library/venv.html
+// https://docs.python.org/3/using/cmdline.html#envvar-PYTHONHOME
+// https://docs.python.org/3/using/cmdline.html#envvar-PYTHONPATH
 void JupyterLauncher::setPythonEnv(const QString& version)
 {
     QString pyInterpreter = QDir::toNativeSeparators(getPythonInterpreterPath());
 
-    auto [isVenv, pythonPath] = getPythonHomePath(pyInterpreter);
+    auto [isVenv, pythonHomePath] = getPythonHomePath(pyInterpreter);
+
+    // TODO: move into above function
+    if (pythonHomePath.endsWith("bin"))
+        pythonHomePath = pythonHomePath.chopped(3); // Removes the last 3 characters ("bin")
+
+    qDebug() << "pythonHomePath: " << pythonHomePath;
 
     if (isVenv) // contains "pyvenv.cfg"
-        qputenv("VIRTUAL_ENV", pythonPath.toUtf8());
+        qputenv("VIRTUAL_ENV", pythonHomePath.toUtf8());
     else  // contains python interpreter executable
-        qputenv("PYTHONHOME", pythonPath.toUtf8());
+        qputenv("PYTHONHOME", pythonHomePath.toUtf8());
+
+    QString pythonPath;
 
     if(QOperatingSystemVersion::currentType() == QOperatingSystemVersion::Windows)
-        pythonPath = pythonPath + "/Lib/site-packages";
+        pythonPath = pythonHomePath + "/Lib/site-packages";
     else
-        pythonPath = pythonPath + "/lib/python" + version + "/site-packages";   // TODO: check if we need to remove a . here
+    {
+        if (pythonHomePath.endsWith("bin"))
+            pythonPath = pythonHomePath.chopped(3); // Removes the last 3 characters ("bin")
+
+        QString versionNumeric = QString(version).insert(1, '.');
+
+        pythonPath = pythonPath + "/lib/python" + versionNumeric + "/site-packages:" + pythonPath + "/lib/python" + versionNumeric;
+    }
+
+    qputenv("PYTHONIOENCODING", QString("UTF-8").toUtf8());
+
+    // TODO: see https://github.com/vim/vim/issues/2840
 
     // Path to folder with installed packages
     // PYTHONPATH is essential for xeusinterpreter to load as the xeus_python_shell
