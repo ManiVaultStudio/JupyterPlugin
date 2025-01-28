@@ -33,12 +33,21 @@ using namespace mv;
 
 Q_PLUGIN_METADATA(IID "studio.manivault.JupyterLauncher")
 
-static inline bool setPythonPluginSearchPath(const QDir& sharedLibDir)
+static inline bool makePythonPluginIsAvailable(const QFileInfo& pythonLibrary)
 {
 #ifdef WIN32
-    return SetDllDirectoryA(QString(sharedLibDir.absolutePath() + "/").toUtf8().data());
+    // Adds a directory to the search path used to locate DLLs for the application.
+    return SetDllDirectoryA(QString(pythonLibrary.dir().absolutePath() + "/").toUtf8().data());
 #else
-    return qputenv("LD_LIBRARY_PATH", QString(sharedLibDir.absolutePath() + "/").toUtf8() + ":" + qgetenv("LD_LIBRARY_PATH"));
+    // This approach seems cleaner but does not work on Windows
+    QString sharedLibFilePath   = pythonLibrary.absoluteFilePath();
+
+    qDebug() << "Using python shared library at: " << sharedLibFilePath;
+    if (!QLibrary::isLibrary(sharedLibFilePath))
+        qWarning() << "Not a library: " << sharedLibFilePath;
+
+    QLibrary lib(sharedLibFilePath);
+    return lib.load();
 #endif
 }
 
@@ -535,24 +544,11 @@ void JupyterLauncher::launchJupyterKernelAndNotebookImpl()
         return;
     }
 
-    auto pythonLibrary          = QFileInfo(sout);
-    QString sharedLibFilePath   = pythonLibrary.absoluteFilePath();
-    QDir sharedLibDir           = pythonLibrary.dir();
+    QFileInfo pythonLibrary     = QFileInfo(sout);
 
-    // This seems cleaner but does not work
-    //qDebug() << "Using python shared library at: " << sharedLibFilePath;
-    //if (!QLibrary::isLibrary(sharedLibFilePath))
-    //    qWarning() << "Not a library: " << sharedLibFilePath;
-
-    //QLibrary lib(sharedLibFilePath);
-    //if(lib.load())
-    //    qDebug() << "Loaded python library";
-    //else
-    //    qDebug() << "Failed to load python library";
-
-    qDebug() << "Using python shared library " << pythonLibrary.fileName() << " at: " << sharedLibDir.absolutePath();
-    if (!setPythonPluginSearchPath(sharedLibDir))
-        qWarning() << "Failed set runtime path of python communication plugin given " << sharedLibDir.absolutePath();
+    qDebug() << "Using python communication plugin library " << pythonLibrary.fileName() << " at: " << pythonLibrary.dir().absolutePath();
+    if (!makePythonPluginIsAvailable(pythonLibrary))
+        qWarning() << "Failed to load/locate python communication plugin";
 
     QString jupyterPluginPath           = QCoreApplication::applicationDirPath() + "/PluginDependencies/JupyterLauncher/bin/JupyterPlugin" + _currentInterpreterVersion.remove(".");
     QLibrary jupyterPluginLib           = QLibrary(jupyterPluginPath);
