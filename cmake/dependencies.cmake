@@ -31,7 +31,8 @@ CPMAddPackage(
     "JSON_BuildTests OFF"
 )
 
-# produces xeus and xeus-static
+set(CMAKE_PREFIX_PATH "${Python_LIBRARY_DIRS}/../" ${CMAKE_PREFIX_PATH})
+
 CPMAddPackage(
     NAME xeus
     GITHUB_REPOSITORY "jupyter-xeus/xeus"
@@ -41,7 +42,7 @@ CPMAddPackage(
     OPTIONS "BUILD_EXAMPLES OFF"
             "XEUS_BUILD_SHARED_LIBS OFF"
             "XEUS_BUILD_STATIC_LIBS ON"
-            "XEUS_STATIC_DEPENDENCIES OFF"
+            "XEUS_STATIC_DEPENDENCIES ON"
 )
 
 # produces libzmq and libzmq-static depending on settings
