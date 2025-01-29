@@ -67,6 +67,9 @@ target_link_libraries(${JUPYTERPLUGIN} PRIVATE cppzmq-static)
 target_link_libraries(${JUPYTERPLUGIN} PRIVATE pybind11::embed)
 target_link_libraries(${JUPYTERPLUGIN} PRIVATE nlohmann_json::nlohmann_json)
 
+target_link_libraries(${JUPYTERPLUGIN} PRIVATE ${CMAKE_DL_LIBS})
+
+
 # -----------------------------------------------------------------------------
 # Python MVJupyterPluginManager packages
 # -----------------------------------------------------------------------------
