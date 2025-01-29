@@ -152,8 +152,8 @@ void JupyterLauncher::setPythonEnv(const QString& version)
     // std::cout << "PYTHONHOME: " << (getenv("PYTHONHOME") ? getenv("PYTHONHOME") : "<not set>") << std::endl;
     // std::cout << "PYTHONPATH: " << (getenv("PYTHONPATH") ? getenv("PYTHONPATH") : "<not set>") << std::endl;
     
+    std::cout << "CONDA_PREFIX: " << (getenv("CONDA_PREFIX") ? getenv("CONDA_PREFIX") : "<not set>") << std::endl;
     qDebug() << "pythonHomePath: " << pythonHomePath;
-    pythonHomePath = pythonHomePath + ":" + pythonHomePath;
 
     if (isVenv) // contains "pyvenv.cfg"
         qputenv("VIRTUAL_ENV", pythonHomePath.toUtf8());
@@ -177,17 +177,11 @@ void JupyterLauncher::setPythonEnv(const QString& version)
                      pythonPath + "/lib/" + pythonVersion + ":" + 
                      pythonPath + "/lib/" + pythonVersion + "/site-packages";
 
-        QString currentPATH = QString::fromLocal8Bit(qgetenv("PATH"));
 
-        currentPATH = pythonHomePath + ":" + pythonPath + ":" + currentPATH;
-        qputenv("PATH", currentPATH.toUtf8());
+        // QString currentPATH = QString::fromLocal8Bit(qgetenv("PATH"));
+        // currentPATH = pythonHomePath + ":" + pythonPath + ":" + currentPATH;
+        // qputenv("PATH", currentPATH.toUtf8());
     }
-
-    qputenv("PYTHONIOENCODING", QString("UTF-8").toUtf8());
-    qputenv("PYTHONTHREEHOME", QString("").toUtf8());
-    qputenv("PYTHONTHREEDLL", QString("").toUtf8());
-
-    // TODO: see https://github.com/vim/vim/issues/2840
 
     // Path to folder with installed packages
     // PYTHONPATH is essential for xeusinterpreter to load as the xeus_python_shell
@@ -196,7 +190,6 @@ void JupyterLauncher::setPythonEnv(const QString& version)
     std::cout << "PATH: " << (getenv("PATH") ? getenv("PATH") : "<not set>") << std::endl;
     std::cout << "PYTHONHOME: " << (getenv("PYTHONHOME") ? getenv("PYTHONHOME") : "<not set>") << std::endl;
     std::cout << "PYTHONPATH: " << (getenv("PYTHONPATH") ? getenv("PYTHONPATH") : "<not set>") << std::endl;
-
 }
 
 // TBD merge the two runScript signatures
