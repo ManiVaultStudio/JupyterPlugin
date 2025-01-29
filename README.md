@@ -16,7 +16,7 @@ git clone git@github.com:ManiVaultStudio/JupyterPlugin.git
 cd YOUR_LOCAL_PATH\AppData\Local\Programs\Python\Python311
 .\python.exe -m venv ..\ManiVaultPythonPluginBuild
 ```
-- with [conda](https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html)
+- with [conda](https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html) (also works with [micromamba](https://mamba.readthedocs.io/en/latest/user_guide/micromamba.html)):
 ```bash
 conda create -n ManiVaultPythonPluginBuild python=3.11
 ```
@@ -24,7 +24,8 @@ conda create -n ManiVaultPythonPluginBuild python=3.11
     - Define `ManiVault_DIR` pointing to the ManiVault cmake file folder, e.g. `YOUR_LOCAL_PATH/install/cmake/mv`
     - Define `Python_EXECUTABLE` pointing to the python exe, e.g. 
         - venv: `YOUR_LOCAL_PATH/AppData/Local/Programs/Python/ManiVaultPythonPluginBuild/Scripts/python.exe`
-        - Conda: `YOUR_LOCAL_PATH/AppData/Local/miniconda3/envs/ManiVaultPythonPluginBuild/python.exe`
+        - Conda: `YOUR_LOCAL_PATH/AppData/Local/miniconda3/envs/ManiVaultPythonPluginBuild/python.exe` (Windows), `YOUR_LOCAL_PATH/AppData/Local/miniconda3/envs/ManiVaultPythonPluginBuild/bin/python` (Linux)
+        - On Linux you might need to activate the environment for CMake to find the correct Python.
 
 3. (On Windows) Use [vcpkg](https://github.com/microsoft/vcpkg) and define `DCMAKE_TOOLCHAIN_FILE="[YOURPATHTO]/vcpkg/scripts/buildsystems/vcpkg.cmake"` to install the OpenSSL dependency
 
