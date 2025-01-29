@@ -118,8 +118,6 @@ target_sources(mvstudio_data PRIVATE
 
 add_dependencies(${JUPYTERPLUGIN} mvstudio_kernel mvstudio_data)
 
-target_link_options(${JUPYTERPLUGIN} PRIVATE -rdynamic)
-
 set_target_properties(${JUPYTERPLUGIN} PROPERTIES FOLDER mvstudio_kernel)
 set_target_properties(${JUPYTERPLUGIN} PROPERTIES FOLDER mvstudio_data)
 
