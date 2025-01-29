@@ -115,6 +115,10 @@ std::pair<bool, QString> JupyterLauncher::getPythonHomePath(const QString& pyInt
         }
     }
 
+    // TODO: move into above function
+    if (pyHomePath.endsWith("bin"))
+        pyHomePath = pyHomePath.chopped(3); // Removes the last 3 characters ("bin")
+
     return { isVenv, QDir::toNativeSeparators(pyHomePath) };
 }
 
@@ -142,39 +146,57 @@ void JupyterLauncher::setPythonEnv(const QString& version)
     QString pyInterpreter = QDir::toNativeSeparators(getPythonInterpreterPath());
 
     auto [isVenv, pythonHomePath] = getPythonHomePath(pyInterpreter);
+    QString pythonPath = pythonHomePath;
 
-    // TODO: move into above function
-    if (pythonHomePath.endsWith("bin"))
-        pythonHomePath = pythonHomePath.chopped(3); // Removes the last 3 characters ("bin")
-
+    // std::cout << "PATH: " << (getenv("PATH") ? getenv("PATH") : "<not set>") << std::endl;
+    // std::cout << "PYTHONHOME: " << (getenv("PYTHONHOME") ? getenv("PYTHONHOME") : "<not set>") << std::endl;
+    // std::cout << "PYTHONPATH: " << (getenv("PYTHONPATH") ? getenv("PYTHONPATH") : "<not set>") << std::endl;
+    
     qDebug() << "pythonHomePath: " << pythonHomePath;
+    pythonHomePath = pythonHomePath + ":" + pythonHomePath;
 
     if (isVenv) // contains "pyvenv.cfg"
         qputenv("VIRTUAL_ENV", pythonHomePath.toUtf8());
     else  // contains python interpreter executable
         qputenv("PYTHONHOME", pythonHomePath.toUtf8());
 
-    QString pythonPath;
-
     if(QOperatingSystemVersion::currentType() == QOperatingSystemVersion::Windows)
-        pythonPath = pythonHomePath + "/Lib/site-packages";
+        pythonPath += "/Lib/site-packages";
     else
     {
-        if (pythonHomePath.endsWith("bin"))
-            pythonPath = pythonHomePath.chopped(3); // Removes the last 3 characters ("bin")
+        if (pythonPath.endsWith("bin"))
+            pythonPath = pythonPath.chopped(3); // Removes the last 3 characters ("bin")
 
-        QString versionNumeric = QString(version).insert(1, '.');
+        if (pythonPath.endsWith("/"))
+            pythonPath = pythonPath.chopped(1);
 
-        pythonPath = pythonPath + "/lib/python" + versionNumeric + "/site-packages:" + pythonPath + "/lib/python" + versionNumeric;
+        QString pythonVersion = "python" + QString(version).insert(1, '.'); // turns 311 into pythonn3.11
+
+        // pythonPath -> "PREFIX/lib:PREFIX/lib/python3.11:PREFIX/lib/python3.11/site-packages"
+        pythonPath = pythonPath + "/lib" + ":" + 
+                     pythonPath + "/lib/" + pythonVersion + ":" + 
+                     pythonPath + "/lib/" + pythonVersion + "/site-packages";
+
+        QString currentPATH = QString::fromLocal8Bit(qgetenv("PATH"));
+
+        currentPATH = pythonHomePath + ":" + pythonPath + ":" + currentPATH;
+        qputenv("PATH", currentPATH.toUtf8());
     }
 
     qputenv("PYTHONIOENCODING", QString("UTF-8").toUtf8());
+    qputenv("PYTHONTHREEHOME", QString("").toUtf8());
+    qputenv("PYTHONTHREEDLL", QString("").toUtf8());
 
     // TODO: see https://github.com/vim/vim/issues/2840
 
     // Path to folder with installed packages
     // PYTHONPATH is essential for xeusinterpreter to load as the xeus_python_shell
     qputenv("PYTHONPATH", QDir::toNativeSeparators(pythonPath).toUtf8());
+
+    std::cout << "PATH: " << (getenv("PATH") ? getenv("PATH") : "<not set>") << std::endl;
+    std::cout << "PYTHONHOME: " << (getenv("PYTHONHOME") ? getenv("PYTHONHOME") : "<not set>") << std::endl;
+    std::cout << "PYTHONPATH: " << (getenv("PYTHONPATH") ? getenv("PYTHONPATH") : "<not set>") << std::endl;
+
 }
 
 // TBD merge the two runScript signatures
