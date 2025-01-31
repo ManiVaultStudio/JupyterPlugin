@@ -29,11 +29,114 @@
 #include <windows.h>
 #endif
 
+#undef slots
+#include <pybind11/embed.h>
+#include <pybind11/pybind11.h>
+namespace py = pybind11;
+#define slots Q_SLOTS
+
 using namespace mv;
 
 Q_PLUGIN_METADATA(IID "studio.manivault.JupyterLauncher")
 
-static inline bool makePythonPluginIsAvailable(const QFileInfo& pythonLibrary)
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <deque>
+#include <cstdio>
+#include <cstdlib>
+
+#include <dlfcn.h>
+#include <unistd.h> 
+
+void unloadLibraryByPath(const char* libPath) {
+    // Try to get a handle to the already loaded library
+    void* handle = dlopen(libPath, RTLD_NOLOAD && RTLD_NOW);
+    if (!handle) {
+        std::cerr << "Library is not currently loaded: " << dlerror() << std::endl;
+        return;
+    }
+
+    std::cout << "Library is currently loaded, attempting to unload..." << std::endl;
+
+    // Close (unload) the library
+    if (dlclose(handle) != 0) {
+        std::cerr << "Error unloading library: " << dlerror() << std::endl;
+    } else {
+        std::cout << "Library successfully unloaded!" << std::endl;
+    }
+}
+
+static void print_pldd() {
+    // Get our own PID
+    pid_t pid = getpid();
+
+    // Construct the command string
+    std::string command = "pldd " + std::to_string(pid);
+
+    // Open a pipe to read the output of pldd
+    FILE* pipe = popen(command.c_str(), "r");
+    if (!pipe) {
+        std::cerr << "Failed to run pldd\n";
+        return;
+    }
+
+    // Read and print the output line by line
+    char buffer[256];
+    while (fgets(buffer, sizeof(buffer), pipe) != nullptr) {
+        std::cout << buffer;
+    }
+
+    std::cout << std::endl;
+
+    // Close the pipe
+    pclose(pipe);
+}
+
+static void print_pldd_n(size_t numLines = 5) {
+    // Get our own PID
+    pid_t pid = getpid();
+
+    // Construct the command string
+    std::string command = "pldd " + std::to_string(pid);
+
+    // Open a pipe to read the output of pldd
+    FILE* pipe = popen(command.c_str(), "r");
+    if (!pipe) {
+        std::cerr << "Failed to run pldd\n";
+        return;
+    }
+
+    // Create a deque to store the last 5 lines
+    std::deque<std::string> lines;
+    char buffer[256];
+
+    // Read the output line by line
+    while (fgets(buffer, sizeof(buffer), pipe) != nullptr) {
+        // Store each line in the deque
+        lines.push_back(buffer);
+
+        // If we have more than 5 lines, remove the oldest
+        if (lines.size() > numLines) {
+            lines.pop_front();
+        }
+    }
+
+    std::cout << "pldd " << pid << std::endl;
+
+    // Print the last 5 lines
+    for (const auto& line : lines) {
+        std::cout << line;
+    }
+
+    std::cout << std::endl;
+
+    // Close the pipe
+    pclose(pipe);
+}
+
+
+static inline bool makePythonPluginAvailable(const QFileInfo& pythonLibrary)
 {
 #ifdef WIN32
     // Adds a directory to the search path used to locate DLLs for the application.
@@ -51,6 +154,42 @@ static inline bool makePythonPluginIsAvailable(const QFileInfo& pythonLibrary)
 #endif
 }
 
+static QStringList findLibraryFiles(const QString &folderPath) {
+    QStringList libraryFiles;
+    QDirIterator it(folderPath, QDir::Files);
+
+    while (it.hasNext()) {
+        QString filePath = it.next();
+        qDebug() << "current: " << filePath;
+        if (QFileInfo(filePath).fileName().contains("JupyterPlugin3") && QLibrary::isLibrary(filePath)) {
+            libraryFiles.append(filePath);
+        }
+    }
+
+    return libraryFiles;
+}
+
+static QString extractSingleNumber(const QString &input) {
+    QRegularExpression regex(R"(\d+)");
+    QRegularExpressionMatch match = regex.match(input);
+
+    if (match.hasMatch()) {
+        return match.captured(0); // Return the matched number
+    }
+
+    return QString();
+}
+
+static QString extractVersionNumber(const QString &input) {
+    QRegularExpression regex(R"(Python\s+(\d+\.\d+))");
+    QRegularExpressionMatch match = regex.match(input);
+
+    if (match.hasMatch()) {
+        return match.captured(1); // Return the matched number
+    }
+
+    return QString();
+}
 
 // =============================================================================
 // JupyterLauncher
@@ -59,7 +198,8 @@ static inline bool makePythonPluginIsAvailable(const QFileInfo& pythonLibrary)
 JupyterLauncher::JupyterLauncher(const PluginFactory* factory) :
     ViewPlugin(factory),
     _connectionFilePath(QDir::toNativeSeparators(QCoreApplication::applicationDirPath() + "/PluginDependencies/JupyterLauncher/py/connection.json")),
-    _currentInterpreterVersion(""),
+    _selectedInterpreterVersion(""),
+    _jupyterPluginFolder(QCoreApplication::applicationDirPath() + "/PluginDependencies/JupyterLauncher/bin/"),
     _serverProcess(this),
     _launcherDialog(std::make_unique<LauncherDialog>(nullptr, this))
 {
@@ -122,6 +262,37 @@ std::pair<bool, QString> JupyterLauncher::getPythonHomePath(const QString& pyInt
     return { isVenv, QDir::toNativeSeparators(pyHomePath) };
 }
 
+bool JupyterLauncher::checkPythonVersion()
+{
+    QProcess process;
+    process.setProgram(getPythonInterpreterPath());
+    process.setArguments({"--version"});
+    process.start();
+    
+    if (!process.waitForFinished(3000)) {  // Timeout after 3 seconds
+        qWarning() << "Failed to get Python version";
+        return false;
+    }
+
+    QString output = process.readAllStandardOutput().trimmed();
+    if (output.isEmpty()) {
+        output = process.readAllStandardError().trimmed();  // Some Python versions print to stderr
+    }
+
+    QString givenInterpreterVersion = extractVersionNumber(output);
+
+    bool match = _selectedInterpreterVersion == givenInterpreterVersion;
+
+    if(!match)
+    {
+        qDebug() << "Version of Python interpreter: " << givenInterpreterVersion;
+        qDebug() << "Version selected in launcher:  " << _selectedInterpreterVersion;
+    }
+
+    return match;
+}
+
+
 QString JupyterLauncher::getPythonInterpreterPath()
 {
     return mv::settings().getPluginGlobalSettingsGroupAction<GlobalSettingsAction>(this)->getDefaultPythonPathAction().getFilePath();
@@ -141,7 +312,7 @@ bool JupyterLauncher::getShowInterpreterPathDialog()
 // https://docs.python.org/3/library/venv.html
 // https://docs.python.org/3/using/cmdline.html#envvar-PYTHONHOME
 // https://docs.python.org/3/using/cmdline.html#envvar-PYTHONPATH
-void JupyterLauncher::setPythonEnv(const QString& version)
+void JupyterLauncher::setPythonEnv()
 {
     QString pyInterpreter = QDir::toNativeSeparators(getPythonInterpreterPath());
 
@@ -170,18 +341,34 @@ void JupyterLauncher::setPythonEnv(const QString& version)
         if (pythonPath.endsWith("/"))
             pythonPath = pythonPath.chopped(1);
 
-        QString pythonVersion = "python" + QString(version).insert(1, '.'); // turns 311 into pythonn3.11
+        qDebug() << "pythonVersionStr: " << _selectedInterpreterVersion;
 
+        QString pythonVersion = "python" + QString(_selectedInterpreterVersion);
+
+        // PREFIX is something like -> /home/USER/miniconda3/envs/ENV_NAME
         // pythonPath -> "PREFIX/lib:PREFIX/lib/python3.11:PREFIX/lib/python3.11/site-packages"
         pythonPath = pythonPath + "/lib" + ":" + 
                      pythonPath + "/lib/" + pythonVersion + ":" + 
-                     pythonPath + "/lib/" + pythonVersion + "/site-packages";
-
+                     pythonPath + "/lib/" + pythonVersion + "/lib-dynload" + ":" + 
+                     pythonPath + "/lib/" + pythonVersion + "/site-packages" + ":" + 
+                     pythonPath + "/lib/" + pythonVersion + "/config-3.12-x86_64-linux-gnu";
 
         // QString currentPATH = QString::fromLocal8Bit(qgetenv("PATH"));
-        // currentPATH = pythonHomePath + ":" + pythonPath + ":" + currentPATH;
-        // qputenv("PATH", currentPATH.toUtf8());
+        // QString newPath = pythonHomePath + ":" + pythonPath + ":" + currentPATH;
+
+        //pythonPath = "/home/alxvth/miniconda3/envs/mv_test_13/lib/python312.zip:/home/alxvth/miniconda3/envs/mv_test_13/lib/python3.12:/home/alxvth/miniconda3/envs/mv_test_13/lib/python3.12/lib-dynload:/home/alxvth/miniconda3/envs/mv_test_13/lib/python3.12/site-packages";
+
+        //QString newPath = "/home/alxvth/cmake/cmake_install/bin:/home/alxvth/qt6/6.3.2/gcc_64/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/usr/lib/wsl/lib:/";
+        //qputenv("PATH", newPath.toUtf8());
+
+        //QString LD_LIBRARY_PATH =  QString("/home/alxvth/miniconda3/envs/mv_test_13/lib:/home/alxvth/miniconda3/envs/mv_test_13/config-3.12-x86_64-linux-gnu:") + QString::fromLocal8Bit(qgetenv("LD_LIBRARY_PATH"));
+        //qDebug() << "LD_LIBRARY_PATH: " << LD_LIBRARY_PATH;
+
+        //qputenv("LD_LIBRARY_PATH", LD_LIBRARY_PATH.toUtf8());
+        qputenv("LD_LIBRARY_PATH", "/home/alxvth/miniconda3/envs/mv_test_13/lib/");
     }
+
+    qDebug() << "pythonPath" << pythonPath;
 
     // Path to folder with installed packages
     // PYTHONPATH is essential for xeusinterpreter to load as the xeus_python_shell
@@ -190,10 +377,17 @@ void JupyterLauncher::setPythonEnv(const QString& version)
     std::cout << "PATH: " << (getenv("PATH") ? getenv("PATH") : "<not set>") << std::endl;
     std::cout << "PYTHONHOME: " << (getenv("PYTHONHOME") ? getenv("PYTHONHOME") : "<not set>") << std::endl;
     std::cout << "PYTHONPATH: " << (getenv("PYTHONPATH") ? getenv("PYTHONPATH") : "<not set>") << std::endl;
+
+    qputenv("PYTHONTREEHOME", QString("/usr").toUtf8());
+
+    // In order to run python -m jupyter lab and access the MANIVAULT_JUPYTERPLUGIN_CONNECTION_FILE 
+    // the env variable must be set in the current process.
+    // Setting it in the child QProcess does not work for reasons that are unclear.
+    qputenv("MANIVAULT_JUPYTERPLUGIN_CONNECTION_FILE", _connectionFilePath.toUtf8());
 }
 
 // TBD merge the two runScript signatures
-int JupyterLauncher::runPythonScript(const QString& scriptName, QString& sout, QString& serr, const QString& version, const QStringList& params)
+int JupyterLauncher::runPythonScript(const QString& scriptName, QString& sout, QString& serr, const QStringList& params)
 {
     // 1. Prepare a python process with the python path
     auto scriptFile =  QFile(scriptName);
@@ -261,7 +455,7 @@ int JupyterLauncher::runPythonScript(const QString& scriptName, QString& sout, Q
     return result;
 }
 
-bool JupyterLauncher::runPythonCommand(const QStringList& params, const QString& version)
+bool JupyterLauncher::runPythonCommand(const QStringList& params)
 {
     QString pyInterpreter = QDir::toNativeSeparators(getPythonInterpreterPath());
 
@@ -314,13 +508,14 @@ bool JupyterLauncher::runPythonCommand(const QStringList& params, const QString&
     return succ;
 }
 
-bool JupyterLauncher::installKernel(const QString& version)
+bool JupyterLauncher::installKernel()
 {
     // 1. Create a marshalling directory with the correct kernel name "ManiVaultStudio"
     QTemporaryDir tdir;
     auto kernelDir = QDir(tdir.path());
     kernelDir.mkdir("ManiVaultStudio");
     kernelDir.cd("ManiVaultStudio");
+
     // 2. Unpack the kernel files from the resources into the marshalling directory 
     QDir directory(":/kernel-files/");
     QStringList kernelList = directory.entryList(QStringList({ "*.*" }));
@@ -340,11 +535,12 @@ bool JupyterLauncher::installKernel(const QString& version)
             newFile.close();
         }
     }
+
     // 3. Install the ManiVaultStudio kernel for the current user 
-    return runPythonCommand(QStringList({ "-m", "jupyter", "kernelspec", "install", kernelDir.absolutePath(), "--user" }), version);
+    return runPythonCommand(QStringList({ "-m", "jupyter", "kernelspec", "install", kernelDir.absolutePath(), "--user" }));
 }
 
-bool JupyterLauncher::optionallyInstallMVWheel(const QString& version)
+bool JupyterLauncher::optionallyInstallMVWheel()
 {
     const QString pluginVersion = QString::fromStdString(getVersion().getVersionString());
     QMessageBox::StandardButton reply = QMessageBox::question(
@@ -360,19 +556,19 @@ bool JupyterLauncher::optionallyInstallMVWheel(const QString& version)
         
         qDebug() << "kernelWheel paths: " << kernelWheel;
 
-        if (!runPythonCommand({ "-m", "pip", "install", kernelWheel }, version)) {
+        if (!runPythonCommand({ "-m", "pip", "install", kernelWheel })) {
             qWarning() << "Installing the mvstudio_kernel package failed. See logging for more information";
             return false;
         }
 
         qDebug() << "dataWheel paths: " << dataWheel;
 
-        if (!runPythonCommand({ "-m", "pip", "install", dataWheel }, version)) {
+        if (!runPythonCommand({ "-m", "pip", "install", dataWheel })) {
             qWarning() << "Installing the mvstudio_data package failed. See logging for more information";
             return false;
         }
 
-        if (!installKernel(version)) {
+        if (!installKernel()) {
             qWarning() << "Installing the ManiVaultStudio Jupyter kernel failed. See logging for more information";
             return false;
         }
@@ -385,7 +581,7 @@ bool JupyterLauncher::optionallyInstallMVWheel(const QString& version)
 void JupyterLauncher::shutdownJupyterServer()
 {
     switch (_serverProcess.state()) {
-    case QProcess::Starting: [[fallthrough]] 		
+    case QProcess::Starting: [[fallthrough]];
     case QProcess::Running:
     {
         // Use the shutdown api with our fixed Authorization token to close the server
@@ -443,10 +639,10 @@ void JupyterLauncher::jupyterServerFinished(int exitCode, QProcess::ExitStatus e
 {
     switch (exitStatus) {
     case QProcess::NormalExit :
-        qDebug() << "Jupyter server exited normally";
+        qDebug() << "Jupyter server exited normally with exitCode " << exitCode ;
         break;
     default:
-        qWarning() << "Jupyter server exited abnormally";
+        qWarning() << "Jupyter server exited abnormally with exitCode " << exitCode ;
         qWarning() << "With error: " << _serverProcess.errorString();
     }
     
@@ -475,13 +671,8 @@ void JupyterLauncher::jupyterServerStarted()
     _serverBackgroundTask->setProgress(1.0f);
 }
 
-void JupyterLauncher::startJupyterServerProcess(const QString& version)
+void JupyterLauncher::startJupyterServerProcess()
 {
-    // In order to run python -m jupyter lab and access the MANIVAULT_JUPYTERPLUGIN_CONNECTION_FILE 
-    // the env variable must be set in the current process.
-    // Setting it in the child QProcess does not work for reasons that are unclear.
-    qputenv("MANIVAULT_JUPYTERPLUGIN_CONNECTION_FILE", _connectionFilePath.toUtf8());
-
     _serverBackgroundTask = new BackgroundTask(this, "JupyterLab Server");
     _serverBackgroundTask->setProgressMode(Task::ProgressMode::Manual);
     _serverBackgroundTask->setIdle();
@@ -521,12 +712,12 @@ void JupyterLauncher::logProcessOutput()
 
 void JupyterLauncher::launchJupyterKernelAndNotebook(const QString& version)
 {
-    _currentInterpreterVersion = version;
+    _selectedInterpreterVersion = version;
 
     if (getShowInterpreterPathDialog())
-        _launcherDialog->show();
+        _launcherDialog->show();                // by default ask user for python path
     else
-        launchJupyterKernelAndNotebookImpl();
+        launchJupyterKernelAndNotebookImpl();   // open notebook immedeatly if user has set do-not-show-dialog option
 
 }
 
@@ -542,12 +733,18 @@ void JupyterLauncher::launchJupyterKernelAndNotebookImpl()
         return;
     }
 
+    if(!checkPythonVersion())
+    {
+        qDebug() << "The given python interpreter does not match the selected python version";
+        return;
+    }
+
     QString serr;
     QString sout;
 
     // 1. Check the path to see if the correct version of mvstudio is installed
     QString pluginVersion = QString::fromStdString(getVersion().getVersionString());
-    auto exitCode = runPythonScript(":/text/check_env.py", sout, serr, _currentInterpreterVersion, QStringList{ pluginVersion });
+    auto exitCode = runPythonScript(":/text/check_env.py", sout, serr, QStringList{ pluginVersion });
 
     if (exitCode > 0)
     {
@@ -562,7 +759,7 @@ void JupyterLauncher::launchJupyterKernelAndNotebookImpl()
         // we might just miss the communication modules
         if (exitCode == 1)
         {
-            bool couldInstallModules = optionallyInstallMVWheel(_currentInterpreterVersion);
+            bool couldInstallModules = optionallyInstallMVWheel();
 
             if(!couldInstallModules)
             {
@@ -573,7 +770,7 @@ void JupyterLauncher::launchJupyterKernelAndNotebookImpl()
     }
 
     // 2. Determine the path to the python library
-    exitCode = runPythonScript(":/text/find_libpython.py", sout, serr, _currentInterpreterVersion);
+    exitCode = runPythonScript(":/text/find_libpython.py", sout, serr);
     if (exitCode != 0) {
         qDebug() << "JupyterLauncher::launchJupyterKernelAndNotebookImpl: Finding python library failed";
         qDebug() << sout;
@@ -581,13 +778,62 @@ void JupyterLauncher::launchJupyterKernelAndNotebookImpl()
         return;
     }
 
+    setPythonEnv();
+
+    {
+        py::scoped_interpreter guard{};
+        qDebug() << "After scoped_interpreter";
+        print_pldd_n();
+
+        qDebug() << "import sys...";
+
+        py::exec(R"(
+            import sys
+            print(sys.path)
+            print(sys.prefix)
+        )");
+
+        qDebug() << "Import socket...";
+
+        py::exec(R"(
+            import socket
+        )");
+    }
+
+    const char* ldLibraryPath = std::getenv("LD_LIBRARY_PATH");
+    if (ldLibraryPath != nullptr) {
+        std::cout << "Library search paths (LD_LIBRARY_PATH): " << ldLibraryPath << std::endl;
+    } else {
+        std::cout << "LD_LIBRARY_PATH is not set." << std::endl;
+    }
+
+    qDebug() << "Before makePythonPluginAvailable" ;
+    print_pldd_n();
+
     QFileInfo pythonLibrary     = QFileInfo(sout);
 
-    qDebug() << "Using python communication plugin library " << pythonLibrary.fileName() << " at: " << pythonLibrary.dir().absolutePath();
-    if (!makePythonPluginIsAvailable(pythonLibrary))
-        qWarning() << "Failed to load/locate python communication plugin";
+    //qDebug() << "Using python communication plugin library " << pythonLibrary.fileName() << " at: " << pythonLibrary.dir().absolutePath();
+    //if (!makePythonPluginAvailable(pythonLibrary))
+    //    qWarning() << "Failed to load/locate python communication plugin";
 
-    QString jupyterPluginPath           = QCoreApplication::applicationDirPath() + "/PluginDependencies/JupyterLauncher/bin/JupyterPlugin" + _currentInterpreterVersion.remove(".");
+    //makePythonPluginAvailable(QFileInfo("/home/alxvth/miniconda3/envs/mv_test_13/lib/libpython3.12.so.1.0"));
+    //makePythonPluginAvailable(QFileInfo("/home/alxvth/miniconda3/envs/mv_test_13/lib/libstdc++.so.6"));
+    //makePythonPluginAvailable(QFileInfo("/home/alxvth/miniconda3/envs/mv_test_13/lib/libgcc_s.so.1"));
+
+    //makePythonPluginAvailable(QFileInfo("/home/alxvth/miniconda3/envs/mv_test_13/lib/libpython3.12.so.1.0"));
+    // makePythonPluginAvailable(QFileInfo("/home/alxvth/miniconda3/envs/mv_test_13/lib/libstdc++.so.6"));
+    // makePythonPluginAvailable(QFileInfo("/home/alxvth/miniconda3/envs/mv_test_13/lib/libgcc_s.so.1"));
+
+    // makePythonPluginAvailable(QFileInfo("/lib/x86_64-linux-gnu/libpthread.so.0"));
+    // makePythonPluginAvailable(QFileInfo("/lib/x86_64-linux-gnu/libdl.so.2"));
+    // makePythonPluginAvailable(QFileInfo("/lib/x86_64-linux-gnu/libutil.so.1"));
+    // makePythonPluginAvailable(QFileInfo("/lib/x86_64-linux-gnu/librt.so.1"));
+
+    qDebug() << "After makePythonPluginAvailable" ;
+    print_pldd_n(10);
+
+    QString jupyterPluginFileName       = "JupyterPlugin" + _selectedInterpreterVersion.remove(".");
+    QString jupyterPluginPath           =  _jupyterPluginFolder + jupyterPluginFileName;
     QLibrary jupyterPluginLib           = QLibrary(jupyterPluginPath);
     QPluginLoader jupyterPluginLoader   = QPluginLoader(jupyterPluginLib.fileName());
 
@@ -618,12 +864,16 @@ void JupyterLauncher::launchJupyterKernelAndNotebookImpl()
         connectionFilePickerAction->setFilePath(_connectionFilePath);
     }
 
-    // Load the plugin but first set the environment to get 
-    // the correct python version
-    setPythonEnv(_currentInterpreterVersion);
-    jupyterPluginInstance->init();
-    startJupyterServerProcess(_currentInterpreterVersion);
+    qDebug() << "After QPluginLoader" ;
+    print_pldd();
 
+//    unloadLibraryByPath("/lib/x86_64-linux-gnu/libpython3.12.so.1.0");
+
+//    qDebug() << "After unloadLibraryByPath" ;
+//    print_pldd_n();
+
+//    jupyterPluginInstance->init();
+//    startJupyterServerProcess();
 }
 
 /// ////////////////////// ///
@@ -659,21 +909,7 @@ void JupyterLauncherFactory::initialize()
     _statusBarPopupGroupAction.setConfigurationFlag(WidgetAction::ConfigurationFlag::NoGroupBoxInPopupLayout);
     _statusBarPopupGroupAction.addAction(&_statusBarPopupAction);
 
-    auto launchJupyterPython311 = new TriggerAction(this, "Start Jupyter Kernel and Lab (3.11)");
-    connect(launchJupyterPython311, &TriggerAction::triggered, this, [this]() {
-        auto openJupyterPlugins = mv::plugins().getPluginsByFactory(this);
-
-        JupyterLauncher* plugin = nullptr;
-        if (openJupyterPlugins.empty())
-            plugin = mv::plugins().requestPlugin<JupyterLauncher>("Jupyter Launcher");
-        else
-            plugin = dynamic_cast<JupyterLauncher*>(openJupyterPlugins.front());
-
-        plugin->launchJupyterKernelAndNotebook("3.11");
-    });
-
     _statusBarAction = new PluginStatusBarAction(this, "Jupyter Launcher", getKind());
-    _statusBarAction->addMenuAction(launchJupyterPython311);
 
     // Sets the action that is shown when the status bar is clicked
     _statusBarAction->setPopupAction(&_statusBarPopupGroupAction);
@@ -683,6 +919,37 @@ void JupyterLauncherFactory::initialize()
 
     // Position to the right of the status bar action
     _statusBarAction->setIndex(-1);
+
+    qDebug() << "JupyterLauncherFactory::initialize";
+
+    QString  jupyterPluginFolder= QCoreApplication::applicationDirPath() + "/PluginDependencies/JupyterLauncher/bin/";
+    qDebug() << "jupyterPluginFolder:" << jupyterPluginFolder;
+
+    QStringList pythonPlugins = findLibraryFiles(jupyterPluginFolder);
+
+    qDebug() << "pythonPlugins:" << pythonPlugins;
+
+    for(const auto& pythonPlugin: pythonPlugins)
+    {
+        QString pythonVersionOfPlugin = extractSingleNumber(QFileInfo(pythonPlugin).fileName()).insert(1, ".");
+
+        qDebug() << "pythonVersionOfPlugin:" << pythonVersionOfPlugin;
+
+        auto launchJupyterPython = new TriggerAction(this, "Start Jupyter Kernel and Lab (" + pythonVersionOfPlugin + ")");
+        connect(launchJupyterPython, &TriggerAction::triggered, this, [this, pythonVersionOfPlugin]() {
+            auto openJupyterPlugins = mv::plugins().getPluginsByFactory(this);
+
+            JupyterLauncher* plugin = nullptr;
+            if (openJupyterPlugins.empty())
+                plugin = mv::plugins().requestPlugin<JupyterLauncher>("Jupyter Launcher");
+            else
+                plugin = dynamic_cast<JupyterLauncher*>(openJupyterPlugins.front());
+
+            plugin->launchJupyterKernelAndNotebook(pythonVersionOfPlugin);
+        });
+
+        _statusBarAction->addMenuAction(launchJupyterPython);
+    }
 
     // Assign the status bar action so that it will appear on the main window status bar
     setStatusBarAction(_statusBarAction);

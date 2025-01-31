@@ -3,7 +3,12 @@
 #include <ViewPlugin.h>
 
 #include <actions/FilePickerAction.h>
+
 #include <memory>
+
+#undef slots
+#include <pybind11/embed.h>
+#define slots Q_SLOTS
 
 using namespace mv::plugin;
 using namespace mv::gui;
@@ -36,6 +41,9 @@ public:
 private:
     std::unique_ptr<XeusKernel>     _pKernel;
     FilePickerAction                _connectionFilePath;        /** Settings action */
+
+    std::unique_ptr<pybind11::scoped_interpreter>   _init_guard = {};
+
 };
 
 

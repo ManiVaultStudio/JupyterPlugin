@@ -1,6 +1,6 @@
 # Download dependencies with CPM
 # Wrapper around fetch content
-include(cmake/get_cpm.cmake)
+include(get_cpm)
 
 # re-applying patches is problematic without CPM_SOURCE_CACHE
 # see https://github.com/cpm-cmake/CPM.cmake/issues/577
@@ -30,8 +30,6 @@ CPMAddPackage(
     OPTIONS
     "JSON_BuildTests OFF"
 )
-
-set(CMAKE_PREFIX_PATH "${Python_LIBRARY_DIRS}/../" ${CMAKE_PREFIX_PATH})
 
 CPMAddPackage(
     NAME xeus
@@ -91,8 +89,9 @@ CPMAddPackage(
     GITHUB_REPOSITORY pybind/pybind11
     GIT_TAG ${pybind11_VERSION}
     EXCLUDE_FROM_ALL YES
-    OPTIONS "PYBIND11_FINDPYTHON ON"
+    OPTIONS "PYBIND11_FINDPYTHON OFF"
 )
+
 
 include("${pybind_SOURCE_DIR}/tools/pybind11Common.cmake")
 

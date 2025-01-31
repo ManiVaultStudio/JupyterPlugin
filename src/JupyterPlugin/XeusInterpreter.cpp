@@ -1,27 +1,105 @@
 #include "XeusInterpreter.h"
 
 #include "MVData.h"
+#include "PythonBuildVersion.h"
 
 #include <iostream>
 #include <stdexcept>
 #include <string>
 
-#include <xeus/xcomm.hpp>
 #include <xeus/xhelper.hpp>
-#include <xeus/xinterpreter.hpp>
-#include <xeus-python/xinterpreter.hpp>
+#include <xeus/xcomm.hpp>
 
-#include <pybind11/gil.h>
-#include <pybind11/pybind11.h>
+#undef slots
+#include <pybind11/embed.h>
+#define slots Q_SLOTS
 
 #include <QDebug>
 
 namespace py = pybind11;
 
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <deque>
+#include <cstdio>
+#include <cstdlib>
+#include <unistd.h> 
+
+static void print_pldd() {
+    // Get our own PID
+    pid_t pid = getpid();
+
+    // Construct the command string
+    std::string command = "pldd " + std::to_string(pid);
+
+    // Open a pipe to read the output of pldd
+    FILE* pipe = popen(command.c_str(), "r");
+    if (!pipe) {
+        std::cerr << "Failed to run pldd\n";
+        return;
+    }
+
+    // Read and print the output line by line
+    char buffer[256];
+    while (fgets(buffer, sizeof(buffer), pipe) != nullptr) {
+        std::cout << buffer;
+    }
+
+    std::cout << std::endl;
+
+    // Close the pipe
+    pclose(pipe);
+}
+
+static void print_pldd_n(size_t numLines = 5) {
+    // Get our own PID
+    pid_t pid = getpid();
+
+    // Construct the command string
+    std::string command = "pldd " + std::to_string(pid);
+
+    // Open a pipe to read the output of pldd
+    FILE* pipe = popen(command.c_str(), "r");
+    if (!pipe) {
+        std::cerr << "Failed to run pldd\n";
+        return;
+    }
+
+    // Create a deque to store the last 5 lines
+    std::deque<std::string> lines;
+    char buffer[256];
+
+    // Read the output line by line
+    while (fgets(buffer, sizeof(buffer), pipe) != nullptr) {
+        // Store each line in the deque
+        lines.push_back(buffer);
+
+        // If we have more than 5 lines, remove the oldest
+        if (lines.size() > numLines) {
+            lines.pop_front();
+        }
+    }
+
+    std::cout << "pldd " << pid << std::endl;
+
+    // Print the last 5 lines
+    for (const auto& line : lines) {
+        std::cout << line;
+    }
+
+    std::cout << std::endl;
+
+    // Close the pipe
+    pclose(pipe);
+}
+
+
 XeusInterpreter::XeusInterpreter(const QString& pluginVersion):
-    xpyt::interpreter(),
+    xpyt::interpreter(false, false),
     _pluginVersion(pluginVersion)
 {
+    m_release_gil_at_startup = false;
 }
 
 void XeusInterpreter::configure_impl()
@@ -31,16 +109,20 @@ void XeusInterpreter::configure_impl()
     };
 
     try {
-        _init_guard = std::make_unique<pybind11::scoped_interpreter>();
+        qDebug() << "xpyt::interpreter::configure_impl";
+        print_pldd_n();
 
         xpyt::interpreter::configure_impl();
         comm_manager().register_comm_target("echo_target", handle_comm_opened);
 
+        qDebug() << "py::gil_scoped_acquire";
         py::gil_scoped_acquire acquire;
-        py::module sys = py::module::import("sys");
 
+        qDebug() << "get_MVData_module";
         py::module MVData_module = get_MVData_module();
         MVData_module.doc() = "Provides access to low level ManiVaultStudio core functions";
+
+        py::module sys = py::module::import("sys");
         sys.attr("modules")["mvstudio_core"] = MVData_module;
     }
     catch (const std::runtime_error& e)
@@ -83,9 +165,9 @@ nl::json XeusInterpreter::kernel_info_request_impl()
 
     return xeus::create_info_reply(xeus::get_protocol_version(),
         "ManiVault JupyterPlugin",
-        _pluginVersion.toStdString(),
+        _pluginVersion.toStdString(), // as defined in JupyterPlugin.json
         "python",
-        "3.11",
+        std::to_string(pythonVersionMajor) + "." + std::to_string(pythonVersionMinor),
         "text/x-python",
         "py",
         "",

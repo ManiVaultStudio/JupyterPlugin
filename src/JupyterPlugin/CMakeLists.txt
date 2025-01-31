@@ -8,6 +8,9 @@ message(STATUS "Plugin: ${JUPYTERPLUGIN}")
 # Source files
 # -----------------------------------------------------------------------------
 
+# create a file that defines variables for the python version that this plugin was built against
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/PythonBuildVersion.h.in" "${CMAKE_CURRENT_SOURCE_DIR}/PythonBuildVersion.h" @ONLY)
+
 set(JUPYTERPLUGIN_SOURCES
     JupyterPlugin.h
     JupyterPlugin.cpp
@@ -19,6 +22,7 @@ set(JUPYTERPLUGIN_SOURCES
     XeusInterpreter.cpp
     MVData.cpp
     MVData.h
+    PythonBuildVersion.h
     JupyterPlugin.json
 )
 
@@ -33,7 +37,7 @@ add_library(${JUPYTERPLUGIN} SHARED ${JUPYTERPLUGIN_SOURCES})
 # -----------------------------------------------------------------------------
 # Target include directories
 # -----------------------------------------------------------------------------
-target_include_directories(${JUPYTERPLUGIN} PRIVATE  "${ManiVault_INCLUDE_DIR}")
+target_include_directories(${JUPYTERPLUGIN} PRIVATE "${ManiVault_INCLUDE_DIR}")
 
 # -----------------------------------------------------------------------------
 # Target properties
@@ -45,6 +49,8 @@ set_target_properties(${JUPYTERPLUGIN} PROPERTIES FOLDER JupyterPlugin)
 
 if(UNIX)
     set_target_properties(${JUPYTERPLUGIN} PROPERTIES POSITION_INDEPENDENT_CODE ON)
+    # set_target_properties(${JUPYTERPLUGIN} PROPERTIES LINK_FLAGS "-Wl,--no-as-needed")
+    # set_target_properties(${JUPYTERPLUGIN} PROPERTIES LINK_FLAGS "-rdynamic")
 endif()
 
 # -----------------------------------------------------------------------------
@@ -67,8 +73,20 @@ target_link_libraries(${JUPYTERPLUGIN} PRIVATE cppzmq-static)
 target_link_libraries(${JUPYTERPLUGIN} PRIVATE pybind11::embed)
 target_link_libraries(${JUPYTERPLUGIN} PRIVATE nlohmann_json::nlohmann_json)
 
-target_link_libraries(${JUPYTERPLUGIN} PRIVATE ${CMAKE_DL_LIBS})
+# message(STATUS "Python_LIBRARIES: ${Python_LIBRARIES}")
+# message(STATUS "Python_INCLUDE_DIRS: ${Python_INCLUDE_DIRS}")
+# message(STATUS "CMAKE_DL_LIBS: ${CMAKE_DL_LIBS}")
 
+# target_link_libraries(${JUPYTERPLUGIN} PRIVATE ${Python_LIBRARIES})
+# target_include_directories(${JUPYTERPLUGIN} PRIVATE ${Python_INCLUDE_DIRS})
+
+# find_library(M_LIB m REQUIRED)
+# find_library(UTIL_LIB util REQUIRED)
+# find_library(DL_LIB dl REQUIRED)
+# find_library(PTHREAD_LIB pthread REQUIRED)
+
+# target_link_libraries(${JUPYTERPLUGIN} PRIVATE m util dl pthread)
+# target_link_libraries(${JUPYTERPLUGIN} PRIVATE ${CMAKE_DL_LIBS})
 
 # -----------------------------------------------------------------------------
 # Python MVJupyterPluginManager packages
@@ -89,7 +107,7 @@ if (NOT ${EXIT_CODE} EQUAL 0)
     if (POETRY_INSTALL_RESULT)
         message(FATAL_ERROR "Install poetry failed. Try 'pip install poetry'.")
     else()
-        message(STATUS "'poetry' succesfully installed")
+        message(STATUS "'poetry' successfully installed")
     endif()
 endif()
 
@@ -123,10 +141,6 @@ add_dependencies(${JUPYTERPLUGIN} mvstudio_kernel mvstudio_data)
 
 set_target_properties(${JUPYTERPLUGIN} PROPERTIES FOLDER mvstudio_kernel)
 set_target_properties(${JUPYTERPLUGIN} PROPERTIES FOLDER mvstudio_data)
-
-if(NOT WIN32)
-    target_link_options(${JUPYTERPLUGIN} PRIVATE "-rdynamic")
-endif()
 
 # -----------------------------------------------------------------------------
 # Target installation

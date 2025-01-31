@@ -24,12 +24,14 @@ PROJECT("JupyterPlugins"
 # CMake Options
 # -----------------------------------------------------------------------------
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
-set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_AUTOMOC ON)
+
+message(STATUS "CMAKE_MODULE_PATH: ${CMAKE_MODULE_PATH}")
 
 # Ensures that all non-inline and inline symbols are hidden unless explicitly marked for export
 set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 set(CMAKE_VISIBILITY_INLINES_HIDDEN ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 if(MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /DWIN32 /EHsc /MP /permissive- /Zc:__cplusplus")
@@ -38,8 +40,7 @@ if(MSVC)
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MD")
 endif(MSVC)
 
-# Cmake internal functions for generating a summary of enabled/disabled features.
-include(FeatureSummary)
+include(CMakePackageConfigHelpers)
 
 # -----------------------------------------------------------------------------
 # Dependencies
@@ -64,7 +65,9 @@ message(STATUS "*** Python version ${Python_VERSION}")
 message(STATUS "*** Python libraries : ${Python_LIBRARIES}")
 message(STATUS "*** Python include dirs ${Python_INCLUDE_DIRS}")
 
-include(cmake/dependencies.cmake)
+set(CMAKE_PREFIX_PATH "${Python_LIBRARY_DIRS}/../" ${CMAKE_PREFIX_PATH})
+
+include(dependencies)
 
 set_target_properties(xeus-static libzmq-static cppzmq xeus-zmq-static 
     PROPERTIES 
@@ -80,4 +83,3 @@ add_subdirectory(src/JupyterPlugin)
 
 # we'd like to always build the python bridge plugin when building the launcher plugin
 add_dependencies(JupyterLauncher ${JupyterPluginTarget})
-
