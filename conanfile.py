@@ -119,6 +119,7 @@ class JupyterPluginConan(ConanFile):
         
         if self.settings.os == "Linux":
             result = subprocess.check_output(['python3-config', '--ldflags', '--embed'], stderr=subprocess.PIPE)
+            print("python3-config:")
             print(result.decode('utf-8'))  # Decode from bytes to string and print
 
         # Use vcpkg-installed dependencies
