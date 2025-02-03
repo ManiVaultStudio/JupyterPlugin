@@ -2,7 +2,6 @@ from conans import ConanFile
 from conan.tools.cmake import CMakeDeps, CMake, CMakeToolchain
 from conans.tools import save, load, SystemPackageTool
 import os
-import sys
 import pathlib
 import subprocess
 from rules_support import PluginBranchInfo
@@ -118,9 +117,9 @@ class JupyterPluginConan(ConanFile):
         # Set some build options
         tc.variables["MV_UNITY_BUILD"] = "ON"
         
-        # Ensure linking is possible on CI
         if self.settings.os == "Linux":
-            tc.variables["CMAKE_PREFIX_PATH"] = f"{sys.prefix}/lib:"
+            result = subprocess.check_output(['python3-config', '--ldflags', '--embed'], stderr=subprocess.PIPE)
+            print(result.decode('utf-8'))  # Decode from bytes to string and print
 
         # Use vcpkg-installed dependencies
         if self.settings.os == "Windows":
