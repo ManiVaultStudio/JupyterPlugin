@@ -68,6 +68,16 @@ h = mvstudio.data.Hierarchy()
 print(h)
 ```
 
+### Running on Linux
+
+Before starting the application:
+```
+conda activate mv_test_13
+CURRENT_PYTHON_PATH=$(find ${CONDA_PREFIX} -name libpython3.12* 2>/dev/null | head -n 1)
+conda env config vars set LD_PRELOAD=$CURRENT_PYTHON_PATH --name mv_test_13
+conda deactivate && conda activate mv_test_13
+```
+
 ## Use of Jupyter logo
 
 This plugin kernel based on the Xeus kernel is compatible with Jupyter software. As such we use the unmodified Jupyter logo to make this clear to end users. This usage follows the rules set out in the [Jupyter documentation](https://jupyter.org/governance/trademarks.html#uses-that-never-require-approval).

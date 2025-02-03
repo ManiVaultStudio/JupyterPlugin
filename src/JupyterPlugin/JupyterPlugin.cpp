@@ -8,7 +8,6 @@
 
 #undef slots
 #include <pybind11/embed.h>
-#include <Python.h>
 #include <pybind11/pybind11.h>
 #define slots Q_SLOTS
 
@@ -109,40 +108,9 @@ JupyterPlugin::~JupyterPlugin()
 void JupyterPlugin::init()
 {  
     {
-        // PyConfig config;
-        // PyConfig_InitPythonConfig(&config);
-        // config.parse_argv = 0;
-
-        // //PyConfig_InitIsolatedConfig(&config);
-
-        // QString pythonHome = QString::fromLocal8Bit(qgetenv("PYTHONHOME"));
-        // PyConfig_SetString(&config, &config.home, pythonHome.toStdWString().c_str());
-
-        // QString program_name = pythonHome + "bin/python3";
-        // PyConfig_SetString(&config, &config.program_name, program_name.toStdWString().c_str());
-
-        // // Set Python home to your Conda environment
-        // // wchar_t* home = Py_DecodeLocale("/home/alxvth/miniconda3/envs/mv_test_13", NULL);
-        // // if (home == NULL) 
-        // //     qDebug() << "FAIL";
-        
-        // // PyConfig_SetString(&config, &config.home, home);
-
-        // config.install_signal_handlers = 1;
-
-        // qDebug() << "Init";
-
-        // py::initialize_interpreter(&config, 0, nullptr, false);
-
         py::scoped_interpreter guard{};
         qDebug() << "After scoped_interpreter";
         print_pldd_n();
-
-        // qDebug() << "PATH: " << (getenv("PATH") ? getenv("PATH") : "<not set>");
-        // qDebug() << "PYTHONHOME: " << (getenv("PYTHONHOME") ? getenv("PYTHONHOME") : "<not set>");
-        // qDebug() << "PYTHONPATH: " << (getenv("PYTHONPATH") ? getenv("PYTHONPATH") : "<not set>");
-
-        //py::scoped_interpreter guard{};
 
         qDebug() << "import sys...";
 
@@ -150,6 +118,7 @@ void JupyterPlugin::init()
             import sys
             print(sys.path)
             print(sys.prefix)
+            print(sys.executable)
         )");
 
         qDebug() << "Import socket...";
@@ -158,7 +127,7 @@ void JupyterPlugin::init()
             import socket
         )");
 
-        //py::finalize_interpreter();
+        print_pldd();
     }
 
     qDebug() << "Switch to Xeus...";

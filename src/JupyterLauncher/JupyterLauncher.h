@@ -21,8 +21,6 @@
 using namespace mv::plugin;
 using namespace mv::gui;
 
-class QLabel;
-
 inline QStringList pythonInterpreterFilters()
 {
     QStringList pythonFilter = {};

@@ -29,12 +29,6 @@
 #include <windows.h>
 #endif
 
-#undef slots
-#include <pybind11/embed.h>
-#include <pybind11/pybind11.h>
-namespace py = pybind11;
-#define slots Q_SLOTS
-
 using namespace mv;
 
 Q_PLUGIN_METADATA(IID "studio.manivault.JupyterLauncher")
@@ -49,94 +43,7 @@ Q_PLUGIN_METADATA(IID "studio.manivault.JupyterLauncher")
 #include <dlfcn.h>
 #include <unistd.h> 
 
-void unloadLibraryByPath(const char* libPath) {
-    // Try to get a handle to the already loaded library
-    void* handle = dlopen(libPath, RTLD_NOLOAD && RTLD_NOW);
-    if (!handle) {
-        std::cerr << "Library is not currently loaded: " << dlerror() << std::endl;
-        return;
-    }
-
-    std::cout << "Library is currently loaded, attempting to unload..." << std::endl;
-
-    // Close (unload) the library
-    if (dlclose(handle) != 0) {
-        std::cerr << "Error unloading library: " << dlerror() << std::endl;
-    } else {
-        std::cout << "Library successfully unloaded!" << std::endl;
-    }
-}
-
-static void print_pldd() {
-    // Get our own PID
-    pid_t pid = getpid();
-
-    // Construct the command string
-    std::string command = "pldd " + std::to_string(pid);
-
-    // Open a pipe to read the output of pldd
-    FILE* pipe = popen(command.c_str(), "r");
-    if (!pipe) {
-        std::cerr << "Failed to run pldd\n";
-        return;
-    }
-
-    // Read and print the output line by line
-    char buffer[256];
-    while (fgets(buffer, sizeof(buffer), pipe) != nullptr) {
-        std::cout << buffer;
-    }
-
-    std::cout << std::endl;
-
-    // Close the pipe
-    pclose(pipe);
-}
-
-static void print_pldd_n(size_t numLines = 5) {
-    // Get our own PID
-    pid_t pid = getpid();
-
-    // Construct the command string
-    std::string command = "pldd " + std::to_string(pid);
-
-    // Open a pipe to read the output of pldd
-    FILE* pipe = popen(command.c_str(), "r");
-    if (!pipe) {
-        std::cerr << "Failed to run pldd\n";
-        return;
-    }
-
-    // Create a deque to store the last 5 lines
-    std::deque<std::string> lines;
-    char buffer[256];
-
-    // Read the output line by line
-    while (fgets(buffer, sizeof(buffer), pipe) != nullptr) {
-        // Store each line in the deque
-        lines.push_back(buffer);
-
-        // If we have more than 5 lines, remove the oldest
-        if (lines.size() > numLines) {
-            lines.pop_front();
-        }
-    }
-
-    std::cout << "pldd " << pid << std::endl;
-
-    // Print the last 5 lines
-    for (const auto& line : lines) {
-        std::cout << line;
-    }
-
-    std::cout << std::endl;
-
-    // Close the pipe
-    pclose(pipe);
-}
-
-
-static inline bool makePythonPluginAvailable(const QFileInfo& pythonLibrary)
+static inline bool loadDynamicLibray(const QFileInfo& pythonLibrary)
 {
 #ifdef WIN32
     // Adds a directory to the search path used to locate DLLs for the application.
@@ -365,7 +272,10 @@ void JupyterLauncher::setPythonEnv()
         //qDebug() << "LD_LIBRARY_PATH: " << LD_LIBRARY_PATH;
 
         //qputenv("LD_LIBRARY_PATH", LD_LIBRARY_PATH.toUtf8());
-        qputenv("LD_LIBRARY_PATH", "/home/alxvth/miniconda3/envs/mv_test_13/lib/");
+        //qputenv("LD_LIBRARY_PATH", "/home/alxvth/miniconda3/envs/mv_test_13/lib/");
+
+        qputenv("LD_PRELOAD", "/home/alxvth/miniconda3/envs/mv_test_13/lib/libpython3.12.so.1.0");
+
     }
 
     qDebug() << "pythonPath" << pythonPath;
@@ -378,7 +288,7 @@ void JupyterLauncher::setPythonEnv()
     std::cout << "PYTHONHOME: " << (getenv("PYTHONHOME") ? getenv("PYTHONHOME") : "<not set>") << std::endl;
     std::cout << "PYTHONPATH: " << (getenv("PYTHONPATH") ? getenv("PYTHONPATH") : "<not set>") << std::endl;
 
-    qputenv("PYTHONTREEHOME", QString("/usr").toUtf8());
+    //qputenv("PYTHONTREEHOME", QString("/usr").toUtf8());
 
     // In order to run python -m jupyter lab and access the MANIVAULT_JUPYTERPLUGIN_CONNECTION_FILE 
     // the env variable must be set in the current process.
@@ -717,7 +627,7 @@ void JupyterLauncher::launchJupyterKernelAndNotebook(const QString& version)
     if (getShowInterpreterPathDialog())
         _launcherDialog->show();                // by default ask user for python path
     else
-        launchJupyterKernelAndNotebookImpl();   // open notebook immedeatly if user has set do-not-show-dialog option
+        launchJupyterKernelAndNotebookImpl();   // open notebook immediately if user has set do-not-show-dialog option
 
 }
 
@@ -778,62 +688,15 @@ void JupyterLauncher::launchJupyterKernelAndNotebookImpl()
         return;
     }
 
-    setPythonEnv();
-
-    {
-        py::scoped_interpreter guard{};
-        qDebug() << "After scoped_interpreter";
-        print_pldd_n();
-
-        qDebug() << "import sys...";
-
-        py::exec(R"(
-            import sys
-            print(sys.path)
-            print(sys.prefix)
-        )");
-
-        qDebug() << "Import socket...";
-
-        py::exec(R"(
-            import socket
-        )");
-    }
-
-    const char* ldLibraryPath = std::getenv("LD_LIBRARY_PATH");
-    if (ldLibraryPath != nullptr) {
-        std::cout << "Library search paths (LD_LIBRARY_PATH): " << ldLibraryPath << std::endl;
-    } else {
-        std::cout << "LD_LIBRARY_PATH is not set." << std::endl;
-    }
-
-    qDebug() << "Before makePythonPluginAvailable" ;
-    print_pldd_n();
-
     QFileInfo pythonLibrary     = QFileInfo(sout);
 
-    //qDebug() << "Using python communication plugin library " << pythonLibrary.fileName() << " at: " << pythonLibrary.dir().absolutePath();
-    //if (!makePythonPluginAvailable(pythonLibrary))
-    //    qWarning() << "Failed to load/locate python communication plugin";
+    setPythonEnv();
 
-    //makePythonPluginAvailable(QFileInfo("/home/alxvth/miniconda3/envs/mv_test_13/lib/libpython3.12.so.1.0"));
-    //makePythonPluginAvailable(QFileInfo("/home/alxvth/miniconda3/envs/mv_test_13/lib/libstdc++.so.6"));
-    //makePythonPluginAvailable(QFileInfo("/home/alxvth/miniconda3/envs/mv_test_13/lib/libgcc_s.so.1"));
+    qDebug() << "Using python communication plugin library " << pythonLibrary.fileName() << " at: " << pythonLibrary.dir().absolutePath();
+    if (!loadDynamicLibray(pythonLibrary))
+        qWarning() << "Failed to load/locate python communication plugin";
 
-    //makePythonPluginAvailable(QFileInfo("/home/alxvth/miniconda3/envs/mv_test_13/lib/libpython3.12.so.1.0"));
-    // makePythonPluginAvailable(QFileInfo("/home/alxvth/miniconda3/envs/mv_test_13/lib/libstdc++.so.6"));
-    // makePythonPluginAvailable(QFileInfo("/home/alxvth/miniconda3/envs/mv_test_13/lib/libgcc_s.so.1"));
-
-    // makePythonPluginAvailable(QFileInfo("/lib/x86_64-linux-gnu/libpthread.so.0"));
-    // makePythonPluginAvailable(QFileInfo("/lib/x86_64-linux-gnu/libdl.so.2"));
-    // makePythonPluginAvailable(QFileInfo("/lib/x86_64-linux-gnu/libutil.so.1"));
-    // makePythonPluginAvailable(QFileInfo("/lib/x86_64-linux-gnu/librt.so.1"));
-
-    qDebug() << "After makePythonPluginAvailable" ;
-    print_pldd_n(10);
-
-    QString jupyterPluginFileName       = "JupyterPlugin" + _selectedInterpreterVersion.remove(".");
-    QString jupyterPluginPath           =  _jupyterPluginFolder + jupyterPluginFileName;
+    QString jupyterPluginPath           = QCoreApplication::applicationDirPath() + "/PluginDependencies/JupyterLauncher/bin/JupyterPlugin" + _selectedInterpreterVersion.remove(".");
     QLibrary jupyterPluginLib           = QLibrary(jupyterPluginPath);
     QPluginLoader jupyterPluginLoader   = QPluginLoader(jupyterPluginLib.fileName());
 
@@ -864,16 +727,10 @@ void JupyterLauncher::launchJupyterKernelAndNotebookImpl()
         connectionFilePickerAction->setFilePath(_connectionFilePath);
     }
 
-    qDebug() << "After QPluginLoader" ;
-    print_pldd();
-
-//    unloadLibraryByPath("/lib/x86_64-linux-gnu/libpython3.12.so.1.0");
-
-//    qDebug() << "After unloadLibraryByPath" ;
-//    print_pldd_n();
-
-//    jupyterPluginInstance->init();
-//    startJupyterServerProcess();
+    // Load the plugin but first set the environment to get 
+    // the correct python version
+    jupyterPluginInstance->init();
+    startJupyterServerProcess();
 }
 
 /// ////////////////////// ///

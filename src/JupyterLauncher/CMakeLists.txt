@@ -56,9 +56,6 @@ target_link_libraries(${JUPYTERLAUNCHER} PRIVATE Qt6::WebEngineWidgets)
 
 target_link_libraries(${JUPYTERLAUNCHER} PRIVATE ManiVault::Core)
 
-target_link_libraries(${JUPYTERLAUNCHER} PRIVATE pybind11::embed)
-target_link_libraries(${JUPYTERLAUNCHER} PRIVATE ${CMAKE_DL_LIBS})
-
 # -----------------------------------------------------------------------------
 # Target installation
 # -----------------------------------------------------------------------------

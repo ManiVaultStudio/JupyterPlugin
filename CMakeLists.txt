@@ -61,11 +61,14 @@ find_package(Qt6 COMPONENTS Widgets WebEngineWidgets REQUIRED)
 find_package(ManiVault COMPONENTS Core PointData ClusterData ImageData CONFIG QUIET)
 find_package(Python COMPONENTS Development Interpreter REQUIRED)
 
-message(STATUS "*** Python version ${Python_VERSION}")
-message(STATUS "*** Python libraries : ${Python_LIBRARIES}")
-message(STATUS "*** Python include dirs ${Python_INCLUDE_DIRS}")
+list(GET Python_LIBRARIES 0 Python_LIBRARY)
+get_filename_component(Python_LIBRARY ${Python_LIBRARY} NAME)
 
-set(CMAKE_PREFIX_PATH "${Python_LIBRARY_DIRS}/../" ${CMAKE_PREFIX_PATH})
+message(STATUS "*** Python version: ${Python_VERSION}")
+message(STATUS "*** Python libraries: ${Python_LIBRARIES}")
+message(STATUS "*** Python library: ${Python_LIBRARY}")
+message(STATUS "*** Python include dirs: ${Python_INCLUDE_DIRS}")
+message(STATUS "*** Python library dirs: ${Python_LIBRARY_DIRS}")
 
 include(dependencies)
 
@@ -82,4 +85,4 @@ add_subdirectory(src/JupyterLauncher)
 add_subdirectory(src/JupyterPlugin)
 
 # we'd like to always build the python bridge plugin when building the launcher plugin
-add_dependencies(JupyterLauncher ${JupyterPluginTarget})
+#add_dependencies(JupyterLauncher ${JupyterPluginTarget})

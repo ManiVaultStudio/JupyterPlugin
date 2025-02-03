@@ -49,8 +49,6 @@ set_target_properties(${JUPYTERPLUGIN} PROPERTIES FOLDER JupyterPlugin)
 
 if(UNIX)
     set_target_properties(${JUPYTERPLUGIN} PROPERTIES POSITION_INDEPENDENT_CODE ON)
-    # set_target_properties(${JUPYTERPLUGIN} PROPERTIES LINK_FLAGS "-Wl,--no-as-needed")
-    # set_target_properties(${JUPYTERPLUGIN} PROPERTIES LINK_FLAGS "-rdynamic")
 endif()
 
 # -----------------------------------------------------------------------------
@@ -70,23 +68,11 @@ target_link_libraries(${JUPYTERPLUGIN} PRIVATE xeus-zmq-static)
 target_link_libraries(${JUPYTERPLUGIN} PRIVATE xeus-python-static)
 target_link_libraries(${JUPYTERPLUGIN} PRIVATE libzmq-static)
 target_link_libraries(${JUPYTERPLUGIN} PRIVATE cppzmq-static)
-target_link_libraries(${JUPYTERPLUGIN} PRIVATE pybind11::embed)
+target_link_libraries(${JUPYTERPLUGIN} PRIVATE pybind11::pybind11)    # Python headers + pybind11::headers, see https://pybind11.readthedocs.io/en/stable/compiling.html#advanced-interface-library-targets
 target_link_libraries(${JUPYTERPLUGIN} PRIVATE nlohmann_json::nlohmann_json)
 
-# message(STATUS "Python_LIBRARIES: ${Python_LIBRARIES}")
-# message(STATUS "Python_INCLUDE_DIRS: ${Python_INCLUDE_DIRS}")
-# message(STATUS "CMAKE_DL_LIBS: ${CMAKE_DL_LIBS}")
-
-# target_link_libraries(${JUPYTERPLUGIN} PRIVATE ${Python_LIBRARIES})
-# target_include_directories(${JUPYTERPLUGIN} PRIVATE ${Python_INCLUDE_DIRS})
-
-# find_library(M_LIB m REQUIRED)
-# find_library(UTIL_LIB util REQUIRED)
-# find_library(DL_LIB dl REQUIRED)
-# find_library(PTHREAD_LIB pthread REQUIRED)
-
-# target_link_libraries(${JUPYTERPLUGIN} PRIVATE m util dl pthread)
-# target_link_libraries(${JUPYTERPLUGIN} PRIVATE ${CMAKE_DL_LIBS})
+target_link_libraries(${JUPYTERPLUGIN} PRIVATE ${Python_LIBRARY})     # do not link against full path but just name
+target_link_libraries(${JUPYTERPLUGIN} PRIVATE pthread dl util m)     # see https://docs.python.org/3/extending/embedding.html
 
 # -----------------------------------------------------------------------------
 # Python MVJupyterPluginManager packages
