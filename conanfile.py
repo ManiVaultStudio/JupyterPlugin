@@ -121,6 +121,7 @@ class JupyterPluginConan(ConanFile):
         # Ensure linking is possible on CI
         if self.settings.os == "Linux":
             os.environ["LD_LIBRARY_PATH"] = f"{sys.prefix}/lib:" + os.environ["LD_LIBRARY_PATH"]
+            print("LD_LIBRARY_PATH: " + os.environ["LD_LIBRARY_PATH"])
 
         # Use vcpkg-installed dependencies
         if self.settings.os == "Windows":
