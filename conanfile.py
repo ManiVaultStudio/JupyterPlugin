@@ -153,7 +153,14 @@ class JupyterPluginConan(ConanFile):
                 # Convert existing string to list. CMake handles the string conversion.
                 existing_prefix_path = [existing_prefix_path]
 
+            print(f"existing_prefix_path: {existing_prefix_path}")
+
             tc.cache_variables["CMAKE_PREFIX_PATH"] = existing_prefix_path + [f"{sys.prefix}/lib"]
+
+            new_prefix = tc.cache_variables["CMAKE_PREFIX_PATH"]
+
+            print(f"CMAKE_PREFIX_PATH: {new_prefix}")
+
 
     def _configure_cmake(self):
         cmake = CMake(self)
