@@ -118,6 +118,10 @@ class JupyterPluginConan(ConanFile):
         # Set some build options
         tc.variables["MV_UNITY_BUILD"] = "ON"
         
+        if self.settings.os == "Linux":
+            tc.variables["CMAKE_PREFIX_PATH"] = f"{sys.prefix}/lib"
+            tc.variables["CMAKE_LIBRARY_PATH"] = f"{sys.prefix}/lib"
+
         # Use vcpkg-installed dependencies
         if self.settings.os == "Windows":
             tc.variables["MV_JUPYTER_USE_VCPKG"] = "ON"
@@ -143,10 +147,6 @@ class JupyterPluginConan(ConanFile):
                 tc.variables["VCPKG_ROOT"]              = vcpkg_dir.as_posix()
 
                 tc.variables["CMAKE_PROJECT_INCLUDE"] = vcpkg_tc.as_posix()
-        else:
-            conda_prefix = pathlib.Path(os.environ["CONDA_PREFIX"])
-            print(f"conda_prefix: {conda_prefix}")
-            tc.variables["Python_EXECUTABLE"] = f"{conda_prefix}/bin/python"
 
         tc.generate()
 

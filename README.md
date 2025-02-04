@@ -54,7 +54,7 @@ brew --prefix libomp
 
 ## Usage
 
-You can use any local python environment (currently restricted to 3.11) with this plugin to interact with ManiVault. 
+You can use any local python environment with this plugin to interact with ManiVault. 
 You need to provide a path to a python interpreter in the ManiVault settings for this. 
 When starting the plugin (via the toolbar on the bottom), you are asked to provide a path the the python environment.
 Alternatively, go to `File` -> `Settings` -> `Plugin: Jupyter Launcher` -> `Python interpreter` and navigate to your local python interpreter. (These can be the same as used for building or any other).
@@ -70,12 +70,12 @@ print(h)
 
 ### Running on Linux
 
-Before starting the application:
+Before starting the application (assuming your local environment uses Python 3.12):
 ```
-conda activate mv_test_13
+conda activate my_local_env
 CURRENT_PYTHON_PATH=$(find ${CONDA_PREFIX} -name libpython3.12* 2>/dev/null | head -n 1)
-conda env config vars set LD_PRELOAD=$CURRENT_PYTHON_PATH --name mv_test_13
-conda deactivate && conda activate mv_test_13
+conda env config vars set LD_PRELOAD=$CURRENT_PYTHON_PATH --name my_local_env
+conda deactivate && conda activate my_local_env
 ```
 
 ## Use of Jupyter logo
