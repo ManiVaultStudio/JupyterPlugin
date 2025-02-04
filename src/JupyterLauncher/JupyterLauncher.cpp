@@ -33,16 +33,6 @@ using namespace mv;
 
 Q_PLUGIN_METADATA(IID "studio.manivault.JupyterLauncher")
 
-#include <iostream>
-#include <fstream>
-#include <string>
-#include <deque>
-#include <cstdio>
-#include <cstdlib>
-
-#include <dlfcn.h>
-#include <unistd.h> 
-
 static inline bool loadDynamicLibray(const QFileInfo& pythonLibrary)
 {
 #ifdef WIN32
