@@ -162,7 +162,6 @@ std::pair<bool, QString> JupyterLauncher::getPythonHomePath(const QString& pyInt
         }
     }
 
-    // TODO: move into above function
     if (pyHomePath.endsWith("bin"))
         pyHomePath = pyHomePath.chopped(3); // Removes the last 3 characters ("bin")
 
@@ -225,14 +224,7 @@ void JupyterLauncher::setPythonEnv()
 
     auto [isVenv, pythonHomePath] = getPythonHomePath(pyInterpreter);
     QString pythonPath = pythonHomePath;
-
-    // std::cout << "PATH: " << (getenv("PATH") ? getenv("PATH") : "<not set>") << std::endl;
-    // std::cout << "PYTHONHOME: " << (getenv("PYTHONHOME") ? getenv("PYTHONHOME") : "<not set>") << std::endl;
-    // std::cout << "PYTHONPATH: " << (getenv("PYTHONPATH") ? getenv("PYTHONPATH") : "<not set>") << std::endl;
     
-    std::cout << "CONDA_PREFIX: " << (getenv("CONDA_PREFIX") ? getenv("CONDA_PREFIX") : "<not set>") << std::endl;
-    qDebug() << "pythonHomePath: " << pythonHomePath;
-
     if (isVenv) // contains "pyvenv.cfg"
         qputenv("VIRTUAL_ENV", pythonHomePath.toUtf8());
     else  // contains python interpreter executable
@@ -248,47 +240,18 @@ void JupyterLauncher::setPythonEnv()
         if (pythonPath.endsWith("/"))
             pythonPath = pythonPath.chopped(1);
 
-        qDebug() << "pythonVersionStr: " << _selectedInterpreterVersion;
-
         QString pythonVersion = "python" + QString(_selectedInterpreterVersion);
 
         // PREFIX is something like -> /home/USER/miniconda3/envs/ENV_NAME
         // pythonPath -> "PREFIX/lib:PREFIX/lib/python3.11:PREFIX/lib/python3.11/site-packages"
         pythonPath = pythonPath + "/lib" + ":" + 
                      pythonPath + "/lib/" + pythonVersion + ":" + 
-                     pythonPath + "/lib/" + pythonVersion + "/lib-dynload" + ":" + 
-                     pythonPath + "/lib/" + pythonVersion + "/site-packages" + ":" + 
-                     pythonPath + "/lib/" + pythonVersion + "/config-3.12-x86_64-linux-gnu";
-
-        // QString currentPATH = QString::fromLocal8Bit(qgetenv("PATH"));
-        // QString newPath = pythonHomePath + ":" + pythonPath + ":" + currentPATH;
-
-        //pythonPath = "/home/alxvth/miniconda3/envs/mv_test_13/lib/python312.zip:/home/alxvth/miniconda3/envs/mv_test_13/lib/python3.12:/home/alxvth/miniconda3/envs/mv_test_13/lib/python3.12/lib-dynload:/home/alxvth/miniconda3/envs/mv_test_13/lib/python3.12/site-packages";
-
-        //QString newPath = "/home/alxvth/cmake/cmake_install/bin:/home/alxvth/qt6/6.3.2/gcc_64/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/usr/lib/wsl/lib:/";
-        //qputenv("PATH", newPath.toUtf8());
-
-        //QString LD_LIBRARY_PATH =  QString("/home/alxvth/miniconda3/envs/mv_test_13/lib:/home/alxvth/miniconda3/envs/mv_test_13/config-3.12-x86_64-linux-gnu:") + QString::fromLocal8Bit(qgetenv("LD_LIBRARY_PATH"));
-        //qDebug() << "LD_LIBRARY_PATH: " << LD_LIBRARY_PATH;
-
-        //qputenv("LD_LIBRARY_PATH", LD_LIBRARY_PATH.toUtf8());
-        //qputenv("LD_LIBRARY_PATH", "/home/alxvth/miniconda3/envs/mv_test_13/lib/");
-
-        qputenv("LD_PRELOAD", "/home/alxvth/miniconda3/envs/mv_test_13/lib/libpython3.12.so.1.0");
-
+                     pythonPath + "/lib/" + pythonVersion + "/site-packages";
     }
-
-    qDebug() << "pythonPath" << pythonPath;
 
     // Path to folder with installed packages
     // PYTHONPATH is essential for xeusinterpreter to load as the xeus_python_shell
     qputenv("PYTHONPATH", QDir::toNativeSeparators(pythonPath).toUtf8());
-
-    std::cout << "PATH: " << (getenv("PATH") ? getenv("PATH") : "<not set>") << std::endl;
-    std::cout << "PYTHONHOME: " << (getenv("PYTHONHOME") ? getenv("PYTHONHOME") : "<not set>") << std::endl;
-    std::cout << "PYTHONPATH: " << (getenv("PYTHONPATH") ? getenv("PYTHONPATH") : "<not set>") << std::endl;
-
-    //qputenv("PYTHONTREEHOME", QString("/usr").toUtf8());
 
     // In order to run python -m jupyter lab and access the MANIVAULT_JUPYTERPLUGIN_CONNECTION_FILE 
     // the env variable must be set in the current process.

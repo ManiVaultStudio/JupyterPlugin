@@ -18,83 +18,6 @@
 
 namespace py = pybind11;
 
-#include <iostream>
-#include <fstream>
-#include <string>
-#include <deque>
-#include <cstdio>
-#include <cstdlib>
-#include <unistd.h> 
-
-static void print_pldd() {
-    // Get our own PID
-    pid_t pid = getpid();
-
-    // Construct the command string
-    std::string command = "pldd " + std::to_string(pid);
-
-    // Open a pipe to read the output of pldd
-    FILE* pipe = popen(command.c_str(), "r");
-    if (!pipe) {
-        std::cerr << "Failed to run pldd\n";
-        return;
-    }
-
-    // Read and print the output line by line
-    char buffer[256];
-    while (fgets(buffer, sizeof(buffer), pipe) != nullptr) {
-        std::cout << buffer;
-    }
-
-    std::cout << std::endl;
-
-    // Close the pipe
-    pclose(pipe);
-}
-
-static void print_pldd_n(size_t numLines = 5) {
-    // Get our own PID
-    pid_t pid = getpid();
-
-    // Construct the command string
-    std::string command = "pldd " + std::to_string(pid);
-
-    // Open a pipe to read the output of pldd
-    FILE* pipe = popen(command.c_str(), "r");
-    if (!pipe) {
-        std::cerr << "Failed to run pldd\n";
-        return;
-    }
-
-    // Create a deque to store the last 5 lines
-    std::deque<std::string> lines;
-    char buffer[256];
-
-    // Read the output line by line
-    while (fgets(buffer, sizeof(buffer), pipe) != nullptr) {
-        // Store each line in the deque
-        lines.push_back(buffer);
-
-        // If we have more than 5 lines, remove the oldest
-        if (lines.size() > numLines) {
-            lines.pop_front();
-        }
-    }
-
-    std::cout << "pldd " << pid << std::endl;
-
-    // Print the last 5 lines
-    for (const auto& line : lines) {
-        std::cout << line;
-    }
-
-    std::cout << std::endl;
-
-    // Close the pipe
-    pclose(pipe);
-}
-
-
 XeusInterpreter::XeusInterpreter(const QString& pluginVersion):
     xpyt::interpreter(false, false),
     _pluginVersion(pluginVersion)
@@ -109,16 +32,11 @@ void XeusInterpreter::configure_impl()
     };
 
     try {
-        qDebug() << "xpyt::interpreter::configure_impl";
-        print_pldd_n();
-
         xpyt::interpreter::configure_impl();
         comm_manager().register_comm_target("echo_target", handle_comm_opened);
 
-        qDebug() << "py::gil_scoped_acquire";
         py::gil_scoped_acquire acquire;
 
-        qDebug() << "get_MVData_module";
         py::module MVData_module = get_MVData_module();
         MVData_module.doc() = "Provides access to low level ManiVaultStudio core functions";
 
