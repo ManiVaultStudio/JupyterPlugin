@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.21)
 
+option(XEUS_BUILD_STATIC_DEPENDENCIES "Xeus depends on libuuid. If that package is installed in your build env you can link statically to it" OFF)
+
 # vcpkg library settings
 if(NOT DEFINED MV_JUPYTER_USE_VCPKG)
     set(MV_JUPYTER_USE_VCPKG OFF)
@@ -61,29 +63,10 @@ find_package(Qt6 COMPONENTS Widgets WebEngineWidgets REQUIRED)
 find_package(ManiVault COMPONENTS Core PointData ClusterData ImageData CONFIG QUIET)
 find_package(Python COMPONENTS Development Interpreter REQUIRED)
 
-message(STATUS "*** CMAKE_PREFIX_PATH: ${CMAKE_PREFIX_PATH}")
-message(STATUS "*** CMAKE_LIBRARY_PATH: ${CMAKE_LIBRARY_PATH}")
-
 message(STATUS "*** Python version: ${Python_VERSION}")
 message(STATUS "*** Python libraries: ${Python_LIBRARIES}")
 message(STATUS "*** Python include dirs: ${Python_INCLUDE_DIRS}")
 message(STATUS "*** Python library dirs: ${Python_LIBRARY_DIRS}")
-
-find_package(UUID REQUIRED)
-
-if(UUID_FOUND)
-  message(STATUS "Found libuuid:")
-  message(STATUS "  Includes: ${UUID_INCLUDE_DIRS}")
-  message(STATUS "  Libraries: ${UUID_LIBRARIES}")  # Could be dynamic
-else()
-  message(FATAL_ERROR "libuuid not found.")
-endif()
-
-find_path(LIBUUID_INCLUDE_DIR uuid/uuid.h)
-find_library(LIBUUID_LIBRARY libuuid.a)
-
-message(STATUS "*** LIBUUID_INCLUDE_DIR: ${LIBUUID_INCLUDE_DIR}")
-message(STATUS "*** LIBUUID_LIBRARY: ${LIBUUID_LIBRARY}")
 
 include(dependencies)
 

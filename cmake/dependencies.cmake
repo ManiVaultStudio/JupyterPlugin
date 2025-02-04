@@ -31,6 +31,10 @@ CPMAddPackage(
     "JSON_BuildTests OFF"
 )
 
+if(XEUS_BUILD_STATIC_DEPENDENCIES)
+    message(STATUS "Linking against UUID statically...")
+endif()
+
 CPMAddPackage(
     NAME xeus
     GITHUB_REPOSITORY "jupyter-xeus/xeus"
@@ -40,7 +44,7 @@ CPMAddPackage(
     OPTIONS "BUILD_EXAMPLES OFF"
             "XEUS_BUILD_SHARED_LIBS OFF"
             "XEUS_BUILD_STATIC_LIBS ON"
-            "XEUS_STATIC_DEPENDENCIES ON"
+            "XEUS_STATIC_DEPENDENCIES ${XEUS_BUILD_STATIC_DEPENDENCIES}"
 )
 
 # produces libzmq and libzmq-static depending on settings
