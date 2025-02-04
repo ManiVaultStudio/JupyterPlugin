@@ -64,6 +64,8 @@ find_package(Python COMPONENTS Development Interpreter REQUIRED)
 list(GET Python_LIBRARIES 0 Python_LIBRARY)
 get_filename_component(Python_LIBRARY ${Python_LIBRARY} NAME)
 
+message(STATUS "*** CMAKE_PREFIX_PATH: ${CMAKE_PREFIX_PATH}")
+
 message(STATUS "*** Python version: ${Python_VERSION}")
 message(STATUS "*** Python libraries: ${Python_LIBRARIES}")
 message(STATUS "*** Python library: ${Python_LIBRARY}")
