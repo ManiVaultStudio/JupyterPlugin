@@ -47,6 +47,8 @@ Linux:
 sudo apt install libtbb-dev libsodium-dev libssl-dev uuid-dev
 ```
 
+You may set the option `XEUS_BUILD_STATIC_DEPENDENCIES` to `ON` if you installed `libuuid` in your build environment, e.g. with `mamba install libuuid -c conda-forge`, see [xeus README](https://github.com/jupyter-xeus/xeus?tab=readme-ov-file#building-from-source).
+
 Mac:
 ```
 brew --prefix libomp

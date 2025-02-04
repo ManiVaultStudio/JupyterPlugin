@@ -28,8 +28,6 @@ PROJECT("JupyterPlugins"
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 set(CMAKE_AUTOMOC ON)
 
-message(STATUS "CMAKE_MODULE_PATH: ${CMAKE_MODULE_PATH}")
-
 # Ensures that all non-inline and inline symbols are hidden unless explicitly marked for export
 set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 set(CMAKE_VISIBILITY_INLINES_HIDDEN ON)
@@ -83,4 +81,4 @@ add_subdirectory(src/JupyterLauncher)
 add_subdirectory(src/JupyterPlugin)
 
 # we'd like to always build the python bridge plugin when building the launcher plugin
-#add_dependencies(JupyterLauncher ${JupyterPluginTarget})
+add_dependencies(JupyterLauncher ${JupyterPluginTarget})
