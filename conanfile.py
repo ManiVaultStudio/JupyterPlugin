@@ -2,6 +2,7 @@ from conans import ConanFile
 from conan.tools.cmake import CMakeDeps, CMake, CMakeToolchain
 from conans.tools import save, load, SystemPackageTool
 import os
+import sys
 import pathlib
 import subprocess
 from rules_support import PluginBranchInfo
@@ -119,7 +120,7 @@ class JupyterPluginConan(ConanFile):
         
         if self.settings.os == "Linux":
             tc.variables["CMAKE_PREFIX_PATH"] = f"{sys.prefix}/lib"
-            print(f"CMAKE_PREFIX_PATH: {tc.variables["CMAKE_PREFIX_PATH"]}")
+            print(f"CMAKE_PREFIX_PATH: {sys.prefix}/lib")
 
         # Use vcpkg-installed dependencies
         if self.settings.os == "Windows":
