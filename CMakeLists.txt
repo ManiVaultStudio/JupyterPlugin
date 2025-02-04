@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.21)
 
+option(XEUS_BUILD_STATIC_DEPENDENCIES "Xeus depends on libuuid. If that package is installed in your build env you can link statically to it" OFF)
+
 # vcpkg library settings
 if(NOT DEFINED MV_JUPYTER_USE_VCPKG)
     set(MV_JUPYTER_USE_VCPKG OFF)
@@ -24,12 +26,12 @@ PROJECT("JupyterPlugins"
 # CMake Options
 # -----------------------------------------------------------------------------
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
-set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_AUTOMOC ON)
 
 # Ensures that all non-inline and inline symbols are hidden unless explicitly marked for export
 set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 set(CMAKE_VISIBILITY_INLINES_HIDDEN ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 if(MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /DWIN32 /EHsc /MP /permissive- /Zc:__cplusplus")
@@ -38,8 +40,7 @@ if(MSVC)
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MD")
 endif(MSVC)
 
-# Cmake internal functions for generating a summary of enabled/disabled features.
-include(FeatureSummary)
+include(CMakePackageConfigHelpers)
 
 # -----------------------------------------------------------------------------
 # Dependencies
@@ -60,11 +61,12 @@ find_package(Qt6 COMPONENTS Widgets WebEngineWidgets REQUIRED)
 find_package(ManiVault COMPONENTS Core PointData ClusterData ImageData CONFIG QUIET)
 find_package(Python COMPONENTS Development Interpreter REQUIRED)
 
-message(STATUS "*** Python version ${Python_VERSION}")
-message(STATUS "*** Python libraries : ${Python_LIBRARIES}")
-message(STATUS "*** Python include dirs ${Python_INCLUDE_DIRS}")
+message(STATUS "*** Python version: ${Python_VERSION}")
+message(STATUS "*** Python libraries: ${Python_LIBRARIES}")
+message(STATUS "*** Python include dirs: ${Python_INCLUDE_DIRS}")
+message(STATUS "*** Python library dirs: ${Python_LIBRARY_DIRS}")
 
-include(cmake/dependencies.cmake)
+include(dependencies)
 
 set_target_properties(xeus-static libzmq-static cppzmq xeus-zmq-static 
     PROPERTIES 
@@ -80,4 +82,3 @@ add_subdirectory(src/JupyterPlugin)
 
 # we'd like to always build the python bridge plugin when building the launcher plugin
 add_dependencies(JupyterLauncher ${JupyterPluginTarget})
-

@@ -18,8 +18,8 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
+python = "^3.11"
 comm ='~=0.2.2'
-python = '~=3.11'
 numpy = '~=1.26'
 jupyterlab_server = "~=2.25"
 jupyter_server = "~=2.12"

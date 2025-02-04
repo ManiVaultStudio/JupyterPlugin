@@ -1,0 +1,9 @@
+#pragma once
+
+#include <cstdint>
+
+// Python version this plugin was built against
+
+constexpr std::int32_t pythonVersionMajor = @Python_VERSION_MAJOR@;
+constexpr std::int32_t pythonVersionMinor = @Python_VERSION_MINOR@;
+constexpr std::int32_t pythonVersionPatch = @Python_VERSION_PATCH@;

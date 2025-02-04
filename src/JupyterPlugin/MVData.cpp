@@ -161,7 +161,7 @@ void orient_multiband_imagedata_as_bip(const U* data_in, const std::vector<size_
         // C order with flip 
         size_t row_size = shape[1] * shape[2];
         size_t num_rows = shape[0];
-        size_t total    = row_size * num_rows;
+
         // Copy starting at the last row of the data_in
         // to the first row of the data_out
         // and so flip up/down
@@ -731,12 +731,12 @@ static py::tuple get_cluster(const std::string& datasetGuid)
         color.getRgbF(&r, &g, &b, &a);
         colors.append(py::make_tuple(r, g, b, a));
         const auto& indices = cluster.getIndices();
-        auto size = indices.size();
+        size_t size = indices.size();
 
         auto indexArray = py::array_t<unsigned int>(size);
         py::buffer_info array_info = indexArray.request();
         unsigned int* output = static_cast<unsigned int*>(array_info.ptr);
-        for (auto i = 0; i < size; i++) {
+        for (size_t i = 0; i < size; i++) {
             output[i] = indices[i];
         }
         indexes_list.append(indexArray);

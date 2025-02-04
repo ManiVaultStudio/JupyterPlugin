@@ -1,27 +1,28 @@
 #include "XeusInterpreter.h"
 
 #include "MVData.h"
+#include "PythonBuildVersion.h"
 
 #include <iostream>
 #include <stdexcept>
 #include <string>
 
-#include <xeus/xcomm.hpp>
 #include <xeus/xhelper.hpp>
-#include <xeus/xinterpreter.hpp>
-#include <xeus-python/xinterpreter.hpp>
+#include <xeus/xcomm.hpp>
 
-#include <pybind11/gil.h>
-#include <pybind11/pybind11.h>
+#undef slots
+#include <pybind11/embed.h>
+#define slots Q_SLOTS
 
 #include <QDebug>
 
 namespace py = pybind11;
 
 XeusInterpreter::XeusInterpreter(const QString& pluginVersion):
-    xpyt::interpreter(),
+    xpyt::interpreter(false, false),
     _pluginVersion(pluginVersion)
 {
+    m_release_gil_at_startup = false;
 }
 
 void XeusInterpreter::configure_impl()
@@ -31,16 +32,15 @@ void XeusInterpreter::configure_impl()
     };
 
     try {
-        _init_guard = std::make_unique<pybind11::scoped_interpreter>();
-
         xpyt::interpreter::configure_impl();
         comm_manager().register_comm_target("echo_target", handle_comm_opened);
 
         py::gil_scoped_acquire acquire;
-        py::module sys = py::module::import("sys");
 
         py::module MVData_module = get_MVData_module();
         MVData_module.doc() = "Provides access to low level ManiVaultStudio core functions";
+
+        py::module sys = py::module::import("sys");
         sys.attr("modules")["mvstudio_core"] = MVData_module;
     }
     catch (const std::runtime_error& e)
@@ -83,9 +83,9 @@ nl::json XeusInterpreter::kernel_info_request_impl()
 
     return xeus::create_info_reply(xeus::get_protocol_version(),
         "ManiVault JupyterPlugin",
-        _pluginVersion.toStdString(),
+        _pluginVersion.toStdString(), // as defined in JupyterPlugin.json
         "python",
-        "3.11",
+        std::to_string(pythonVersionMajor) + "." + std::to_string(pythonVersionMinor),
         "text/x-python",
         "py",
         "",

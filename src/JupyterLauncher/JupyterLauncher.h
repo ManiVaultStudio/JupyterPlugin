@@ -21,8 +21,6 @@
 using namespace mv::plugin;
 using namespace mv::gui;
 
-class QLabel;
-
 inline QStringList pythonInterpreterFilters()
 {
     QStringList pythonFilter = {};
@@ -92,14 +90,16 @@ public slots:
 private:
     // TBD merge the two runPythonScript signatures
     /** Run a python script from the resources return the exit code and stderr and stdout */
-    int runPythonScript(const QString& scriptName, QString& sout, QString& serr, const QString& version, const QStringList& params = {}); 
-    bool runPythonCommand(const QStringList& params, const QString& version);
+    int runPythonScript(const QString& scriptName, QString& sout, QString& serr, const QStringList& params = {}); 
+    bool runPythonCommand(const QStringList& params);
 
-    void setPythonEnv(const QString& version);
-    bool installKernel(const QString& version);
-    bool optionallyInstallMVWheel(const QString& version);
+    void setPythonEnv();
+    bool installKernel();
+    bool optionallyInstallMVWheel();
 
-    void startJupyterServerProcess(const QString& version);
+    bool checkPythonVersion();
+
+    void startJupyterServerProcess();
 
     void logProcessOutput();
 
@@ -111,11 +111,12 @@ private slots:
 
 private:
     QString                         _connectionFilePath;
-    QString                         _currentInterpreterVersion;
+    QString                         _selectedInterpreterVersion;
+    QString                         _jupyterPluginFolder;
 
-    mv::BackgroundTask*             _serverBackgroundTask;      /** The background task monitoring the Jupyter Server */
+    mv::BackgroundTask*             _serverBackgroundTask = nullptr;      /** The background task monitoring the Jupyter Server */
     QProcess                        _serverProcess;             /** A detached process for running the Jupyter server */
-    QTimer*                         _serverPollTimer;           /** Poll the server process output at a regular interval */
+    QTimer*                         _serverPollTimer = nullptr;           /** Poll the server process output at a regular interval */
     std::unique_ptr<LauncherDialog> _launcherDialog;
 
 };

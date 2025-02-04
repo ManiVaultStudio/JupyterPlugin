@@ -155,7 +155,7 @@ jobs:
           conan-pem: ${{secrets.LKEB_UPLOAD_CERT_CHAIN}}
           conan-cc: gcc-${{matrix.build-cversion}}
           conan-cxx: g++-${{matrix.build-cversion}}
-  
+
       - name: Mac build
         if: startsWith(matrix.os, 'macos')
         uses: ManiVaultStudio/github-actions/conan_linuxmac_build@main

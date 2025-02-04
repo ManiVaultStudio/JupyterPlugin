@@ -5,11 +5,7 @@
 #include <xeus-python/xinterpreter.hpp>
 #define slots Q_SLOTS
 
-#include <memory>
-
 #include <QString>
-
-#include <pybind11/embed.h>
 
 /**
  * This class wraps the xeus python interpreter 
@@ -23,7 +19,7 @@
 class XeusInterpreter : public xpyt::interpreter
 {
 public:
-    XeusInterpreter(const QString& pluginVersion = "");
+    XeusInterpreter(const QString& pluginVersion);
     ~XeusInterpreter() = default;
 
 private:
@@ -38,6 +34,5 @@ private:
     nl::json kernel_info_request_impl() override;
 
 private:
-    std::unique_ptr<pybind11::scoped_interpreter>   _init_guard = {};
-    QString                                         _pluginVersion = "";
+    QString _pluginVersion = "";
 };

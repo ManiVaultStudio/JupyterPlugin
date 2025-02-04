@@ -16,7 +16,7 @@ git clone git@github.com:ManiVaultStudio/JupyterPlugin.git
 cd YOUR_LOCAL_PATH\AppData\Local\Programs\Python\Python311
 .\python.exe -m venv ..\ManiVaultPythonPluginBuild
 ```
-- with [conda](https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html)
+- with [conda](https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html) (also works with [micromamba](https://mamba.readthedocs.io/en/latest/user_guide/micromamba.html)):
 ```bash
 conda create -n ManiVaultPythonPluginBuild python=3.11
 ```
@@ -24,7 +24,8 @@ conda create -n ManiVaultPythonPluginBuild python=3.11
     - Define `ManiVault_DIR` pointing to the ManiVault cmake file folder, e.g. `YOUR_LOCAL_PATH/install/cmake/mv`
     - Define `Python_EXECUTABLE` pointing to the python exe, e.g. 
         - venv: `YOUR_LOCAL_PATH/AppData/Local/Programs/Python/ManiVaultPythonPluginBuild/Scripts/python.exe`
-        - Conda: `YOUR_LOCAL_PATH/AppData/Local/miniconda3/envs/ManiVaultPythonPluginBuild/python.exe` (Windows) or `/home/USERNAME/miniconda3/envs/mv_python_build/bin/python` (Linux)
+        - Conda: `YOUR_LOCAL_PATH/AppData/Local/miniconda3/envs/ManiVaultPythonPluginBuild/python.exe` (Windows), `YOUR_LOCAL_PATH/AppData/Local/miniconda3/envs/ManiVaultPythonPluginBuild/bin/python` (Linux)
+        - On Linux you might need to activate the environment for CMake to find the correct Python.
 
 3. (On Windows) Use [vcpkg](https://github.com/microsoft/vcpkg) and define `DCMAKE_TOOLCHAIN_FILE="[YOURPATHTO]/vcpkg/scripts/buildsystems/vcpkg.cmake"` to install the OpenSSL dependency
 
@@ -46,6 +47,8 @@ Linux:
 sudo apt install libtbb-dev libsodium-dev libssl-dev uuid-dev
 ```
 
+You may set the option `XEUS_BUILD_STATIC_DEPENDENCIES` to `ON` if you installed `libuuid` in your build environment, e.g. with `mamba install libuuid -c conda-forge`, see [xeus README](https://github.com/jupyter-xeus/xeus?tab=readme-ov-file#building-from-source).
+
 Mac:
 ```
 brew --prefix libomp
@@ -53,7 +56,7 @@ brew --prefix libomp
 
 ## Usage
 
-You can use any local python environment (currently restricted to 3.11) with this plugin to interact with ManiVault. 
+You can use any local python environment with this plugin to interact with ManiVault. 
 You need to provide a path to a python interpreter in the ManiVault settings for this. 
 When starting the plugin (via the toolbar on the bottom), you are asked to provide a path the the python environment.
 Alternatively, go to `File` -> `Settings` -> `Plugin: Jupyter Launcher` -> `Python interpreter` and navigate to your local python interpreter. (These can be the same as used for building or any other).
@@ -65,6 +68,16 @@ To access data from ManiVault:
 import mvstudio.data
 h = mvstudio.data.Hierarchy()
 print(h)
+```
+
+### Running on Linux
+
+Before starting the application (assuming your local environment uses Python 3.12):
+```
+conda activate my_local_env
+CURRENT_PYTHON_PATH=$(find ${CONDA_PREFIX} -name libpython3.12* 2>/dev/null | head -n 1)
+conda env config vars set LD_PRELOAD=$CURRENT_PYTHON_PATH --name my_local_env
+conda deactivate && conda activate my_local_env
 ```
 
 ## Use of Jupyter logo

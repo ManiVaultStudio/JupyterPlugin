@@ -8,6 +8,9 @@ message(STATUS "Plugin: ${JUPYTERPLUGIN}")
 # Source files
 # -----------------------------------------------------------------------------
 
+# create a file that defines variables for the python version that this plugin was built against
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/PythonBuildVersion.h.in" "${CMAKE_CURRENT_SOURCE_DIR}/PythonBuildVersion.h" @ONLY)
+
 set(JUPYTERPLUGIN_SOURCES
     JupyterPlugin.h
     JupyterPlugin.cpp
@@ -19,6 +22,7 @@ set(JUPYTERPLUGIN_SOURCES
     XeusInterpreter.cpp
     MVData.cpp
     MVData.h
+    PythonBuildVersion.h
     JupyterPlugin.json
 )
 
@@ -33,7 +37,7 @@ add_library(${JUPYTERPLUGIN} SHARED ${JUPYTERPLUGIN_SOURCES})
 # -----------------------------------------------------------------------------
 # Target include directories
 # -----------------------------------------------------------------------------
-target_include_directories(${JUPYTERPLUGIN} PRIVATE  "${ManiVault_INCLUDE_DIR}")
+target_include_directories(${JUPYTERPLUGIN} PRIVATE "${ManiVault_INCLUDE_DIR}")
 
 # -----------------------------------------------------------------------------
 # Target properties
@@ -64,8 +68,14 @@ target_link_libraries(${JUPYTERPLUGIN} PRIVATE xeus-zmq-static)
 target_link_libraries(${JUPYTERPLUGIN} PRIVATE xeus-python-static)
 target_link_libraries(${JUPYTERPLUGIN} PRIVATE libzmq-static)
 target_link_libraries(${JUPYTERPLUGIN} PRIVATE cppzmq-static)
-target_link_libraries(${JUPYTERPLUGIN} PRIVATE pybind11::embed)
+target_link_libraries(${JUPYTERPLUGIN} PRIVATE pybind11::pybind11)    # Python headers + pybind11::headers, see https://pybind11.readthedocs.io/en/stable/compiling.html#advanced-interface-library-targets
 target_link_libraries(${JUPYTERPLUGIN} PRIVATE nlohmann_json::nlohmann_json)
+
+target_link_libraries(${JUPYTERPLUGIN} PRIVATE Python::Python)
+
+if(UNIX)
+    target_link_libraries(${JUPYTERPLUGIN} PRIVATE pthread dl util m)     # see https://docs.python.org/3/extending/embedding.html
+endif()
 
 # -----------------------------------------------------------------------------
 # Python MVJupyterPluginManager packages
@@ -86,7 +96,7 @@ if (NOT ${EXIT_CODE} EQUAL 0)
     if (POETRY_INSTALL_RESULT)
         message(FATAL_ERROR "Install poetry failed. Try 'pip install poetry'.")
     else()
-        message(STATUS "'poetry' succesfully installed")
+        message(STATUS "'poetry' successfully installed")
     endif()
 endif()
 
@@ -140,6 +150,7 @@ install(FILES
 
 install(FILES 
     ${PROJECT_SOURCE_DIR}/examples/demo_data_loading.ipynb
+    ${PROJECT_SOURCE_DIR}/examples/requirements.txt
     DESTINATION examples/JupyterPlugin 
     COMPONENT PLUGINS
 )

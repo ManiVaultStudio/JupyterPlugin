@@ -1,6 +1,6 @@
 # Download dependencies with CPM
 # Wrapper around fetch content
-include(cmake/get_cpm.cmake)
+include(get_cpm)
 
 # re-applying patches is problematic without CPM_SOURCE_CACHE
 # see https://github.com/cpm-cmake/CPM.cmake/issues/577
@@ -31,7 +31,10 @@ CPMAddPackage(
     "JSON_BuildTests OFF"
 )
 
-# produces xeus and xeus-static
+if(XEUS_BUILD_STATIC_DEPENDENCIES)
+    message(STATUS "Linking against UUID statically...")
+endif()
+
 CPMAddPackage(
     NAME xeus
     GITHUB_REPOSITORY "jupyter-xeus/xeus"
@@ -41,7 +44,7 @@ CPMAddPackage(
     OPTIONS "BUILD_EXAMPLES OFF"
             "XEUS_BUILD_SHARED_LIBS OFF"
             "XEUS_BUILD_STATIC_LIBS ON"
-            "XEUS_STATIC_DEPENDENCIES OFF"
+            "XEUS_STATIC_DEPENDENCIES ${XEUS_BUILD_STATIC_DEPENDENCIES}"
 )
 
 # produces libzmq and libzmq-static depending on settings
@@ -90,8 +93,9 @@ CPMAddPackage(
     GITHUB_REPOSITORY pybind/pybind11
     GIT_TAG ${pybind11_VERSION}
     EXCLUDE_FROM_ALL YES
-    OPTIONS "PYBIND11_FINDPYTHON ON"
+    OPTIONS "PYBIND11_FINDPYTHON OFF"
 )
+
 
 include("${pybind_SOURCE_DIR}/tools/pybind11Common.cmake")
 

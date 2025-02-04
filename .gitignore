@@ -38,3 +38,4 @@ poetry.lock
 *.whl
 src/mvstudio_data/dist/
 src/mvstudio_kernel/dist/
+src/JupyterPlugin/PythonBuildVersion.h
