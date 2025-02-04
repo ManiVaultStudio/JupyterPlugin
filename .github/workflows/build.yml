@@ -56,17 +56,23 @@ jobs:
         run: |
           sudo xcode-select -switch /Applications/Xcode_${{matrix.build-xcode-version}}.app
 
+      - name: Setup python version
+        if: startsWith(runner.os, 'windows')
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
       - uses: mamba-org/setup-micromamba@v2
+        if: startsWith(matrix.os, 'ubuntu') || startsWith(matrix.os, 'macos')
         with:
           # the create command looks like this:
-          # `micromamba create -n build-env python=3.10`
-          environment-name: build-env
+          # micromamba create -n test-env python=3.11
+          environment-name: test-env
           create-args: >-
             python=3.11
             poetry=1.8.4
           init-shell: >-
             bash
-            powershell
 
       - name: Start ssh key agent
         uses: webfactory/ssh-agent@v0.9.0
@@ -147,8 +153,6 @@ jobs:
           conan-password: ${{secrets.LKEB_UPLOAD_USER_PASSWORD}}
           conan-pem: ${{secrets.LKEB_UPLOAD_CERT_CHAIN}}
           rs_ssh_key: ${{ secrets.RULESSUPPORT_DEPLOY_KEY }}
-        run: |
-          micromamba activate build-env
 
       - name: Linux build
         if: startsWith(matrix.os, 'ubuntu')
@@ -164,8 +168,6 @@ jobs:
           conan-pem: ${{secrets.LKEB_UPLOAD_CERT_CHAIN}}
           conan-cc: gcc-${{matrix.build-cversion}}
           conan-cxx: g++-${{matrix.build-cversion}}
-        run: |
-          micromamba activate build-env
 
       - name: Mac build
         if: startsWith(matrix.os, 'macos')
@@ -179,5 +181,3 @@ jobs:
           conan-user: ${{secrets.LKEB_UPLOAD_USER}}
           conan-password: ${{secrets.LKEB_UPLOAD_USER_PASSWORD}}
           conan-pem: ${{secrets.LKEB_UPLOAD_CERT_CHAIN}}
-        run: |
-          micromamba activate build-env

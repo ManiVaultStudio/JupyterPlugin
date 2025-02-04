@@ -80,7 +80,7 @@ class JupyterPluginConan(ConanFile):
             proc = subprocess.run("brew --prefix libomp",  shell=True, capture_output=True)
             subprocess.run(f"ln {proc.stdout.decode('UTF-8').strip()}/lib/libomp.dylib /usr/local/lib/libomp.dylib", shell=True)
         if self.settings.os == "Linux":
-            self.run("sudo apt update && sudo apt install -y libtbb2-dev libsodium-dev uuid-dev")
+            self.run("sudo apt update && sudo apt install -y libtbb-dev libsodium-dev libssl-dev uuid-dev")
 
     def config_options(self):
         if self.settings.os == "Windows":
@@ -143,13 +143,10 @@ class JupyterPluginConan(ConanFile):
                 tc.variables["VCPKG_ROOT"]              = vcpkg_dir.as_posix()
 
                 tc.variables["CMAKE_PROJECT_INCLUDE"] = vcpkg_tc.as_posix()
-
-        # if self.settings.os == "Linux":
-        #     tc.cache_variables["CMAKE_PREFIX_PATH"] = f"{sys.prefix}/lib"
-
-        #     new_prefix = tc.cache_variables["CMAKE_PREFIX_PATH"]
-
-        #     print(f"CMAKE_PREFIX_PATH: {new_prefix}")
+        else:
+            conda_prefix = pathlib.Path(os.environ["CONDA_PREFIX"])
+            print(f"conda_prefix: {conda_prefix}")
+            tc.variables["Python_EXECUTABLE"] = f"{conda_prefix}/bin/python"
 
         tc.generate()
 
