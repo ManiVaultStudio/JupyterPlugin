@@ -72,7 +72,10 @@ target_link_libraries(${JUPYTERPLUGIN} PRIVATE pybind11::pybind11)    # Python h
 target_link_libraries(${JUPYTERPLUGIN} PRIVATE nlohmann_json::nlohmann_json)
 
 target_link_libraries(${JUPYTERPLUGIN} PRIVATE Python::Python)
-target_link_libraries(${JUPYTERPLUGIN} PRIVATE pthread dl util m)     # see https://docs.python.org/3/extending/embedding.html
+
+if(UNIX)
+    target_link_libraries(${JUPYTERPLUGIN} PRIVATE pthread dl util m)     # see https://docs.python.org/3/extending/embedding.html
+endif()
 
 # -----------------------------------------------------------------------------
 # Python MVJupyterPluginManager packages
