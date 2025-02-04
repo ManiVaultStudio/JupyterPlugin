@@ -56,10 +56,17 @@ jobs:
         run: |
           sudo xcode-select -switch /Applications/Xcode_${{matrix.build-xcode-version}}.app
 
-      - name: Setup python version
-        uses: actions/setup-python@v5
+      - uses: mamba-org/setup-micromamba@v2
         with:
-          python-version: "3.11"
+          # the create command looks like this:
+          # `micromamba create -n test-env python=3.10`
+          environment-name: test-env
+          create-args: >-
+            python=3.11
+            poetry=1.8.4
+          init-shell: >-
+            bash
+            powershell
 
       - name: Start ssh key agent
         uses: webfactory/ssh-agent@v0.9.0

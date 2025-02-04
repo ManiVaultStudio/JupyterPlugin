@@ -144,12 +144,12 @@ class JupyterPluginConan(ConanFile):
 
                 tc.variables["CMAKE_PROJECT_INCLUDE"] = vcpkg_tc.as_posix()
 
-        if self.settings.os == "Linux":
-            tc.cache_variables["CMAKE_PREFIX_PATH"] = f"{sys.prefix}/lib"
+        # if self.settings.os == "Linux":
+        #     tc.cache_variables["CMAKE_PREFIX_PATH"] = f"{sys.prefix}/lib"
 
-            new_prefix = tc.cache_variables["CMAKE_PREFIX_PATH"]
+        #     new_prefix = tc.cache_variables["CMAKE_PREFIX_PATH"]
 
-            print(f"CMAKE_PREFIX_PATH: {new_prefix}")
+        #     print(f"CMAKE_PREFIX_PATH: {new_prefix}")
 
         tc.generate()
 
