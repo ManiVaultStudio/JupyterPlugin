@@ -71,7 +71,7 @@ target_link_libraries(${JUPYTERPLUGIN} PRIVATE cppzmq-static)
 target_link_libraries(${JUPYTERPLUGIN} PRIVATE pybind11::pybind11)    # Python headers + pybind11::headers, see https://pybind11.readthedocs.io/en/stable/compiling.html#advanced-interface-library-targets
 target_link_libraries(${JUPYTERPLUGIN} PRIVATE nlohmann_json::nlohmann_json)
 
-target_link_libraries(${JUPYTERPLUGIN} PRIVATE ${Python_LIBRARY})     # do not link against full path but just name
+target_link_libraries(${JUPYTERPLUGIN} PRIVATE Python::Python)
 target_link_libraries(${JUPYTERPLUGIN} PRIVATE pthread dl util m)     # see https://docs.python.org/3/extending/embedding.html
 
 # -----------------------------------------------------------------------------

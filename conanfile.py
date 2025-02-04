@@ -118,10 +118,6 @@ class JupyterPluginConan(ConanFile):
         # Set some build options
         tc.variables["MV_UNITY_BUILD"] = "ON"
         
-        if self.settings.os == "Linux":
-            tc.variables["CMAKE_PREFIX_PATH"] = f"{sys.prefix}/lib"
-            tc.variables["CMAKE_LIBRARY_PATH"] = f"{sys.prefix}/lib"
-
         # Use vcpkg-installed dependencies
         if self.settings.os == "Windows":
             tc.variables["MV_JUPYTER_USE_VCPKG"] = "ON"
