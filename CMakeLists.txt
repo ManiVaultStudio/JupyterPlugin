@@ -69,6 +69,22 @@ message(STATUS "*** Python libraries: ${Python_LIBRARIES}")
 message(STATUS "*** Python include dirs: ${Python_INCLUDE_DIRS}")
 message(STATUS "*** Python library dirs: ${Python_LIBRARY_DIRS}")
 
+find_package(UUID REQUIRED)
+
+if(UUID_FOUND)
+  message(STATUS "Found libuuid:")
+  message(STATUS "  Includes: ${UUID_INCLUDE_DIRS}")
+  message(STATUS "  Libraries: ${UUID_LIBRARIES}")  # Could be dynamic
+else()
+  message(FATAL_ERROR "libuuid not found.")
+endif()
+
+find_path(LIBUUID_INCLUDE_DIR uuid/uuid.h)
+find_library(LIBUUID_LIBRARY libuuid.a)
+
+message(STATUS "*** LIBUUID_INCLUDE_DIR: ${LIBUUID_INCLUDE_DIR}")
+message(STATUS "*** LIBUUID_LIBRARY: ${LIBUUID_LIBRARY}")
+
 include(dependencies)
 
 set_target_properties(xeus-static libzmq-static cppzmq xeus-zmq-static 

@@ -56,7 +56,7 @@ jobs:
         run: |
           sudo xcode-select -switch /Applications/Xcode_${{matrix.build-xcode-version}}.app
 
-      - name: Setup python
+      - name: Setup python version
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"

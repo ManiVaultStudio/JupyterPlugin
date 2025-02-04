@@ -2,7 +2,6 @@ from conans import ConanFile
 from conan.tools.cmake import CMakeDeps, CMake, CMakeToolchain
 from conans.tools import save, load, SystemPackageTool
 import os
-import sys
 import pathlib
 import subprocess
 from rules_support import PluginBranchInfo
