@@ -59,8 +59,8 @@ jobs:
       - uses: mamba-org/setup-micromamba@v2
         with:
           # the create command looks like this:
-          # `micromamba create -n test-env python=3.10`
-          environment-name: test-env
+          # `micromamba create -n build-env python=3.10`
+          environment-name: build-env
           create-args: >-
             python=3.11
             poetry=1.8.4
@@ -147,6 +147,8 @@ jobs:
           conan-password: ${{secrets.LKEB_UPLOAD_USER_PASSWORD}}
           conan-pem: ${{secrets.LKEB_UPLOAD_CERT_CHAIN}}
           rs_ssh_key: ${{ secrets.RULESSUPPORT_DEPLOY_KEY }}
+        run: |
+          micromamba activate build-env
 
       - name: Linux build
         if: startsWith(matrix.os, 'ubuntu')
@@ -162,7 +164,9 @@ jobs:
           conan-pem: ${{secrets.LKEB_UPLOAD_CERT_CHAIN}}
           conan-cc: gcc-${{matrix.build-cversion}}
           conan-cxx: g++-${{matrix.build-cversion}}
-  
+        run: |
+          micromamba activate build-env
+
       - name: Mac build
         if: startsWith(matrix.os, 'macos')
         uses: ManiVaultStudio/github-actions/conan_linuxmac_build@main
@@ -175,3 +179,5 @@ jobs:
           conan-user: ${{secrets.LKEB_UPLOAD_USER}}
           conan-password: ${{secrets.LKEB_UPLOAD_USER_PASSWORD}}
           conan-pem: ${{secrets.LKEB_UPLOAD_CERT_CHAIN}}
+        run: |
+          micromamba activate build-env
