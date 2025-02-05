@@ -16,6 +16,8 @@
 #include <QPluginLoader>
 #include <QProcess>
 #include <QProcessEnvironment>
+#include <QRegularExpression>
+#include <QRegularExpressionMatch>
 #include <QTemporaryDir>
 #include <QTemporaryFile>
 #include <QThread>
@@ -86,6 +88,28 @@ static QString extractVersionNumber(const QString &input) {
     }
 
     return QString();
+}
+
+static QString getPythonVersion(const QString& pythonInterpreterPath)
+{
+    QProcess process;
+    process.setProgram(pythonInterpreterPath);
+    process.setArguments({"--version"});
+    process.start();
+    
+    if (!process.waitForFinished(3000)) {  // Timeout after 3 seconds
+        qWarning() << "Failed to get Python version";
+        return "";
+    }
+
+    QString output = process.readAllStandardOutput().trimmed();
+    if (output.isEmpty()) {
+        output = process.readAllStandardError().trimmed();  // Some Python versions print to stderr
+    }
+
+    QString givenInterpreterVersion = extractVersionNumber(output);
+
+    return givenInterpreterVersion;
 }
 
 // =============================================================================
@@ -160,22 +184,7 @@ std::pair<bool, QString> JupyterLauncher::getPythonHomePath(const QString& pyInt
 
 bool JupyterLauncher::checkPythonVersion()
 {
-    QProcess process;
-    process.setProgram(getPythonInterpreterPath());
-    process.setArguments({"--version"});
-    process.start();
-    
-    if (!process.waitForFinished(3000)) {  // Timeout after 3 seconds
-        qWarning() << "Failed to get Python version";
-        return false;
-    }
-
-    QString output = process.readAllStandardOutput().trimmed();
-    if (output.isEmpty()) {
-        output = process.readAllStandardError().trimmed();  // Some Python versions print to stderr
-    }
-
-    QString givenInterpreterVersion = extractVersionNumber(output);
+    QString givenInterpreterVersion = getPythonVersion(getPythonInterpreterPath());
 
     bool match = _selectedInterpreterVersion == givenInterpreterVersion;
 
@@ -247,6 +256,31 @@ void JupyterLauncher::setPythonEnv()
     // the env variable must be set in the current process.
     // Setting it in the child QProcess does not work for reasons that are unclear.
     qputenv("MANIVAULT_JUPYTERPLUGIN_CONNECTION_FILE", _connectionFilePath.toUtf8());
+}
+
+std::pair<bool, QString> isCondaEnvironmentActive()
+{
+    if (!qEnvironmentVariableIsSet("CONDA_PREFIX"))
+        return {false, ""};
+
+    const QString condaPrefix = QString::fromLocal8Bit(qgetenv("CONDA_PREFIX"));
+    qDebug() << "CONDA_PREFIX exists: " << condaPrefix;
+
+    QString pythonInterpreterPath = "";
+
+    if(QOperatingSystemVersion::currentType() == QOperatingSystemVersion::Windows)
+        pythonInterpreterPath += "/Scripts/python.exe";
+    else // Linux/macOS
+        pythonInterpreterPath += "/bin/python3";
+
+    QString givenInterpreterVersion = getPythonVersion(pythonInterpreterPath);
+
+    if(givenInterpreterVersion.isEmpty())
+        return {false, ""};
+
+    qDebug() << "Python version:" << givenInterpreterVersion.trimmed();
+
+    return {true, givenInterpreterVersion.trimmed()};
 }
 
 // TBD merge the two runScript signatures
@@ -641,7 +675,7 @@ void JupyterLauncher::launchJupyterKernelAndNotebookImpl()
         return;
     }
 
-    QFileInfo pythonLibrary     = QFileInfo(sout);
+    QFileInfo pythonLibrary = QFileInfo(sout);
 
     setPythonEnv();
 
@@ -730,12 +764,35 @@ void JupyterLauncherFactory::initialize()
     // Position to the right of the status bar action
     _statusBarAction->setIndex(-1);
 
+    auto [isConda, pyVersion] = isCondaEnvironmentActive();
+
     qDebug() << "JupyterLauncherFactory::initialize";
 
-    QString  jupyterPluginFolder= QCoreApplication::applicationDirPath() + "/PluginDependencies/JupyterLauncher/bin/";
+    QString  jupyterPluginFolder = QCoreApplication::applicationDirPath() + "/PluginDependencies/JupyterLauncher/bin/";
     qDebug() << "jupyterPluginFolder:" << jupyterPluginFolder;
 
     QStringList pythonPlugins = findLibraryFiles(jupyterPluginFolder);
+
+    qDebug() << "pythonPlugins:" << pythonPlugins;
+
+    // On Linux/Mac in a conda environment we cannot switch between environments
+    if(QOperatingSystemVersion::currentType() != QOperatingSystemVersion::Windows && isConda)
+    {
+        QStringList filteredPythonPlugins;
+        for (const QString &path : pythonPlugins) {
+            QFileInfo fileInfo(path);
+            QString fileName = fileInfo.fileName(); // Extract file name
+
+            qDebug() << "fileName:" << fileName;
+            qDebug() << "pyVersion:" << pyVersion.remove(".");
+
+            if (fileName.contains(pyVersion.remove("."), Qt::CaseInsensitive))
+                filteredPythonPlugins.append(path);
+
+        }
+
+        pythonPlugins = filteredPythonPlugins;
+    }
 
     qDebug() << "pythonPlugins:" << pythonPlugins;
 
