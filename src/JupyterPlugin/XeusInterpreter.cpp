@@ -49,6 +49,7 @@ void XeusInterpreter::configure_impl()
     catch (const std::runtime_error& e)
     {
         std::cerr << "MVData modules failed to load: " << e.what() << std::endl;
+        throw std::runtime_error("Required python modules not available");
     }
     catch (...) 
     {
@@ -68,7 +69,9 @@ void XeusInterpreter::configure_impl()
             std::cerr << "   conda deactivate && conda activate " + environmentName + "\n";
             std::cerr << std::endl;
         }
+        throw std::runtime_error("Cannot start notebook");
     }
+
 }
 
 void XeusInterpreter::execute_request_impl(send_reply_callback cb,
