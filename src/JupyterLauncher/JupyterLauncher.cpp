@@ -277,8 +277,6 @@ std::pair<bool, QString> isCondaEnvironmentActive()
     if(givenInterpreterVersion.isEmpty())
         return {false, ""};
 
-    qDebug() << "Python version in environment:" << givenInterpreterVersion.trimmed();
-
     return {true, givenInterpreterVersion.trimmed()};
 }
 
