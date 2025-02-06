@@ -2,6 +2,7 @@
 
 #include "JupyterLauncher.h"
 
+#include <QOperatingSystemVersion>
 #include <QWidget>
 
 LauncherDialog::LauncherDialog(QWidget* parent, JupyterLauncher* launcherLauncher) :

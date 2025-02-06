@@ -3,6 +3,7 @@
 #include "JupyterLauncher.h"
 
 #include <QHBoxLayout>
+#include <QOperatingSystemVersion>
 #include <QStandardPaths>
 
 using namespace mv;
