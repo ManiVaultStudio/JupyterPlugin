@@ -21,6 +21,11 @@ GlobalSettingsAction::GlobalSettingsAction(QObject* parent, const plugin::Plugin
     _defaultPythonPathAction.setUseNativeFileDialog(true);
     _defaultPythonPathAction.getFilePathAction().setText("Python interpreter");
 
+    auto [isConda, pyVersion] = isCondaEnvironmentActive();
+
+    if(QOperatingSystemVersion::currentType() != QOperatingSystemVersion::Windows && isConda)
+        _defaultPythonPathAction.setDisabled(true);
+
     addAction(&_defaultPythonPathAction);
     addAction(&_doNotShowAgainButton);
 }
