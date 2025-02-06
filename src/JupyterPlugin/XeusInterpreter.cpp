@@ -62,11 +62,15 @@ void XeusInterpreter::configure_impl()
             std::string environmentName = QDir(condaPrefixPath.absoluteFilePath()).dirName().toStdString();
             std::string pyVersion = std::to_string(pythonVersionMajor) + "." + std::to_string(pythonVersionMinor);
 
-            std::cerr << "If you are using a conda/mamba environment, setting LD_PRELOAD before restarting the application might help:\n";
+            std::cerr << "If you are using a conda environment, setting LD_PRELOAD before restarting the application might help:\n";
             std::cerr << "   conda activate " + environmentName + "\n";
             std::cerr << "   CURRENT_PYTHON_PATH=$(find ${CONDA_PREFIX} -name libpython" + pyVersion + "* 2>/dev/null | head -n 1)\n";
             std::cerr << "   conda env config vars set LD_PRELOAD=$CURRENT_PYTHON_PATH --name " + environmentName + "\n";
             std::cerr << "   conda deactivate && conda activate " + environmentName + "\n";
+            std::cerr << "\n";
+            std::cerr << "If you are using a mamba environment, setting LD_PRELOAD has to be done slightly differently:\n";
+            std::cerr << '   echo -e "{\\"env_vars\\": {\\"LD_PRELOAD\\": \\"${CURRENT_PYTHON_PATH}\\"}}" >> ${CONDA_PREFIX}/conda-meta/state\n';
+            std::cerr << "   micromamba deactivate && micromamba activate " + environmentName + "\n";
             std::cerr << std::endl;
         }
         throw std::runtime_error("Cannot start notebook");
