@@ -10,7 +10,7 @@ git clone git@github.com:ManiVaultStudio/JupyterPlugin.git
 
 ## Building
 
-1. Setup a python 3.11 environment, 
+1. Setup a python environment (preferably 3.11+):
 - with [venv](https://docs.python.org/3.11/library/venv.html):
 ```bash
 cd YOUR_LOCAL_PATH\AppData\Local\Programs\Python\Python311
@@ -18,7 +18,7 @@ cd YOUR_LOCAL_PATH\AppData\Local\Programs\Python\Python311
 ```
 - with [conda](https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html) (also works with [micromamba](https://mamba.readthedocs.io/en/latest/user_guide/micromamba.html)):
 ```bash
-conda create -n ManiVaultPythonPluginBuild python=3.11
+conda create -n ManiVaultPythonPluginBuild python=3.11 -y
 ```
 2. Pass `Python_EXECUTABLE` and `ManiVaultDir` to cmake:
     - Define `ManiVault_DIR` pointing to the ManiVault cmake file folder, e.g. `YOUR_LOCAL_PATH/install/cmake/mv`
@@ -33,7 +33,12 @@ This projects builds two ManiVault plugins, a communication bridge `JupyterPlugi
 Additionally two python modules are build `mvstudio_data` and `mvstudio_kernel` that used two pass data between Python and ManiVault. 
 
 It is advisable to use a different environment during building these plugins and during runtime.
-Building the two python modules requires `poetry` which is automatically installed alongside other module dependencies in the `Python_EXECUTABLE` environment.
+Building the two python modules requires `poetry` which is automatically installed in the `Python_EXECUTABLE` environment (see `requirements.txt`).
+`mvstudio_data` and `mvstudio_kernel` have to be installed when first starting the JupyterPlugin in a python environment.
+ManiVault will ask you if this should be performed automatically.
+
+You may build multiple Jupyter Plugins, e.g. `JupyterPlugin311` and `JupyterPlugin312` for different python version. 
+The Jupyter Launcher will list all available plugins during runtime.
 
 ## Dependencies
 
@@ -100,7 +105,7 @@ This plugin kernel based on the Xeus kernel is compatible with Jupyter software.
 
 ## Kernel architecture
 
-The kernel relies on Jupyter-Xeus components to expose a python 3.11 environment. 
+The kernel relies on Jupyter-Xeus components to expose a python environment. 
 
 The architecture of the kernel is based on [Slicer/SlicerJupyter](https://github.com/Slicer/SlicerJupyter). The correspondence is shown in the table below.
 
