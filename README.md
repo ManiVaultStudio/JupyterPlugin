@@ -72,12 +72,26 @@ print(h)
 
 ### Running on Linux
 
+When using a non-system python interpreter, we have to make sure that the environment variable `LD_PRELOAD` contains the interpreter path that we intend to use in order to [prevent a conflict between the system libstdc++ and the python environment libstdc++](https://www.scivision.dev/conda-python-libstdc-/):
+
+#### Using a Conda environment
+
 Before starting the application (assuming your local environment uses Python 3.12):
 ```
-conda activate my_local_env
+conda activate your_local_env
 CURRENT_PYTHON_PATH=$(find ${CONDA_PREFIX} -name libpython3.12* 2>/dev/null | head -n 1)
-conda env config vars set LD_PRELOAD=$CURRENT_PYTHON_PATH --name my_local_env
-conda deactivate && conda activate my_local_env
+conda env config vars set LD_PRELOAD=$CURRENT_PYTHON_PATH --name your_local_env
+conda deactivate && conda activate your_local_env
+```
+
+#### Using a Mamba environment
+
+Before starting the application (assuming your local environment uses Python 3.12):
+```
+micromamba activate your_local_env
+echo -e "{\"env_vars\": {\"LD_PRELOAD\": \"${CURRENT_PYTHON_PATH}\"}}" >> ${CONDA_PREFIX}/conda-meta/state
+echo -e "LD_PRELOAD=\"${CURRENT_PYTHON_PATH}\"" >> ${CONDA_PREFIX}/conda-meta/state
+micromamba deactivate && micromamba activate your_local_env
 ```
 
 ## Use of Jupyter logo
