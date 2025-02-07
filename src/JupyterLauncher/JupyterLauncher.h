@@ -32,6 +32,8 @@ inline QStringList pythonInterpreterFilters()
     return pythonFilter;
 }
 
+std::pair<bool, QString> isCondaEnvironmentActive();
+
 /**
  * Transitive JupyterPlugin Loader
  *
@@ -66,9 +68,7 @@ public:
     }
 
     // The pyversion should correspond to a python major.minor version
-    // e.g.
-    // "3.11"
-    // "3.12"
+    // e.g. "3.11", "3.12"
     // There  must be a JupyterPlugin (a kernel provider) that matches the python version for this to work.
     void launchJupyterKernelAndNotebook(const QString& version);
 

@@ -10,7 +10,7 @@ git clone git@github.com:ManiVaultStudio/JupyterPlugin.git
 
 ## Building
 
-1. Setup a python 3.11 environment, 
+1. Setup a python environment (preferably 3.11+):
 - with [venv](https://docs.python.org/3.11/library/venv.html):
 ```bash
 cd YOUR_LOCAL_PATH\AppData\Local\Programs\Python\Python311
@@ -18,7 +18,7 @@ cd YOUR_LOCAL_PATH\AppData\Local\Programs\Python\Python311
 ```
 - with [conda](https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html) (also works with [micromamba](https://mamba.readthedocs.io/en/latest/user_guide/micromamba.html)):
 ```bash
-conda create -n ManiVaultPythonPluginBuild python=3.11
+conda create -n ManiVaultPythonPluginBuild python=3.11 -y
 ```
 2. Pass `Python_EXECUTABLE` and `ManiVaultDir` to cmake:
     - Define `ManiVault_DIR` pointing to the ManiVault cmake file folder, e.g. `YOUR_LOCAL_PATH/install/cmake/mv`
@@ -33,7 +33,12 @@ This projects builds two ManiVault plugins, a communication bridge `JupyterPlugi
 Additionally two python modules are build `mvstudio_data` and `mvstudio_kernel` that used two pass data between Python and ManiVault. 
 
 It is advisable to use a different environment during building these plugins and during runtime.
-Building the two python modules requires `poetry` which is automatically installed alongside other module dependencies in the `Python_EXECUTABLE` environment.
+Building the two python modules requires `poetry` which is automatically installed in the `Python_EXECUTABLE` environment (see `requirements.txt`).
+`mvstudio_data` and `mvstudio_kernel` have to be installed when first starting the JupyterPlugin in a python environment.
+ManiVault will ask you if this should be performed automatically.
+
+You may build multiple Jupyter Plugins, e.g. `JupyterPlugin311` and `JupyterPlugin312` for different python version. 
+The Jupyter Launcher will list all available plugins during runtime.
 
 ## Dependencies
 
@@ -72,12 +77,26 @@ print(h)
 
 ### Running on Linux
 
+When using a non-system python interpreter, we have to make sure that the environment variable `LD_PRELOAD` contains the interpreter path that we intend to use in order to [prevent a conflict between the system libstdc++ and the python environment libstdc++](https://www.scivision.dev/conda-python-libstdc-/):
+
+#### Using a Conda environment
+
 Before starting the application (assuming your local environment uses Python 3.12):
 ```
-conda activate my_local_env
+conda activate your_local_env
 CURRENT_PYTHON_PATH=$(find ${CONDA_PREFIX} -name libpython3.12* 2>/dev/null | head -n 1)
-conda env config vars set LD_PRELOAD=$CURRENT_PYTHON_PATH --name my_local_env
-conda deactivate && conda activate my_local_env
+conda env config vars set LD_PRELOAD=$CURRENT_PYTHON_PATH --name your_local_env
+conda deactivate && conda activate your_local_env
+```
+
+#### Using a Mamba environment
+
+Before starting the application (assuming your local environment uses Python 3.12):
+```
+micromamba activate your_local_env
+echo -e "{\"env_vars\": {\"LD_PRELOAD\": \"${CURRENT_PYTHON_PATH}\"}}" >> ${CONDA_PREFIX}/conda-meta/state
+echo -e "LD_PRELOAD=\"${CURRENT_PYTHON_PATH}\"" >> ${CONDA_PREFIX}/conda-meta/state
+micromamba deactivate && micromamba activate your_local_env
 ```
 
 ## Use of Jupyter logo
@@ -86,7 +105,7 @@ This plugin kernel based on the Xeus kernel is compatible with Jupyter software.
 
 ## Kernel architecture
 
-The kernel relies on Jupyter-Xeus components to expose a python 3.11 environment. 
+The kernel relies on Jupyter-Xeus components to expose a python environment. 
 
 The architecture of the kernel is based on [Slicer/SlicerJupyter](https://github.com/Slicer/SlicerJupyter). The correspondence is shown in the table below.
 

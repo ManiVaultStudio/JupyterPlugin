@@ -2,6 +2,7 @@
 
 #include "JupyterLauncher.h"
 
+#include <QOperatingSystemVersion>
 #include <QWidget>
 
 LauncherDialog::LauncherDialog(QWidget* parent, JupyterLauncher* launcherLauncher) :
@@ -21,6 +22,25 @@ LauncherDialog::LauncherDialog(QWidget* parent, JupyterLauncher* launcherLaunche
     _interpreterFileAction.setUseNativeFileDialog(true);
     _interpreterFileAction.getFilePathAction().setText("Python interpreter");
     _interpreterFileAction.setFilePath(_launcherLauncher->getPythonInterpreterPath());
+
+    auto [isConda, pyVersion] = isCondaEnvironmentActive();
+
+    auto interpreterFileActionWidget =_interpreterFileAction.createWidget(this);
+
+    if(QOperatingSystemVersion::currentType() != QOperatingSystemVersion::Windows && isConda)
+    {
+        const QString pythonInterpreterPath = QString::fromLocal8Bit(qgetenv("CONDA_PREFIX")) + "/bin/python3";
+
+        _launcherLauncher->setPythonInterpreterPath(pythonInterpreterPath);
+        _interpreterFileAction.setFilePath(pythonInterpreterPath);
+        _interpreterFileAction.setToolTip("On UNIX systems in a conda/mamba environment you cannot switch the python interpreter");
+        interpreterFileActionWidget->setDisabled(true);
+
+        qDebug() << "JupyterLauncher: Disable python environment selection";
+    }
+    else
+        _interpreterFileAction.setToolTip("Select the Python interpreter...");
+
 
     _doNotShowAgainButton.setToolTip("You can always change this\nback in the global settings.");
 
@@ -57,7 +77,7 @@ LauncherDialog::LauncherDialog(QWidget* parent, JupyterLauncher* launcherLaunche
     infoText->setText("Please provide a path to a python interpreter, i.e., the environment you want to use.");
 
     layout->addWidget(infoText, row, 0, 1, 5);
-    layout->addWidget(_interpreterFileAction.createWidget(this), ++row, 0, 1, 5);
+    layout->addWidget(interpreterFileActionWidget, ++row, 0, 1, 5);
     layout->addWidget(_moduleInfoGroupsWidget, ++row, 0, 1, 5);
     layout->addWidget(_okButton.createWidget(this), ++row, 4, 1, 1, Qt::AlignRight);
     layout->addWidget(_doNotShowAgainButton.createWidget(this), ++row, 4, 1, 1, Qt::AlignRight);
