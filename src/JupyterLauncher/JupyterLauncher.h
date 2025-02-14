@@ -34,6 +34,8 @@ inline QStringList pythonInterpreterFilters()
 
 std::pair<bool, QString> isCondaEnvironmentActive();
 
+QString getPythonVersion(const QString& pythonInterpreterPath);
+
 /**
  * Transitive JupyterPlugin Loader
  *

@@ -90,7 +90,7 @@ static QString extractVersionNumber(const QString &input) {
     return QString();
 }
 
-static QString getPythonVersion(const QString& pythonInterpreterPath)
+QString getPythonVersion(const QString& pythonInterpreterPath)
 {
     QProcess process;
     process.setProgram(pythonInterpreterPath);

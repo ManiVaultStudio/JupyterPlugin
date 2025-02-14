@@ -23,8 +23,7 @@ LauncherDialog::LauncherDialog(QWidget* parent, JupyterLauncher* launcherLaunche
     _interpreterFileAction.getFilePathAction().setText("Python interpreter");
     _interpreterFileAction.setFilePath(_launcherLauncher->getPythonInterpreterPath());
 
-    auto [isConda, pyVersion] = isCondaEnvironmentActive();
-
+    const auto [isConda, pyVersion] = isCondaEnvironmentActive();
     auto interpreterFileActionWidget =_interpreterFileAction.createWidget(this);
 
     if(QOperatingSystemVersion::currentType() != QOperatingSystemVersion::Windows && isConda)
@@ -36,11 +35,13 @@ LauncherDialog::LauncherDialog(QWidget* parent, JupyterLauncher* launcherLaunche
         _interpreterFileAction.setToolTip("On UNIX systems in a conda/mamba environment you cannot switch the python interpreter");
         interpreterFileActionWidget->setDisabled(true);
 
-        qDebug() << "JupyterLauncher: Disable python environment selection";
+        qDebug() << "JupyterLauncher: Disable python environment selection on UNIX systems in a conda/mamba environment";
     }
     else
+    {
         _interpreterFileAction.setToolTip("Select the Python interpreter...");
-
+        interpreterFileActionWidget->setEnabled(true);
+    }
 
     _doNotShowAgainButton.setToolTip("You can always change this\nback in the global settings.");
 

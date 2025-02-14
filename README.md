@@ -18,7 +18,7 @@ cd YOUR_LOCAL_PATH\AppData\Local\Programs\Python\Python311
 ```
 - with [conda](https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html) (also works with [micromamba](https://mamba.readthedocs.io/en/latest/user_guide/micromamba.html)):
 ```bash
-conda create -n ManiVaultPythonPluginBuild python=3.11 -y
+conda create -n ManiVaultPythonPluginBuild -y python=3.11 poetry=2.0
 ```
 2. Pass `Python_EXECUTABLE` and `ManiVaultDir` to cmake:
     - Define `ManiVault_DIR` pointing to the ManiVault cmake file folder, e.g. `YOUR_LOCAL_PATH/install/cmake/mv`
@@ -94,8 +94,8 @@ conda deactivate && conda activate your_local_env
 Before starting the application (assuming your local environment uses Python 3.12):
 ```
 micromamba activate your_local_env
+CURRENT_PYTHON_PATH=$(find ${CONDA_PREFIX} -name libpython3.12* 2>/dev/null | head -n 1)
 echo -e "{\"env_vars\": {\"LD_PRELOAD\": \"${CURRENT_PYTHON_PATH}\"}}" >> ${CONDA_PREFIX}/conda-meta/state
-echo -e "LD_PRELOAD=\"${CURRENT_PYTHON_PATH}\"" >> ${CONDA_PREFIX}/conda-meta/state
 micromamba deactivate && micromamba activate your_local_env
 ```
 
