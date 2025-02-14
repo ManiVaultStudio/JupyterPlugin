@@ -27,15 +27,21 @@ void XeusKernel::startKernel(const QString& connection_path, const QString& plug
     std::unique_ptr<XeusInterpreter>        interpreter = std::make_unique<XeusInterpreter>(pluginVersion);
     std::unique_ptr<xeus::xhistory_manager> history     = xeus::make_in_memory_history_manager();
 
-    m_kernel = std::make_unique<xeus::xkernel>(
-        /*config: noy used here */
-        /*user_name*/ xeus::get_user_name(),
-        /*context*/ std::move(context),
-        /*interpreter*/ std::move(interpreter),
-        /*server_builder*/ make_XeusServer,
-        /*history_manager*/ std::move(history),
-        /*logger*/ nullptr
-    );
+    try {
+        m_kernel = std::make_unique<xeus::xkernel>(
+            /*config: noy used here */
+            /*user_name*/ xeus::get_user_name(),
+            /*context*/ std::move(context),
+            /*interpreter*/ std::move(interpreter),
+            /*server_builder*/ make_XeusServer,
+            /*history_manager*/ std::move(history),
+            /*logger*/ nullptr
+        );
+    } catch (const std::exception& ex) {
+        qDebug() << "Cannot create xeus kernel: " << ex.what();
+        m_kernel.reset();
+        return;
+    }
 
     // Save the config that was generated
     const auto& set_config = m_kernel->get_config();

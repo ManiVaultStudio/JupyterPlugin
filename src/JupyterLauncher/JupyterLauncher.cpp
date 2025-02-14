@@ -264,7 +264,6 @@ std::pair<bool, QString> isCondaEnvironmentActive()
         return {false, ""};
 
     const QString condaPrefix = QString::fromLocal8Bit(qgetenv("CONDA_PREFIX"));
-    qDebug() << "CONDA_PREFIX exists: " << condaPrefix;
 
     QString pythonInterpreterPath = "";
 
@@ -277,8 +276,6 @@ std::pair<bool, QString> isCondaEnvironmentActive()
 
     if(givenInterpreterVersion.isEmpty())
         return {false, ""};
-
-    qDebug() << "Python version:" << givenInterpreterVersion.trimmed();
 
     return {true, givenInterpreterVersion.trimmed()};
 }
@@ -443,7 +440,7 @@ bool JupyterLauncher::optionallyInstallMVWheel()
     QMessageBox::StandardButton reply = QMessageBox::question(
         nullptr, 
         "Python modules missing", 
-        "mvstudio.kernel and mvstudio.data " + pluginVersion + " are needed in the python environment.\n Do you wish to install it now? ",
+        "mvstudio.kernel " + pluginVersion + " and mvstudio.data " + pluginVersion + " are required for passing data between Python and ManiVault.\nDo you wish to install them now?",
         QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes);
     if (reply == QMessageBox::Yes) {
         auto MVWheelPath = QCoreApplication::applicationDirPath() + "/PluginDependencies/JupyterLauncher/py/";

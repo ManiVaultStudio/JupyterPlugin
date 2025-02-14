@@ -3,6 +3,7 @@
 #include "JupyterLauncher.h"
 
 #include <QHBoxLayout>
+#include <QOperatingSystemVersion>
 #include <QStandardPaths>
 
 using namespace mv;
@@ -21,12 +22,11 @@ GlobalSettingsAction::GlobalSettingsAction(QObject* parent, const plugin::Plugin
     _defaultPythonPathAction.setUseNativeFileDialog(true);
     _defaultPythonPathAction.getFilePathAction().setText("Python interpreter");
 
-    addAction(&_defaultPythonPathAction);
-    addAction(&_doNotShowAgainButton);
-
     const auto [isConda, pyVersion] = isCondaEnvironmentActive();
 
     if(QOperatingSystemVersion::currentType() != QOperatingSystemVersion::Windows && isConda)
-        _defaultPythonPathAction.setEnabled(false);
+        _defaultPythonPathAction.setDisabled(true);
 
+    addAction(&_defaultPythonPathAction);
+    addAction(&_doNotShowAgainButton);
 }
