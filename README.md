@@ -18,7 +18,7 @@ cd YOUR_LOCAL_PATH\AppData\Local\Programs\Python\Python311
 ```
 - with [conda](https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html) (also works with [micromamba](https://mamba.readthedocs.io/en/latest/user_guide/micromamba.html)):
 ```bash
-conda create -n ManiVaultPythonPluginBuild python=3.11
+conda create -n ManiVaultPythonPluginBuild -y python=3.11 poetry=2.0
 ```
 2. Pass `Python_EXECUTABLE` and `ManiVaultDir` to cmake:
     - Define `ManiVault_DIR` pointing to the ManiVault cmake file folder, e.g. `YOUR_LOCAL_PATH/install/cmake/mv`

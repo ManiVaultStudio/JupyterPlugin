@@ -22,6 +22,17 @@ LauncherDialog::LauncherDialog(QWidget* parent, JupyterLauncher* launcherLaunche
     _interpreterFileAction.getFilePathAction().setText("Python interpreter");
     _interpreterFileAction.setFilePath(_launcherLauncher->getPythonInterpreterPath());
 
+    const auto [isConda, pyVersion] = isCondaEnvironmentActive();
+
+    if(QOperatingSystemVersion::currentType() != QOperatingSystemVersion::Windows && isConda)
+    {
+        const QString pythonInterpreterPath = QString::fromLocal8Bit(qgetenv("CONDA_PREFIX")) + "/bin/python3";
+
+        _launcherLauncher->setPythonInterpreterPath(pythonInterpreterPath);
+        _interpreterFileAction.setFilePath(_launcherLauncher->getPythonInterpreterPath());
+        _interpreterFileAction.setEnabled(false);
+    }
+
     _doNotShowAgainButton.setToolTip("You can always change this\nback in the global settings.");
 
     _moduleInfoText.setDefaultWidgetFlags(mv::gui::StringAction::WidgetFlag::Label);
