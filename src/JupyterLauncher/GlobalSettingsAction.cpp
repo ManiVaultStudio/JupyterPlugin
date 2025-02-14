@@ -25,7 +25,11 @@ GlobalSettingsAction::GlobalSettingsAction(QObject* parent, const plugin::Plugin
     const auto [isConda, pyVersion] = isCondaEnvironmentActive();
 
     if(QOperatingSystemVersion::currentType() != QOperatingSystemVersion::Windows && isConda)
+    {
         _defaultPythonPathAction.setDisabled(true);
+        _defaultPythonPathAction.getFilePathAction().setDisabled(true);
+        _defaultPythonPathAction.getPickAction().setDisabled(true);
+    }
 
     addAction(&_defaultPythonPathAction);
     addAction(&_doNotShowAgainButton);
