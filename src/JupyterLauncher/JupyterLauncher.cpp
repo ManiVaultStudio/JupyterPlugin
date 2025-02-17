@@ -118,13 +118,19 @@ QString getPythonVersion(const QString& pythonInterpreterPath)
 
 JupyterLauncher::JupyterLauncher(const PluginFactory* factory) :
     ViewPlugin(factory),
-    _connectionFilePath(QDir::toNativeSeparators(QCoreApplication::applicationDirPath() + "/PluginDependencies/JupyterLauncher/py/connection.json")),
     _selectedInterpreterVersion(""),
     _jupyterPluginFolder(QCoreApplication::applicationDirPath() + "/PluginDependencies/JupyterLauncher/bin/"),
     _serverProcess(this),
     _launcherDialog(std::make_unique<LauncherDialog>(nullptr, this))
 {
     setObjectName("Jupyter kernel plugin launcher");
+
+    QDir temporaryApplicationDirectory = Application::current()->getTemporaryDir().path();
+    QDir temporaryPluginDirectory = QDir(temporaryApplicationDirectory.absolutePath()  + QDir::separator() + "JupyterLauncher");
+    if (!temporaryPluginDirectory.exists())
+        temporaryPluginDirectory.mkpath(".");
+
+    _connectionFilePath = temporaryPluginDirectory.absolutePath() + QDir::separator() +  "connection.json";
 
     QFile jsonFile(_connectionFilePath);
     if (jsonFile.open(QIODevice::WriteOnly))
