@@ -2,10 +2,6 @@
 # Wrapper around fetch content
 include(get_cpm)
 
-# re-applying patches is problematic without CPM_SOURCE_CACHE
-# see https://github.com/cpm-cmake/CPM.cmake/issues/577
-set(CPM_SOURCE_CACHE ${CMAKE_CURRENT_BINARY_DIR}/.cpm-cache)
-
 if (WIN32)
     if(${MV_JUPYTER_USE_VCPKG})
         find_package (OpenSSL REQUIRED)
