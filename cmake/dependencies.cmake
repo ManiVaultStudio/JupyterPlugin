@@ -84,14 +84,15 @@ CPMAddPackage(
 
 install(TARGETS nlohmann_json EXPORT xeus-targets)
 
+# preempt some complaints from pybind
+set(PYTHON_EXECUTABLE "${Python_EXECUTABLE}")
+
 CPMAddPackage(
     NAME pybind
     GITHUB_REPOSITORY pybind/pybind11
     GIT_TAG ${pybind11_VERSION}
     EXCLUDE_FROM_ALL YES
-    OPTIONS "PYBIND11_FINDPYTHON OFF"
 )
-
 
 include("${pybind_SOURCE_DIR}/tools/pybind11Common.cmake")
 
