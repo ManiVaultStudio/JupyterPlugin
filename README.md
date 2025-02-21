@@ -27,7 +27,9 @@ conda create -n ManiVaultPythonPluginBuild -y python=3.11 poetry=2.0
         - Conda: `YOUR_LOCAL_PATH/AppData/Local/miniconda3/envs/ManiVaultPythonPluginBuild/python.exe` (Windows), `YOUR_LOCAL_PATH/AppData/Local/miniconda3/envs/ManiVaultPythonPluginBuild/bin/python` (Linux)
         - On Linux you might need to activate the environment for CMake to find the correct Python.
 
-3. (On Windows) Use [vcpkg](https://github.com/microsoft/vcpkg) and define `DCMAKE_TOOLCHAIN_FILE="[YOURPATHTO]/vcpkg/scripts/buildsystems/vcpkg.cmake"` to install the OpenSSL dependency
+    (Alternatively, define `Python_ROOT_DIR`, the root directory of a Python installation.)
+
+3. (On Windows) Use [vcpkg](https://github.com/microsoft/vcpkg): define `DCMAKE_TOOLCHAIN_FILE="[YOURPATHTO]/vcpkg/scripts/buildsystems/vcpkg.cmake"` to install the OpenSSL dependency. You'll also need to set `-DMV_JUPYTER_USE_VCPKG=ON`.
 
 This projects builds two ManiVault plugins, a communication bridge `JupyterPlugin311` between the ManiVault application and Python as well as a `JupyterLauncher` plugin, which is used to launch a Python kernel and Jupyter notebook.
 Additionally two python modules are build `mvstudio_data` and `mvstudio_kernel` that used two pass data between Python and ManiVault. 

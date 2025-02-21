@@ -62,6 +62,7 @@ find_package(ManiVault COMPONENTS Core PointData ClusterData ImageData CONFIG QU
 find_package(Python COMPONENTS Development Interpreter REQUIRED)
 
 message(STATUS "*** Python version: ${Python_VERSION}")
+message(STATUS "*** Python interpreter: ${Python_EXECUTABLE}")
 message(STATUS "*** Python libraries: ${Python_LIBRARIES}")
 message(STATUS "*** Python include dirs: ${Python_INCLUDE_DIRS}")
 message(STATUS "*** Python library dirs: ${Python_LIBRARY_DIRS}")
