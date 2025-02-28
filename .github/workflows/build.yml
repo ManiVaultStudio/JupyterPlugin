@@ -97,6 +97,19 @@ jobs:
           echo "VCPKG_EXE=${{ github.workspace }}/vcpkg/vcpkg" >> $GITHUB_ENV
           echo "VCPKG_LIBRARY_LINKAGE=dynamic" >> $GITHUB_ENV
 
+      - name: NuGet dependencies (Linux)
+        if: startsWith(matrix.os, 'ubuntu')
+        shell: bash
+        run:  |
+          sudo apt update && sudo apt install -y mono-complete
+
+      - name: NuGet dependencies (MacOS)
+        if: startsWith(matrix.os, 'macos') && !endsWith(matrix.os, '13')
+        shell: bash
+        run:  |
+          brew update && brew upgrade
+          brew install mono
+
       # Use cached vcpkg packages if possible
       - name: Add NuGet sources (Windows)
         if: startsWith(matrix.os, 'windows')
