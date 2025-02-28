@@ -9,6 +9,8 @@
 
 #include <QByteArray>
 #include <QDebug>
+#include <QDir>
+#include <QDirIterator>
 #include <QLibrary>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
@@ -18,6 +20,7 @@
 #include <QProcessEnvironment>
 #include <QRegularExpression>
 #include <QRegularExpressionMatch>
+#include <QStringList>
 #include <QTemporaryDir>
 #include <QTemporaryFile>
 #include <QThread>
