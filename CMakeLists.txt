@@ -71,7 +71,7 @@ include(dependencies)
 
 set_target_properties(xeus-static libzmq-static cppzmq xeus-zmq-static 
     PROPERTIES 
-    FOLDER JupyterPluginDependencies
+    FOLDER AnalysisPlugins/Dependencies/JupyterPluginDependencies
 )
 
 # -----------------------------------------------------------------------------
