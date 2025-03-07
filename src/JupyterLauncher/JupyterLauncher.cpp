@@ -736,6 +736,7 @@ JupyterLauncherFactory::JupyterLauncherFactory() :
     _statusBarPopupGroupAction(this, "Popup Group"),
     _statusBarPopupAction(this, "Popup")
 {
+    setIcon(QIcon(":/images/logo.svg"));
     setMaximumNumberOfInstances(1);
 }
 
@@ -826,11 +827,6 @@ void JupyterLauncherFactory::initialize()
 
     // Assign the status bar action so that it will appear on the main window status bar
     setStatusBarAction(_statusBarAction);
-}
-
-QIcon JupyterLauncherFactory::getIcon(const QColor& color /*= Qt::black*/) const
-{
-    return QIcon(":/images/logo.svg");
 }
 
 mv::DataTypes JupyterLauncherFactory::supportedDataTypes() const

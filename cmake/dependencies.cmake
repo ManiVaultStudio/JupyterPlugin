@@ -92,6 +92,7 @@ CPMAddPackage(
     GITHUB_REPOSITORY pybind/pybind11
     GIT_TAG ${pybind11_VERSION}
     EXCLUDE_FROM_ALL YES
+    OPTIONS "PYBIND11_FINDPYTHON ON"
 )
 
 include("${pybind_SOURCE_DIR}/tools/pybind11Common.cmake")

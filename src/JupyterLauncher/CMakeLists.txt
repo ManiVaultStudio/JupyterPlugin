@@ -42,7 +42,10 @@ target_include_directories(${JUPYTERLAUNCHER} PRIVATE "${ManiVault_INCLUDE_DIR}"
 # -----------------------------------------------------------------------------
 target_compile_features(${JUPYTERLAUNCHER} PRIVATE cxx_std_20)
 
-set_target_properties(${JUPYTERLAUNCHER} PROPERTIES FOLDER JupyterPlugin)
+set_target_properties(${JUPYTERLAUNCHER} 
+    PROPERTIES 
+    FOLDER AnalysisPlugins
+)
 
 if(UNIX)
     set_target_properties(${JUPYTERLAUNCHER} PROPERTIES POSITION_INDEPENDENT_CODE ON)
