@@ -390,7 +390,7 @@ bool JupyterLauncher::runPythonCommand(const QStringList& params)
         qWarning() << "failed start";
         succ = false;
     }
-    if (!pythonProcess.waitForFinished(/* int msecs */ 60'000 )) {
+    if (!pythonProcess.waitForFinished(/* int msecs */ 180'000 )) { // three minutes, as dependency installation might take its time...
         qWarning() << "failed timeout";
         succ = false;
     }
