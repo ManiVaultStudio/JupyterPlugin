@@ -137,6 +137,8 @@ class JupyterPluginConan(ConanFile):
                 tc.variables["VCPKG_ROOT"]              = vcpkg_dir.as_posix()
 
                 tc.variables["CMAKE_PROJECT_INCLUDE"] = vcpkg_tc.as_posix()
+        if self.settings.os == "Macos":
+            tc.variables["CMAKE_POLICY_VERSION_MINIMUM"] = 3.5
 
         tc.generate()
 
