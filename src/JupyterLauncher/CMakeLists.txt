@@ -71,6 +71,7 @@ add_custom_command(TARGET ${JUPYTERLAUNCHER} POST_BUILD
     COMMAND "${CMAKE_COMMAND}"
         --install ${CMAKE_CURRENT_BINARY_DIR}
         --config $<CONFIGURATION>
+        --component PLUGINS
         --prefix ${ManiVault_INSTALL_DIR}/$<CONFIGURATION>
 )
 
