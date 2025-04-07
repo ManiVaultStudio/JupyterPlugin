@@ -33,12 +33,12 @@ set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 set(CMAKE_VISIBILITY_INLINES_HIDDEN ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-if(MSVC)
+if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /DWIN32 /EHsc /MP /permissive- /Zc:__cplusplus")
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MDd")
     set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} /MD")
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MD")
-endif(MSVC)
+endif()
 
 include(CMakePackageConfigHelpers)
 
@@ -68,11 +68,6 @@ message(STATUS "*** Python include dirs: ${Python_INCLUDE_DIRS}")
 message(STATUS "*** Python library dirs: ${Python_LIBRARY_DIRS}")
 
 include(dependencies)
-
-set_target_properties(xeus-static libzmq-static cppzmq xeus-zmq-static 
-    PROPERTIES 
-    FOLDER AnalysisPlugins/Dependencies/JupyterPluginDependencies
-)
 
 # -----------------------------------------------------------------------------
 # Plugins

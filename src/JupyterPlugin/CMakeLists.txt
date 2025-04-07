@@ -42,10 +42,13 @@ target_include_directories(${JUPYTERPLUGIN} PRIVATE "${ManiVault_INCLUDE_DIR}")
 # -----------------------------------------------------------------------------
 # Target properties
 # -----------------------------------------------------------------------------
-# Request C++17
+# Request C++20
 target_compile_features(${JUPYTERPLUGIN} PRIVATE cxx_std_20)
 
-set_target_properties(${JUPYTERPLUGIN} PROPERTIES FOLDER JupyterPlugin)
+set_target_properties(${JUPYTERPLUGIN} 
+    PROPERTIES 
+    FOLDER AnalysisPlugins
+)
 
 if(UNIX)
     set_target_properties(${JUPYTERPLUGIN} PROPERTIES POSITION_INDEPENDENT_CODE ON)
@@ -128,7 +131,7 @@ target_sources(mvstudio_data PRIVATE
 
 add_dependencies(${JUPYTERPLUGIN} mvstudio_kernel mvstudio_data)
 
-set_target_properties(${JUPYTERPLUGIN}  mvstudio_kernel mvstudio_data
+set_target_properties(mvstudio_kernel mvstudio_data xeus-static xeus-zmq-static xeus-python-static libzmq-static
     PROPERTIES 
     FOLDER AnalysisPlugins/Dependencies/JupyterPluginDependencies
 )
@@ -168,7 +171,7 @@ add_custom_command(TARGET ${JUPYTERPLUGIN} POST_BUILD
 # Miscellaneous
 # -----------------------------------------------------------------------------
 # Automatically set the debug environment (command + working directory) for MSVC
-if(MSVC)
+if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     set_property(TARGET ${JUPYTERPLUGIN} PROPERTY VS_DEBUGGER_WORKING_DIRECTORY $<IF:$<CONFIG:DEBUG>,${ManiVault_INSTALL_DIR}/Debug,$<IF:$<CONFIG:RELWITHDEBINFO>,${ManiVault_INSTALL_DIR}/RelWithDebInfo,${ManiVault_INSTALL_DIR}/Release>>)
     set_property(TARGET ${JUPYTERPLUGIN} PROPERTY VS_DEBUGGER_COMMAND $<IF:$<CONFIG:DEBUG>,"${ManiVault_INSTALL_DIR}/Debug/ManiVault Studio.exe",$<IF:$<CONFIG:RELWITHDEBINFO>,"${ManiVault_INSTALL_DIR}/RelWithDebInfo/ManiVault Studio.exe","${ManiVault_INSTALL_DIR}/Release/ManiVault Studio.exe">>)
 endif()
