@@ -42,10 +42,13 @@ target_include_directories(${JUPYTERPLUGIN} PRIVATE "${ManiVault_INCLUDE_DIR}")
 # -----------------------------------------------------------------------------
 # Target properties
 # -----------------------------------------------------------------------------
-# Request C++17
+# Request C++20
 target_compile_features(${JUPYTERPLUGIN} PRIVATE cxx_std_20)
 
-set_target_properties(${JUPYTERPLUGIN} PROPERTIES FOLDER JupyterPlugin)
+set_target_properties(${JUPYTERPLUGIN} 
+    PROPERTIES 
+    FOLDER AnalysisPlugins
+)
 
 if(UNIX)
     set_target_properties(${JUPYTERPLUGIN} PROPERTIES POSITION_INDEPENDENT_CODE ON)
@@ -128,7 +131,7 @@ target_sources(mvstudio_data PRIVATE
 
 add_dependencies(${JUPYTERPLUGIN} mvstudio_kernel mvstudio_data)
 
-set_target_properties(${JUPYTERPLUGIN}  mvstudio_kernel mvstudio_data
+set_target_properties(mvstudio_kernel mvstudio_data xeus-static xeus-zmq-static xeus-python-static libzmq-static
     PROPERTIES 
     FOLDER AnalysisPlugins/Dependencies/JupyterPluginDependencies
 )
@@ -136,10 +139,10 @@ set_target_properties(${JUPYTERPLUGIN}  mvstudio_kernel mvstudio_data
 # -----------------------------------------------------------------------------
 # Target installation
 # -----------------------------------------------------------------------------
-# Install the shared plugin libary to the "Plugins" folder in the ManiVault install directory
+# Install the shared libary to the "PluginDependencies" folder in the ManiVault install directory
 install(TARGETS ${JUPYTERPLUGIN}
-    RUNTIME DESTINATION PluginDependencies/JupyterLauncher/bin COMPONENT PLUGINS # Windows .dll
-    LIBRARY DESTINATION PluginDependencies/JupyterLauncher/bin COMPONENT PLUGINS # Linux/Mac .so
+    RUNTIME DESTINATION PluginDependencies/JupyterLauncher/bin COMPONENT PLUGIN # Windows .dll
+    LIBRARY DESTINATION PluginDependencies/JupyterLauncher/bin COMPONENT PLUGIN # Linux/Mac .so
 )
 
 install(FILES 
@@ -147,28 +150,29 @@ install(FILES
     ${PROJECT_SOURCE_DIR}/src/mvstudio_data/dist/mvstudio_data-${PROJECT_VERSION}-py3-none-any.whl 
     ${PROJECT_SOURCE_DIR}/src/mvstudio_kernel/dist/mvstudio_kernel-${PROJECT_VERSION}-py3-none-any.whl 
     DESTINATION PluginDependencies/JupyterLauncher/py 
-    COMPONENT PLUGINS
+    COMPONENT PLUGIN
 )
 
 install(FILES 
     ${PROJECT_SOURCE_DIR}/examples/demo_data_loading.ipynb
     ${PROJECT_SOURCE_DIR}/examples/requirements.txt
     DESTINATION examples/JupyterPlugin 
-    COMPONENT PLUGINS
+    COMPONENT PLUGIN
 )
 
 add_custom_command(TARGET ${JUPYTERPLUGIN} POST_BUILD
     COMMAND "${CMAKE_COMMAND}"
-        --install ${CMAKE_CURRENT_BINARY_DIR}
-        --config $<CONFIGURATION>
-        --prefix ${ManiVault_INSTALL_DIR}/$<CONFIGURATION>/
+    --install ${CMAKE_CURRENT_BINARY_DIR}
+    --config $<CONFIGURATION>
+    --component PLUGIN
+    --prefix ${ManiVault_INSTALL_DIR}/$<CONFIGURATION>
 )
 
 # -----------------------------------------------------------------------------
 # Miscellaneous
 # -----------------------------------------------------------------------------
 # Automatically set the debug environment (command + working directory) for MSVC
-if(MSVC)
+if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     set_property(TARGET ${JUPYTERPLUGIN} PROPERTY VS_DEBUGGER_WORKING_DIRECTORY $<IF:$<CONFIG:DEBUG>,${ManiVault_INSTALL_DIR}/Debug,$<IF:$<CONFIG:RELWITHDEBINFO>,${ManiVault_INSTALL_DIR}/RelWithDebInfo,${ManiVault_INSTALL_DIR}/Release>>)
     set_property(TARGET ${JUPYTERPLUGIN} PROPERTY VS_DEBUGGER_COMMAND $<IF:$<CONFIG:DEBUG>,"${ManiVault_INSTALL_DIR}/Debug/ManiVault Studio.exe",$<IF:$<CONFIG:RELWITHDEBINFO>,"${ManiVault_INSTALL_DIR}/RelWithDebInfo/ManiVault Studio.exe","${ManiVault_INSTALL_DIR}/Release/ManiVault Studio.exe">>)
 endif()

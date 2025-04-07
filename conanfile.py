@@ -112,6 +112,9 @@ class JupyterPluginConan(ConanFile):
         # Set some build options
         tc.variables["MV_UNITY_BUILD"] = "ON"
         
+        # libzmq still sets a cmake version <3.0 
+        tc.variables["CMAKE_POLICY_VERSION_MINIMUM"] = 3.5
+
         # Use vcpkg-installed dependencies
         if self.settings.os == "Windows":
             tc.variables["MV_JUPYTER_USE_VCPKG"] = "ON"
