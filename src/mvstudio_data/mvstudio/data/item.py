@@ -30,8 +30,8 @@ class Item:
         guidTuples = mvstudio_core.get_item_children(self.datasetId)
         child_id = 1
         for childGuidTuple in guidTuples:
-            item_name = mvstudio_core.get_item_name(self.datasetId)
-            self._children.append(makeItem(self._hierarchy, childGuidTuple, item_name, self._hierarchy_id + [child_id]))
+            child_name = mvstudio_core.get_item_name(childGuidTuple[1])
+            self._children.append(makeItem(self._hierarchy, childGuidTuple, child_name, self._hierarchy_id + [child_id]))
             child_id += 1
 
     def _setType(self):
