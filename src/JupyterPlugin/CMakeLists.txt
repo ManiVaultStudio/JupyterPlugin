@@ -139,10 +139,10 @@ set_target_properties(mvstudio_kernel mvstudio_data xeus-static xeus-zmq-static 
 # -----------------------------------------------------------------------------
 # Target installation
 # -----------------------------------------------------------------------------
-# Install the shared plugin libary to the "Plugins" folder in the ManiVault install directory
+# Install the shared libary to the "PluginDependencies" folder in the ManiVault install directory
 install(TARGETS ${JUPYTERPLUGIN}
-    RUNTIME DESTINATION PluginDependencies/JupyterLauncher/bin COMPONENT PLUGINS # Windows .dll
-    LIBRARY DESTINATION PluginDependencies/JupyterLauncher/bin COMPONENT PLUGINS # Linux/Mac .so
+    RUNTIME DESTINATION PluginDependencies/JupyterLauncher/bin COMPONENT PLUGIN # Windows .dll
+    LIBRARY DESTINATION PluginDependencies/JupyterLauncher/bin COMPONENT PLUGIN # Linux/Mac .so
 )
 
 install(FILES 
@@ -150,22 +150,22 @@ install(FILES
     ${PROJECT_SOURCE_DIR}/src/mvstudio_data/dist/mvstudio_data-${PROJECT_VERSION}-py3-none-any.whl 
     ${PROJECT_SOURCE_DIR}/src/mvstudio_kernel/dist/mvstudio_kernel-${PROJECT_VERSION}-py3-none-any.whl 
     DESTINATION PluginDependencies/JupyterLauncher/py 
-    COMPONENT PLUGINS
+    COMPONENT PLUGIN
 )
 
 install(FILES 
     ${PROJECT_SOURCE_DIR}/examples/demo_data_loading.ipynb
     ${PROJECT_SOURCE_DIR}/examples/requirements.txt
     DESTINATION examples/JupyterPlugin 
-    COMPONENT PLUGINS
+    COMPONENT PLUGIN
 )
 
 add_custom_command(TARGET ${JUPYTERPLUGIN} POST_BUILD
     COMMAND "${CMAKE_COMMAND}"
-        --install ${CMAKE_CURRENT_BINARY_DIR}
-        --config $<CONFIGURATION>
-        --component PLUGINS
-        --prefix ${ManiVault_INSTALL_DIR}/$<CONFIGURATION>/
+    --install ${CMAKE_CURRENT_BINARY_DIR}
+    --config $<CONFIGURATION>
+    --component PLUGIN
+    --prefix ${ManiVault_INSTALL_DIR}/$<CONFIGURATION>
 )
 
 # -----------------------------------------------------------------------------

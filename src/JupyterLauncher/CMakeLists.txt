@@ -63,15 +63,15 @@ target_link_libraries(${JUPYTERLAUNCHER} PRIVATE ManiVault::Core)
 # Target installation
 # -----------------------------------------------------------------------------
 install(TARGETS ${JUPYTERLAUNCHER}
-    RUNTIME DESTINATION Plugins COMPONENT PLUGINS # Windows .dll
-    LIBRARY DESTINATION Plugins COMPONENT PLUGINS # Linux/Mac .so
+    RUNTIME DESTINATION Plugins COMPONENT PLUGIN # Windows .dll
+    LIBRARY DESTINATION Plugins COMPONENT PLUGIN # Linux/Mac .so
 )
 
 add_custom_command(TARGET ${JUPYTERLAUNCHER} POST_BUILD
     COMMAND "${CMAKE_COMMAND}"
         --install ${CMAKE_CURRENT_BINARY_DIR}
         --config $<CONFIGURATION>
-        --component PLUGINS
+        --component PLUGIN
         --prefix ${ManiVault_INSTALL_DIR}/$<CONFIGURATION>
 )
 
