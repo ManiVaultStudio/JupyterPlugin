@@ -633,6 +633,77 @@ static std::uint64_t get_item_rawsize(const std::string& datasetGuid)
     return item->getDataset()->getRawDataSize();
 }
 
+static std::vector<std::string> get_item_properties(const std::string& datasetGuid)
+{
+    auto item = mv::dataHierarchy().getItem(QString(datasetGuid.c_str()));
+    auto dataset = item->getDataset<Points>();
+    QStringList propertyNamesQt = dataset->propertyNames();
+    std::vector<std::string> propertyNames;
+    propertyNames.resize(propertyNamesQt.size());
+
+    for (const auto& propertyName : propertyNamesQt) {
+        propertyNames.push_back(propertyName.toStdString());
+    }
+
+    return propertyNames;
+}
+
+static py::object get_item_property(const std::string& datasetGuid, const std::string& propertyName)
+{
+    auto item = mv::dataHierarchy().getItem(QString(datasetGuid.c_str()));
+    auto dataset = item->getDataset<Points>();
+
+    auto propertyNameQt = QString(propertyName.c_str());
+
+    const auto property = dataset->getProperty(propertyNameQt);
+
+    if (property.isNull()) {
+        qDebug() << "Dataset " << dataset->getGuiName() << " does not have property " << propertyNameQt;
+        return py::none();
+    }
+
+    auto variant_to_pyobject = [](const QVariant& var) -> py::object {
+        switch (var.typeId()) {
+        case QMetaType::Int:
+            return py::int_(var.toInt());
+        case QMetaType::UInt:
+            return py::int_(var.toUInt());
+        case QMetaType::LongLong:
+            return py::int_(var.toLongLong());
+        case QMetaType::ULongLong:
+            return py::int_(var.toULongLong());
+        case QMetaType::Float:
+            return py::float_(var.toFloat());
+        case QMetaType::Double:
+            return py::float_(var.toDouble());
+        case QMetaType::Bool:
+            return py::bool_(var.toBool());
+        case QMetaType::Char:
+            return py::str(var.toChar().decomposition().toStdString());
+        case QMetaType::QString:
+            return py::str(var.toString().toStdString());
+        default:
+            return py::none();
+        }
+        };
+
+    py::object res;
+    py::list pyList;
+
+    if (property.typeId() == QMetaType::QVariantList) {
+        const QVariantList list = property.toList();
+        for (const QVariant& item : list) {
+            pyList.append(variant_to_pyobject(item));
+        }
+        res = pyList;
+    }
+    else {
+        res = variant_to_pyobject(property);
+    }
+
+    return res;
+}
+
 // Get all children
 // Returns a list of tuples
 // Each tuple contains:
@@ -765,6 +836,8 @@ py::module get_MVData_module()
     MVData_module.def("get_item_numdimensions", get_item_numdimensions, py::arg("datasetGuid") = py::str());
     MVData_module.def("get_item_numpoints", get_item_numpoints, py::arg("datasetGuid") = py::str());
     MVData_module.def("get_item_children", get_item_children, py::arg("datasetGuid") = py::str());
+    MVData_module.def("get_item_properties", get_item_properties, py::arg("datasetGuid") = py::str());
+    MVData_module.def("get_item_property", get_item_property, py::arg("datasetGuid") = py::str(), py::arg("propertyName") = py::str());
     MVData_module.def("get_data_type", get_data_type, py::arg("datasetGuid") = py::str());
     MVData_module.def("find_image_dataset", find_image_dataset, py::arg("datasetGuid") = py::str());
     MVData_module.def("get_image_dimensions", get_image_dimensions, py::arg("datasetGuid") = py::str());

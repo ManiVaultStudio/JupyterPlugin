@@ -1,5 +1,5 @@
 import mvstudio_core
-from typing import Generator, Self
+from typing import Generator, Self, Any
 import numpy as np
 import numpy.typing as npt
 from enum import Enum
@@ -173,6 +173,15 @@ class Item:
     def numpoints(self) -> int:
         """Return the numper of points"""
         return mvstudio_core.get_item_numpoints(self.datasetId)
+
+    @property
+    def properties(self) -> list[str]:
+        """Return the names of available properties"""
+        return mvstudio_core.get_item_properties(self.datasetId)
+
+    def getProperty(self, name : str) -> Any:
+        """Return the property with a given name"""
+        return mvstudio_core.get_item_property(self.datasetId, name)
 
     def __str__(self) -> str:
         children_strs = [f'{"  "*(len(self._hierarchy_id)-1)}Item id: {self._hierarchy_id}, dataset id: {self.datasetId}, display name: {self.name}, type: {self.type}']
