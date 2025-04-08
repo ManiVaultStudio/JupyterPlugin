@@ -1,3 +1,5 @@
 matplotlib~=3.9.0
 scikit-image~=0.24.0
 scikit-learn~=1.5.2
+ipython~=9.1.0
+numpy~=1.22.0
