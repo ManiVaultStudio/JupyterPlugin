@@ -155,6 +155,8 @@ install(FILES
 
 install(FILES 
     ${PROJECT_SOURCE_DIR}/examples/demo_data_loading.ipynb
+    ${PROJECT_SOURCE_DIR}/examples/save_load_clusters.ipynb
+    ${PROJECT_SOURCE_DIR}/examples/count_cells_per_cluster.ipynb
     ${PROJECT_SOURCE_DIR}/examples/requirements.txt
     DESTINATION examples/JupyterPlugin 
     COMPONENT PLUGIN
