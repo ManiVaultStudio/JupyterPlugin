@@ -78,6 +78,8 @@ target_link_libraries(${JUPYTERPLUGIN} PRIVATE Crypt32)
 
 if(UNIX)
     target_link_libraries(${JUPYTERPLUGIN} PRIVATE pthread dl util m)     # see https://docs.python.org/3/extending/embedding.html
+else()
+    target_link_libraries(${JUPYTERPLUGIN} PRIVATE Crypt32)
 endif()
 
 # -----------------------------------------------------------------------------
