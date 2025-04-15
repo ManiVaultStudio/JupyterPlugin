@@ -1,11 +1,10 @@
 cmake_minimum_required(VERSION 3.22)
 
 option(XEUS_BUILD_STATIC_DEPENDENCIES "Xeus depends on libuuid. If that package is installed in your build env you can link statically to it" OFF)
+option(MV_JUPYTER_USE_VCPKG "Use vcpkg for openssl dependency" OFF)
 
 # vcpkg library settings
-if(NOT DEFINED MV_JUPYTER_USE_VCPKG)
-    set(MV_JUPYTER_USE_VCPKG OFF)
-elseif(MV_JUPYTER_USE_VCPKG AND WIN32)
+if(${MV_JUPYTER_USE_VCPKG} AND WIN32)
     message(STATUS "JupyterPlugins: Using vcpkg to install dependencies")
     set(VCPKG_HOST_TRIPLET "x64-windows-static-md" CACHE STRING "")
     set(VCPKG_TARGET_TRIPLET "x64-windows-static-md" CACHE STRING "")
