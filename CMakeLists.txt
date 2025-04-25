@@ -54,7 +54,7 @@ set(cppzmq_VERSION "v4.10.0")
 set(xeus-zmq_VERSION "3.1.0")
 set(pybind11_VERSION "v2.13.6")
 set(pybind11_json_VERSION "0.2.15")
-set(xeus-python_VERSION "0.17.2")
+set(xeus-python_VERSION "0.17.4")
 
 find_package(Qt6 COMPONENTS Widgets WebEngineWidgets REQUIRED)
 find_package(ManiVault COMPONENTS Core PointData ClusterData ImageData CONFIG QUIET)
