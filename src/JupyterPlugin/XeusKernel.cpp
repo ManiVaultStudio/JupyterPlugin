@@ -29,7 +29,7 @@ void XeusKernel::startKernel(const QString& connection_path, const QString& plug
 
     try {
         m_kernel = std::make_unique<xeus::xkernel>(
-            /*config: noy used here */
+            /*config: not used here */
             /*user_name*/ xeus::get_user_name(),
             /*context*/ std::move(context),
             /*interpreter*/ std::move(interpreter),
