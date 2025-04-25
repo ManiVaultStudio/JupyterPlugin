@@ -48,7 +48,7 @@ include(CMakePackageConfigHelpers)
 # xeus-zmq depends on: xeus, ZeroMQ (libzmq), cppzmq, OpenSSL, and nlohmann_json
 # xeus-python depends on: xeus-zmq, pybind11, pybind11_json and nlohmann_json
 set(xeus_VERSION "5.2.1")
-set(nlohmann_json_VERSION "v3.11.3")
+set(nlohmann_json_VERSION "v3.12.0")
 set(libzmq_VERSION "v4.3.5")
 set(cppzmq_VERSION "v4.10.0")
 set(xeus-zmq_VERSION "3.1.0")
