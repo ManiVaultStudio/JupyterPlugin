@@ -149,6 +149,50 @@ static py::array get_data_for_item(const std::string& datasetGuid)
     return py::array_t<float>(0);
 }
 
+// Get the selected data points for a data set
+static py::array get_selection_for_item(const std::string& datasetGuid)
+{
+    DataHierarchyItem* item = mv::dataHierarchy().getItem(QString(datasetGuid.c_str()));
+
+    if (!item)
+        return {};
+
+    auto data = item->getDataset();
+
+    std::vector<std::uint32_t>& selectionIndices = data->getSelectionIndices();
+
+    return py::array_t<uint32_t>(
+        selectionIndices.size(),    // Number of elements
+        selectionIndices.data()     // Pointer to data
+    );
+}
+
+// Set the selected data points for a data set
+static void set_selection_for_item(const std::string& datasetGuid, const py::array_t<uint32_t>& selectionIDs)
+{
+    DataHierarchyItem* item = mv::dataHierarchy().getItem(QString(datasetGuid.c_str()));
+
+    if (!item)
+        return;
+
+    auto data = item->getDataset();
+
+    // Request a buffer info from the array
+    py::buffer_info buf = selectionIDs.request();
+
+    if (buf.ndim != 1)
+        throw std::runtime_error("Input array must be 1-dimensional");
+
+    // Copy the data into a std::vector
+    uint32_t* ptr  = static_cast<uint32_t*>(buf.ptr);
+    size_t len     = static_cast<size_t>(buf.shape[0]);
+    auto selection = std::vector<uint32_t>(ptr, ptr + len);
+
+    // Send selection to the core
+    data->setSelectionIndices(std::move(selection));
+    mv::events().notifyDatasetDataSelectionChanged(data);
+}
+
 // numpy default for 3d (2D+RGB) images in C format is BIP 
 // so we don't do anything 
 // Assumes input data is arranged contiguously in memory
@@ -828,6 +872,8 @@ py::module get_MVData_module()
     MVData_module.def("get_top_level_item_names", get_top_level_item_names);
     MVData_module.def("get_top_level_guids", get_top_level_guids);
     MVData_module.def("get_data_for_item", get_data_for_item, py::arg("datasetGuid") = py::str());
+    MVData_module.def("get_selection_for_item", get_selection_for_item, py::arg("datasetGuid") = py::str());
+    MVData_module.def("set_selection_for_item", set_selection_for_item, py::arg("datasetGuid") = py::str(), py::arg("selectionIDs") = py::array_t<uint32_t>());
     MVData_module.def("get_image_item", get_mv_image, py::arg("datasetGuid") = py::str());
     MVData_module.def("get_item_name", get_item_name, py::arg("datasetGuid") = py::str());
     MVData_module.def("get_item_rawsize", get_item_rawsize, py::arg("datasetGuid") = py::str());
