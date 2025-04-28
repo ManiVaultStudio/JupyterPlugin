@@ -69,7 +69,7 @@ class Item:
             yield self._children[index]
             index += 1
 
-    def getItem(self, itemId) -> Self | None:
+    def getItem(self, itemId : str) -> Self | None:
         """Return the DataHierarchy Item corresponding to the given
         hierarchy item ID. It can be the current item or a child item.
         """
@@ -82,7 +82,7 @@ class Item:
                 return item
         return None
     
-    def getItemByDataID(self, datasetId) -> Self | None:
+    def getItemByDataID(self, datasetId : str) -> Self | None:
         """Return the DataHierarchy Item corresponding to the given
         dataset ID. It can be the current item or a child item.
         """
@@ -128,7 +128,17 @@ class Item:
             if item is not None:
                 break
         return item
-        
+    
+    def getSelection(self) -> np.ndarray:
+        """Get the selection for a given dataset, specified using its dataset ID.
+        """
+        return mvstudio_core.get_selection_for_item(self.datasetId)
+
+    def setSelection(self, selectionIDs : np.ndarray) -> None:
+        """Set the selection for a given dataset, specified using its dataset ID.
+        """
+        return mvstudio_core.set_selection_for_item(self.datasetId, selectionIDs)
+
     @property
     def points(self) -> np.ndarray:
         return mvstudio_core.get_data_for_item(self.datasetId)
