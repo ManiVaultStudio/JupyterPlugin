@@ -129,19 +129,25 @@ JupyterLauncher::JupyterLauncher(const PluginFactory* factory) :
     setObjectName("Jupyter kernel plugin launcher");
 
     QDir temporaryApplicationDirectory = Application::current()->getTemporaryDir().path();
-    QDir temporaryPluginDirectory = QDir(temporaryApplicationDirectory.absolutePath()  + QDir::separator() + "JupyterLauncher");
+    QDir temporaryPluginDirectory = QDir(temporaryApplicationDirectory.absolutePath() + QDir::separator() + "JupyterLauncher");
     if (!temporaryPluginDirectory.exists())
         temporaryPluginDirectory.mkpath(".");
 
-    _connectionFilePath = temporaryPluginDirectory.absolutePath() + QDir::separator() +  "connection.json";
+    _connectionFilePath = temporaryPluginDirectory.absolutePath() + QDir::separator() + "connection.json";
 
     QFile jsonFile(_connectionFilePath);
     if (jsonFile.open(QIODevice::WriteOnly))
         jsonFile.close();
-    else 
+    else
         qWarning() << "JupyterLauncher: Could not create connection file at " << _connectionFilePath;
 
-    connect(_launcherDialog.get(), &LauncherDialog::accepted, this, &JupyterLauncher::createPythonPluginAndStartNotebook);
+    connect(_launcherDialog.get(), &LauncherDialog::accepted, this, [this]() {
+        if (_launcherDialog->getMode() == 0)
+            createPythonPluginAndStartNotebook();
+        else
+            addPythonScripts();
+        });
+
     connect(&_launcherDialog->getDoNotShowAgainButton(), &mv::gui::ToggleAction::toggled, this, [this](bool toggled) {
         mv::settings().getPluginGlobalSettingsGroupAction<GlobalSettingsAction>(this)->getDoNotShowAgainButton().setChecked(toggled);
         });
@@ -671,7 +677,9 @@ void JupyterLauncher::launchJupyterKernelAndNotebook(const QString& version)
     _selectedInterpreterVersion = version;
 
     if (getShowInterpreterPathDialog()) {
+        _launcherDialog->setMode(0);
         _launcherDialog->show();                // by default ask user for python path
+        return;
     }
 
     createPythonPluginAndStartNotebook();   // open notebook immediately if user has set do-not-show-dialog option
@@ -742,17 +750,33 @@ void JupyterLauncher::initPythonScripts(const QString& version)
     _selectedInterpreterVersion = version;
 
     if (getShowInterpreterPathDialog()) {
+        _launcherDialog->setMode(1);
         _launcherDialog->show();                // by default ask user for python path
+        return;
     }
-
-    initPython();
 
     addPythonScripts();
 }
 
 void JupyterLauncher::addPythonScripts()
 {
+    initPython();
+
     // Look for all available scripts
+    const QString jupyterPluginPath = QCoreApplication::applicationDirPath() + "/examples/JupyterPlugin/scripts";
+    QDir dir(jupyterPluginPath);
+
+    QStringList filters;
+    filters << "*.json";
+
+    QFileInfoList fileList = dir.entryInfoList(filters, QDir::Files | QDir::NoSymLinks);
+
+    std::vector<QString> scriptDescriptors;
+
+    for (const QFileInfo& fileInfo : fileList) {
+        scriptDescriptors.push_back(fileInfo.absoluteFilePath());
+        qDebug() << fileInfo.absoluteFilePath();
+    }
 
     // Add UI entries for the scripts
 }
@@ -867,6 +891,7 @@ void JupyterLauncherFactory::initialize()
         // Python Scripts
         auto initPythonScripts = new TriggerAction(this, "Init Python Scripts (" + pythonVersionOfPlugin + ")");
         connect(initPythonScripts, &TriggerAction::triggered, this, [this, pythonVersionOfPlugin, getJupyterLauncherPlugin]() {
+
             JupyterLauncher* plugin = getJupyterLauncherPlugin();
             if (plugin) {
                 plugin->initPythonScripts(pythonVersionOfPlugin);
