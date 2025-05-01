@@ -141,7 +141,7 @@ JupyterLauncher::JupyterLauncher(const PluginFactory* factory) :
     else 
         qWarning() << "JupyterLauncher: Could not create connection file at " << _connectionFilePath;
 
-    connect(_launcherDialog.get(), &LauncherDialog::accepted, this, &JupyterLauncher::launchJupyterKernelAndNotebookImpl);
+    connect(_launcherDialog.get(), &LauncherDialog::accepted, this, &JupyterLauncher::createPythonPluginAndStartNotebook);
     connect(&_launcherDialog->getDoNotShowAgainButton(), &mv::gui::ToggleAction::toggled, this, [this](bool toggled) {
         mv::settings().getPluginGlobalSettingsGroupAction<GlobalSettingsAction>(this)->getDoNotShowAgainButton().setChecked(toggled);
         });
@@ -613,20 +613,10 @@ void JupyterLauncher::logProcessOutput()
 
 }
 
-void JupyterLauncher::launchJupyterKernelAndNotebook(const QString& version)
+
+void JupyterLauncher::initPython()
 {
-    _selectedInterpreterVersion = version;
-
-    if (getShowInterpreterPathDialog())
-        _launcherDialog->show();                // by default ask user for python path
-    else
-        launchJupyterKernelAndNotebookImpl();   // open notebook immediately if user has set do-not-show-dialog option
-
-}
-
-void JupyterLauncher::launchJupyterKernelAndNotebookImpl()
-{
-    // 0. Check if the user set a python interpreter path
+    // Check if the user set a python interpreter path
     if (getPythonInterpreterPath() == "")
     {
         [[maybe_unused]] QMessageBox::StandardButton reply = QMessageBox::information(
@@ -636,22 +626,23 @@ void JupyterLauncher::launchJupyterKernelAndNotebookImpl()
         return;
     }
 
-    if(!checkPythonVersion())
+    if (!checkPythonVersion())
     {
         qDebug() << "The given python interpreter does not match the selected python version";
         return;
     }
 
-    QString serr;
-    QString sout;
+    QString serr = {};
+    QString sout = {};
+    int exitCode = {};
 
-    // 1. Check the path to see if the correct version of mvstudio is installed
-    QString pluginVersion = QString::fromStdString(getVersion().getVersionString());
-    auto exitCode = runPythonScript(":/text/check_env.py", sout, serr, QStringList{ pluginVersion });
+    // Check the path to see if the correct version of mvstudio is installed
+    const QString pluginVersion = QString::fromStdString(getVersion().getVersionString());
+    exitCode = runPythonScript(":/text/check_env.py", sout, serr, QStringList{ pluginVersion });
 
     if (exitCode > 0)
     {
-        qDebug() << "JupyterLauncher::launchJupyterKernelAndNotebookImpl: Checking environment failed";
+        qDebug() << "JupyterLauncher::createPythonPluginAndStartNotebook: Checking environment failed";
         qDebug() << sout;
         qDebug() << serr;
 
@@ -664,7 +655,7 @@ void JupyterLauncher::launchJupyterKernelAndNotebookImpl()
         {
             bool couldInstallModules = optionallyInstallMVWheel();
 
-            if(!couldInstallModules)
+            if (!couldInstallModules)
             {
                 qDebug() << "Could not install ManiVault JupyterPythonKernel modules";
                 return;
@@ -672,18 +663,38 @@ void JupyterLauncher::launchJupyterKernelAndNotebookImpl()
         }
     }
 
-    // 2. Determine the path to the python library
+    setPythonEnv();
+}
+
+void JupyterLauncher::launchJupyterKernelAndNotebook(const QString& version)
+{
+    _selectedInterpreterVersion = version;
+
+    if (getShowInterpreterPathDialog()) {
+        _launcherDialog->show();                // by default ask user for python path
+    }
+
+    createPythonPluginAndStartNotebook();   // open notebook immediately if user has set do-not-show-dialog option
+}
+
+void JupyterLauncher::createPythonPluginAndStartNotebook()
+{
+    initPython();
+
+    QString serr = {};
+    QString sout = {};
+    int exitCode = {};
+
+    // Determine the path to the python library
     exitCode = runPythonScript(":/text/find_libpython.py", sout, serr);
     if (exitCode != 0) {
-        qDebug() << "JupyterLauncher::launchJupyterKernelAndNotebookImpl: Finding python library failed";
+        qDebug() << "JupyterLauncher::createPythonPluginAndStartNotebook: Finding python library failed";
         qDebug() << sout;
         qDebug() << serr;
         return;
     }
 
     QFileInfo pythonLibrary = QFileInfo(sout);
-
-    setPythonEnv();
 
     qDebug() << "Using python communication plugin library " << pythonLibrary.fileName() << " at: " << pythonLibrary.dir().absolutePath();
     if (!loadDynamicLibray(pythonLibrary))
@@ -724,6 +735,26 @@ void JupyterLauncher::launchJupyterKernelAndNotebookImpl()
     // the correct python version
     jupyterPluginInstance->init();
     startJupyterServerProcess();
+}
+
+void JupyterLauncher::initPythonScripts(const QString& version)
+{
+    _selectedInterpreterVersion = version;
+
+    if (getShowInterpreterPathDialog()) {
+        _launcherDialog->show();                // by default ask user for python path
+    }
+
+    initPython();
+
+    addPythonScripts();
+}
+
+void JupyterLauncher::addPythonScripts()
+{
+    // Look for all available scripts
+
+    // Add UI entries for the scripts
 }
 
 /// ////////////////////// ///
@@ -803,26 +834,47 @@ void JupyterLauncherFactory::initialize()
 
     qDebug() << "pythonPlugins:" << pythonPlugins;
 
+    auto getJupyterLauncherPlugin = [this]() ->JupyterLauncher* {
+        auto openJupyterPlugins = mv::plugins().getPluginsByFactory(this);
+
+        JupyterLauncher* plugin = nullptr;
+        if (openJupyterPlugins.empty())
+            plugin = mv::plugins().requestPlugin<JupyterLauncher>("Jupyter Launcher");
+        else
+            plugin = dynamic_cast<JupyterLauncher*>(openJupyterPlugins.front());
+
+        return plugin;
+        };
+
     for(const auto& pythonPlugin: pythonPlugins)
     {
         QString pythonVersionOfPlugin = extractSingleNumber(QFileInfo(pythonPlugin).fileName()).insert(1, ".");
 
         qDebug() << "pythonVersionOfPlugin:" << pythonVersionOfPlugin;
 
+        // Jupyter Notebooks
         auto launchJupyterPython = new TriggerAction(this, "Start Jupyter Kernel and Lab (" + pythonVersionOfPlugin + ")");
-        connect(launchJupyterPython, &TriggerAction::triggered, this, [this, pythonVersionOfPlugin]() {
-            auto openJupyterPlugins = mv::plugins().getPluginsByFactory(this);
+        connect(launchJupyterPython, &TriggerAction::triggered, this, [this, pythonVersionOfPlugin, getJupyterLauncherPlugin]() {
 
-            JupyterLauncher* plugin = nullptr;
-            if (openJupyterPlugins.empty())
-                plugin = mv::plugins().requestPlugin<JupyterLauncher>("Jupyter Launcher");
-            else
-                plugin = dynamic_cast<JupyterLauncher*>(openJupyterPlugins.front());
-
-            plugin->launchJupyterKernelAndNotebook(pythonVersionOfPlugin);
+            JupyterLauncher* plugin = getJupyterLauncherPlugin();
+            if (plugin) {
+                plugin->launchJupyterKernelAndNotebook(pythonVersionOfPlugin);
+            }
         });
 
         _statusBarAction->addMenuAction(launchJupyterPython);
+
+        // Python Scripts
+        auto initPythonScripts = new TriggerAction(this, "Init Python Scripts (" + pythonVersionOfPlugin + ")");
+        connect(initPythonScripts, &TriggerAction::triggered, this, [this, pythonVersionOfPlugin, getJupyterLauncherPlugin]() {
+            JupyterLauncher* plugin = getJupyterLauncherPlugin();
+            if (plugin) {
+                plugin->initPythonScripts(pythonVersionOfPlugin);
+            }
+            });
+
+        _statusBarAction->addMenuAction(initPythonScripts);
+
     }
 
     // Assign the status bar action so that it will appear on the main window status bar

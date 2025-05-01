@@ -74,6 +74,10 @@ public:
     // There  must be a JupyterPlugin (a kernel provider) that matches the python version for this to work.
     void launchJupyterKernelAndNotebook(const QString& version);
 
+    // The pyversion should correspond to a python major.minor version
+    // e.g. "3.11", "3.12"
+    void initPythonScripts(const QString& version);
+
 public: // Global settings
     // Python interpreter path
     QString getPythonInterpreterPath();
@@ -98,6 +102,7 @@ private:
     void setPythonEnv();
     bool installKernel();
     bool optionallyInstallMVWheel();
+    void initPython();
 
     bool checkPythonVersion();
 
@@ -108,8 +113,8 @@ private:
     // Distinguish between python in a regular or conda directory and python in a venv
     std::pair<bool, QString> getPythonHomePath(const QString& pyInterpreterPath);
     
-private slots:
-    void launchJupyterKernelAndNotebookImpl();
+    void createPythonPluginAndStartNotebook();
+    void addPythonScripts();
 
 private:
     QString                         _connectionFilePath;
