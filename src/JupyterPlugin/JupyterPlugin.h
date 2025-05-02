@@ -10,6 +10,7 @@
 
 #undef slots
 #include <pybind11/embed.h>
+#include <pybind11/pybind11.h>
 #define slots Q_SLOTS
 
 using namespace mv::plugin;
@@ -42,12 +43,14 @@ public:
 
     Q_INVOKABLE void runScriptWithArgs(const QString& scriptPath, const QStringList& args);
 
+    static std::unique_ptr<pybind11::module> mv_communication_module;
+    static void init_mv_communication_module();
+
 private:
     std::unique_ptr<XeusKernel>     _pKernel;
     FilePickerAction                _connectionFilePath;        /** Settings action */
 
     std::unique_ptr<pybind11::scoped_interpreter>   _init_guard = {};
-
 };
 
 

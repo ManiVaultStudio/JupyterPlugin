@@ -22,6 +22,17 @@ Q_PLUGIN_METADATA(IID "studio.manivault.JupyterPlugin")
 using namespace mv;
 namespace py = pybind11;
 
+std::unique_ptr<pybind11::module> JupyterPlugin::mv_communication_module = {};
+
+void JupyterPlugin::init_mv_communication_module() {
+    if (mv_communication_module) {
+        return;
+    }
+
+    mv_communication_module = std::make_unique<pybind11::module>(get_MVData_module());
+    mv_communication_module->doc() = "Provides access to low level ManiVaultStudio core functions";
+}
+
 JupyterPlugin::JupyterPlugin(const PluginFactory* factory) :
     ViewPlugin(factory),
     _pKernel(std::make_unique<XeusKernel>()),
@@ -49,16 +60,19 @@ void JupyterPlugin::runScriptWithArgs(const QString& scriptPath, const QStringLi
 {
     auto runScript = [](const QString& scriptPath, const QStringList& args) {
         // Insert manivault communication module into sys.modules
-        py::module MVData_module = get_MVData_module();
-        MVData_module.doc() = "Provides access to low level ManiVaultStudio core functions";
-
         py::module sys = py::module::import("sys");
-        sys.attr("modules")["mvstudio_core"] = MVData_module;
+        py::dict modules = sys.attr("modules");
+
+        if (!modules.contains("mvstudio_core")) {
+            py::module MVData_module = *(JupyterPlugin::mv_communication_module.get());
+
+            sys.attr("modules")["mvstudio_core"] = MVData_module;
+        }
 
         // Set sys.argv
         py::list py_args = py::list();
         for (const auto& arg : args) {
-            py_args.append(py::cast(arg));
+            py_args.append(py::cast(arg.toStdString()));
         }
         sys.attr("argv") = py_args;
 
@@ -69,6 +83,8 @@ void JupyterPlugin::runScriptWithArgs(const QString& scriptPath, const QStringLi
         };
 
     try {
+
+        JupyterPlugin::init_mv_communication_module();
 
         if (Py_IsInitialized()) {
             // --- Scenario 1: Interpreter Already Exists ---
