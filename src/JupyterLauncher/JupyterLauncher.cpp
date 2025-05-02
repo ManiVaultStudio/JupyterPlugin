@@ -129,8 +129,10 @@ QString getPythonVersion(const QString& pythonInterpreterPath)
 
 JupyterLauncher::JupyterLauncher(const PluginFactory* factory) :
     ViewPlugin(factory),
+    _connectionFilePath(""),
     _selectedInterpreterVersion(""),
     _jupyterPluginFolder(QCoreApplication::applicationDirPath() + "/PluginDependencies/JupyterLauncher/bin/"),
+    _initializedPythonInterpreters(),
     _serverProcess(this),
     _launcherDialog(std::make_unique<LauncherDialog>(nullptr, this))
 {
@@ -423,6 +425,35 @@ bool JupyterLauncher::runPythonCommand(const QStringList& params)
     pythonProcess.deleteLater();
 
     return succ;
+}
+
+bool JupyterLauncher::runScriptInKernel(const QString& scriptPath, QString interpreterVersion, const QStringList& params)
+{
+    if (!_initializedPythonInterpreters.contains(interpreterVersion)) {
+        qWarning() << "JupyterLauncher::runScriptInKernel: version not initialized: " << interpreterVersion;
+        return false;
+    }
+
+    auto interpreterPlugin = _initializedPythonInterpreters[interpreterVersion];
+
+    if (!interpreterPlugin) {
+        qWarning() << "JupyterLauncher::runScriptInKernel: version not initialized: " << interpreterVersion;
+        return false;
+    }
+
+    // Call method using meta-object system
+    bool success = QMetaObject::invokeMethod(
+        interpreterPlugin,
+        "runScriptWithArgs",
+        Q_ARG(QString, scriptPath),
+        Q_ARG(QStringList, params)
+    );
+
+    if (!success) {
+        qWarning() << "Failed to invoke runScriptWithArgs";
+    }
+
+    return true;
 }
 
 bool JupyterLauncher::installKernel()
@@ -729,7 +760,7 @@ bool JupyterLauncher::initPython()
     // the correct python version
     jupyterPluginInstance->init();
 
-    _initializedPythonInterpreters.insert(_selectedInterpreterVersion);
+    _initializedPythonInterpreters.insert({ _selectedInterpreterVersion, jupyterPluginInstance });
 
     return true;
 }
@@ -841,9 +872,9 @@ void JupyterLauncher::addPythonScripts()
         const QString scriptName = json.value("name").toString();
 
         auto scriptTrigger = new TriggerAction(this, scriptName);
-        connect(scriptTrigger, &TriggerAction::triggered, this, [json, scriptPath]() {
+        connect(scriptTrigger, &TriggerAction::triggered, this, [this, json, scriptPath]() {
             // TODO: only open dialog if necessary, i.e. if user input is needed
-            auto scriptDialog = new ScriptDialog(nullptr, json, scriptPath);
+            auto scriptDialog = new ScriptDialog(nullptr, json, scriptPath, _selectedInterpreterVersion, this);
             scriptDialog->show();
             });
 

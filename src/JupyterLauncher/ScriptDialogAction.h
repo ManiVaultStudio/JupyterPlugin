@@ -9,15 +9,15 @@
 #include <QDialog>
 #include <QJsonObject>
 #include <QString>
-#include <QStringList>
 
 class QWidget;
+class JupyterLauncher;
 
 class ScriptDialog : public QDialog
 {
     Q_OBJECT
 public:
-    ScriptDialog(QWidget* parent, const QJsonObject json, const QString scriptPath);
+    ScriptDialog(QWidget* parent, const QJsonObject json, const QString scriptPath, const QString interpreterVersion, JupyterLauncher* launcher);
 
 private:
     void runScript();
@@ -26,7 +26,9 @@ private:
     mv::gui::TriggerAction                  _okButton;
     std::vector<mv::gui::WidgetAction*>     _argumentActions;
 
+    QString                                 _interpreterVersion;
     QString                                 _scriptPath;
-    QStringList                             _scriptParams;
     std::unordered_map<QString, QString>    _argumentMap;
+
+    JupyterLauncher*                        _launcherPlugin = nullptr;
 };

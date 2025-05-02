@@ -6,6 +6,8 @@
 
 #include <memory>
 
+#include <QStringList>
+
 #undef slots
 #include <pybind11/embed.h>
 #define slots Q_SLOTS
@@ -37,6 +39,8 @@ public:
     ~JupyterPlugin();
 
     void init() override;
+
+    Q_INVOKABLE void runScriptWithArgs(const QString& scriptPath, const QStringList& args);
 
 private:
     std::unique_ptr<XeusKernel>     _pKernel;

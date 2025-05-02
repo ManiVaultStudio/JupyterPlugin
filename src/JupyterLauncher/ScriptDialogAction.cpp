@@ -10,16 +10,18 @@
 #include <util/StyledIcon.h>
 
 #include <QJsonArray>
+#include <QStringList>
 #include <QVBoxLayout>
 #include <QWidget>
 
-ScriptDialog::ScriptDialog(QWidget* parent, const QJsonObject json, const QString scriptPath) :
+ScriptDialog::ScriptDialog(QWidget* parent, const QJsonObject json, const QString scriptPath, const QString interpreterVersion, JupyterLauncher* launcher) :
     QDialog(parent),
     _okButton(this, "Run script"),
     _argumentActions(),
+    _interpreterVersion(interpreterVersion),
     _scriptPath(scriptPath),
-    _scriptParams(),
-    _argumentMap()
+    _argumentMap(),
+    _launcherPlugin(launcher)
 {
     setWindowTitle(json["name"].toString());
     setWindowIcon(mv::util::StyledIcon("gears"));
@@ -83,21 +85,16 @@ ScriptDialog::ScriptDialog(QWidget* parent, const QJsonObject json, const QStrin
 }
 
 void ScriptDialog::runScript() {
-    _scriptParams.clear();
+    if (!_launcherPlugin) {
+        return;
+    }
+
+    QStringList scriptParams;
 
     for (auto& [param, value] : _argumentMap) {
-        _scriptParams.append(param);
-        _scriptParams.append(value);
+        scriptParams.append(param);
+        scriptParams.append(value);
     }
 
-    QString serr = {};
-    QString sout = {};
-
-    int exitCode = JupyterLauncher::runPythonScript(_scriptPath, sout, serr, _scriptParams);
-
-    if (exitCode != 0) {
-        qWarning() << sout;
-        qWarning() << serr;
-    }
-
+    _launcherPlugin->runScriptInKernel(_scriptPath, _interpreterVersion, scriptParams);
 }

@@ -93,6 +93,8 @@ public: // Call python
     static int runPythonScript(const QString& scriptName, QString& sout, QString& serr, const QStringList& params = {});
     static bool runPythonCommand(const QStringList& params);
 
+    bool runScriptInKernel(const QString& scriptPath, QString interpreterVersion, const QStringList& params = {});
+
 private:
     void jupyterServerError(QProcess::ProcessError error);
     void jupyterServerFinished(int exitCode, QProcess::ExitStatus exitStatus);
@@ -122,7 +124,9 @@ private:
     QString                         _connectionFilePath;
     QString                         _selectedInterpreterVersion;
     QString                         _jupyterPluginFolder;
-    std::unordered_set<QString>     _initializedPythonInterpreters;
+
+    using LoadedPythonInterpreters = std::unordered_map<QString, mv::plugin::Plugin*>;
+    LoadedPythonInterpreters        _initializedPythonInterpreters;
 
     mv::BackgroundTask*             _serverBackgroundTask = nullptr;      /** The background task monitoring the Jupyter Server */
     QProcess                        _serverProcess;             /** A detached process for running the Jupyter server */
