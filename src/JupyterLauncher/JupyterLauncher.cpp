@@ -5,13 +5,17 @@
 #include <Application.h>
 #include <CoreInterface.h>
 
+#include <actions/StatusBarAction.h>
 #include <actions/WidgetAction.h>
 
 #include <QByteArray>
 #include <QDebug>
 #include <QDir>
 #include <QDirIterator>
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <QLibrary>
+#include <QMainWindow>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QOperatingSystemVersion>
@@ -20,17 +24,20 @@
 #include <QProcessEnvironment>
 #include <QRegularExpression>
 #include <QRegularExpressionMatch>
+#include <QStatusBar>
 #include <QStringList>
 #include <QTemporaryDir>
 #include <QTemporaryFile>
 #include <QThread>
 #include <QUrl>
 
+#include <algorithm>
 #include <exception>
 #include <iostream>
 #include <stdexcept>
 
-#ifdef _WIN32
+#ifdef WIN32
+#define NOMINMAX
 #include <windows.h>
 #endif
 
@@ -779,6 +786,53 @@ void JupyterLauncher::addPythonScripts()
     }
 
     // Add UI entries for the scripts
+    auto statusBarAction = new StatusBarAction(this, "Python Scripts " + _selectedInterpreterVersion, mv::util::StyledIcon("python"));
+    auto statusBar = Application::getMainWindow()->statusBar();
+
+    int numberOfPermanentWidgets = statusBar->findChildren<QWidget*>(Qt::FindDirectChildrenOnly).count();
+    int widetIndex = std::max(0, numberOfPermanentWidgets - 1);
+    statusBar->insertPermanentWidget(widetIndex, statusBarAction->createWidget(Application::getMainWindow()), statusBarAction->getStretch());
+
+    for (const auto& scriptDescriptor : scriptDescriptors) {
+        QFile file(scriptDescriptor);
+        if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+            qWarning() << "Couldn't open file:" << scriptDescriptor;
+            continue;
+        }
+
+        QByteArray jsonData = file.readAll();
+        file.close();
+
+        QJsonParseError parseError;
+        QJsonDocument document = QJsonDocument::fromJson(jsonData, &parseError);
+        if (parseError.error != QJsonParseError::NoError) {
+            qWarning() << "JSON parse error:" << parseError.errorString();
+            continue;
+        }
+
+        if (!document.isObject()) {
+            qWarning() << "JSON is not an object.";
+            continue;
+        }
+
+        const QJsonObject json = document.object();
+
+        std::vector<QString> requiredEntries = { "script", "name", "type"};
+        if (!std::all_of(requiredEntries.begin(), requiredEntries.end(), [&json](QString& entry) { return json.contains(entry); })) {
+            qWarning() << "Does not contain all required entries: " << scriptDescriptor;
+            continue;
+        }
+
+        const QString scriptName = json.value("name").toString();
+
+        auto scriptTrigger = new TriggerAction(this, scriptName);
+        connect(scriptTrigger, &TriggerAction::triggered, this, [scriptName]() {
+            qDebug() << scriptName;
+            });
+
+        statusBarAction->addMenuAction(scriptTrigger);
+    }
+
 }
 
 /// ////////////////////// ///

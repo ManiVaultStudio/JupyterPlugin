@@ -1,5 +1,8 @@
 {
     "script": "load_cell_image_and_mask.py",
+    "name": "Load cell image and mask",
+    "type": "Loader",
+    "requirements": "load_cell_image_and_mask_requirements.txt",
     "arguments": [
         {
         "name": "input-file-image",
