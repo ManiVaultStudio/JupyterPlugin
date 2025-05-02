@@ -15,6 +15,7 @@
 #include <QTimer>
 
 #include <memory>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -103,9 +104,9 @@ private:
     void setPythonEnv();
     bool installKernel();
     bool optionallyInstallMVWheel();
-    void initPython();
+    bool initPython();
 
-    bool checkPythonVersion();
+    bool checkPythonVersion() const;
 
     void startJupyterServerProcess();
 
@@ -121,6 +122,7 @@ private:
     QString                         _connectionFilePath;
     QString                         _selectedInterpreterVersion;
     QString                         _jupyterPluginFolder;
+    std::unordered_set<QString>     _initializedPythonInterpreters;
 
     mv::BackgroundTask*             _serverBackgroundTask = nullptr;      /** The background task monitoring the Jupyter Server */
     QProcess                        _serverProcess;             /** A detached process for running the Jupyter server */

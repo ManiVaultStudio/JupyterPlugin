@@ -4,6 +4,7 @@ import sys
 
 def load_json(load_json_file_path):
     import json
+    print(f"load_json {load_json_file_path}")
     with open(load_json_file_path) as load_json_file:
         loaded_json_file = json.load(load_json_file)
     return loaded_json_file
@@ -11,12 +12,13 @@ def load_json(load_json_file_path):
 
 def load_tiff(load_tiff_path):
     from tifffile import tifffile
+    print(f"load_tiff {load_tiff_path}")
     return tifffile.imread(load_tiff_path)
 
 
-def extract_mask_from_geojson(geo_json_in, mask_out_shape = (1024, 1024)):
+def extract_mask_from_geojson(geo_json_file, mask_out_shape = (1024, 1024)):
     """
-    :param geo_json_in: json file
+    :param geo_json_file: json file
     :param mask_out_shape: optional, Define output raster shape (e.g., 512x512) and transform (identity for simple pixel grid)
     :return:
     """
@@ -24,7 +26,7 @@ def extract_mask_from_geojson(geo_json_in, mask_out_shape = (1024, 1024)):
     from rasterio.features import rasterize
 
     # Extract polygon geometries
-    shapes = [shape(feature['geometry']) for feature in geo_json_in['features']]
+    shapes = [shape(feature['geometry']) for feature in geo_json_file['features']]
 
     # Rasterize polygons into mask
     mask_out = rasterize(
@@ -44,23 +46,31 @@ def main(args):
     Args:
         args (argparse.Namespace): Parsed command-line arguments.
     """
-    # Load data
-    image = load_tiff(args.input_file_image)
-    geojson = load_json(args.input_file_json)
-
-    # Convert QuPath segmentation to mask
-    mask = extract_mask_from_geojson(geojson, (image.shape[0], image.shape[1]))
-
+    print("ENTER MAIN")
     try:
+        # Load data
+        image = load_tiff(args.input_file_image)
+        geojson = load_json(args.input_file_json)
+
+        # Convert QuPath segmentation to mask
+        mask = extract_mask_from_geojson(geojson, (image.shape[0], image.shape[1]))
+
+        print(f"Also works: {len(mask)}")
+
         # Connect to ManiVault
+        print(f"About to import")
         import mvstudio.data
+        print(f"Done Importing")
         mv = mvstudio.data.Hierarchy()
+
+        print(f"mvstudio.data.Hierarchy: {mv}")
 
         # Push image and mask
         dataName = args.output_file_name
         image_mv_ref = mv.addImageItem(image, f"{dataName} Image")
         mask_mv_ref = mv.addImageItem(mask, f"{dataName} Mask")
-    except:
+    except Exception as e:
+        print("An error occurred:", e)
         sys.exit(1) # Exit with a non-zero status code to indicate failure
 
     sys.exit(0) # Explicitly exit with 0 for success
@@ -68,7 +78,7 @@ def main(args):
 
 def parse_arguments():
     """Parses command-line arguments using argparse."""
-
+    print("ENTER PARSE ARGUMENTS")
     parser = argparse.ArgumentParser(
                     prog='load_cell_image_and_mask',
                     description='Loads tiff files and associate masks')
@@ -95,5 +105,6 @@ def parse_arguments():
 
 
 if __name__ == "__main__":
+    print("ENTER SCRIPT")
     parsed_args = parse_arguments()
     main(parsed_args)

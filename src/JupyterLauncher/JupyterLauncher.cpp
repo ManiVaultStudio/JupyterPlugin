@@ -205,7 +205,7 @@ std::pair<bool, QString> JupyterLauncher::getPythonHomePath(const QString& pyInt
     return { isVenv, QDir::toNativeSeparators(pyHomePath) };
 }
 
-bool JupyterLauncher::checkPythonVersion()
+bool JupyterLauncher::checkPythonVersion() const
 {
     QString givenInterpreterVersion = getPythonVersion(getPythonInterpreterPath());
 
@@ -627,22 +627,25 @@ void JupyterLauncher::logProcessOutput()
 
 }
 
-void JupyterLauncher::initPython()
+bool JupyterLauncher::initPython()
 {
+    if (_initializedPythonInterpreters.contains(_selectedInterpreterVersion)) {
+        qDebug() << "JupyterLauncher::initPython: already initialized: " << _selectedInterpreterVersion;
+        return true;
+    }
+
     // Check if the user set a python interpreter path
-    if (getPythonInterpreterPath() == "")
-    {
+    if (getPythonInterpreterPath() == "") {
         [[maybe_unused]] QMessageBox::StandardButton reply = QMessageBox::information(
             nullptr,
             "No Python interpreter",
             "Please provide a path to a python interpreter in the plugin settings.\n Go to File -> Settings -> Plugin: Jupyter Launcher -> Python interpreter");
-        return;
+        return false;
     }
 
-    if (!checkPythonVersion())
-    {
+    if (!checkPythonVersion()) {
         qDebug() << "The given python interpreter does not match the selected python version";
-        return;
+        return false;
     }
 
     QString serr = {};
@@ -653,15 +656,14 @@ void JupyterLauncher::initPython()
     const QString pluginVersion = QString::fromStdString(getVersion().getVersionString());
     exitCode = runPythonScript(":/text/check_env.py", sout, serr, QStringList{ pluginVersion });
 
-    if (exitCode > 0)
-    {
+    if (exitCode > 0) {
         qDebug() << "JupyterLauncher::createPythonPluginAndStartNotebook: Checking environment failed";
         qDebug() << sout;
         qDebug() << serr;
 
         // error like time out or other failed connection
         if (exitCode >= 2)
-            return;
+            return false;
 
         // we might just miss the communication modules
         if (exitCode == 1)
@@ -671,12 +673,65 @@ void JupyterLauncher::initPython()
             if (!couldInstallModules)
             {
                 qDebug() << "Could not install ManiVault JupyterPythonKernel modules";
-                return;
+                return false;
             }
         }
     }
 
     setPythonEnv();
+
+    // Determine the path to the python library
+    exitCode = runPythonScript(":/text/find_libpython.py", sout, serr);
+    if (exitCode != 0) {
+        qDebug() << "JupyterLauncher::createPythonPluginAndStartNotebook: Finding python library failed";
+        qDebug() << sout;
+        qDebug() << serr;
+        return false;
+    }
+
+    QFileInfo pythonLibrary = QFileInfo(sout);
+
+    qDebug() << "Using python communication plugin library " << pythonLibrary.fileName() << " at: " << pythonLibrary.dir().absolutePath();
+    if (!loadDynamicLibray(pythonLibrary)) {
+        qWarning() << "Failed to load/locate python communication plugin";
+    }
+
+    QString jupyterPluginPath = QCoreApplication::applicationDirPath() + "/PluginDependencies/JupyterLauncher/bin/JupyterPlugin" + _selectedInterpreterVersion.remove(".");
+    QLibrary jupyterPluginLib = QLibrary(jupyterPluginPath);
+    QPluginLoader jupyterPluginLoader = QPluginLoader(jupyterPluginLib.fileName());
+
+    qDebug() << "Using python plugin at: " << jupyterPluginLib.fileName();
+
+    // Check if the plugin was loaded successfully
+    if (!jupyterPluginLoader.load()) {
+        qWarning() << "Failed to load plugin:" << jupyterPluginLoader.errorString();
+        return false;
+    }
+
+    // If pluginFactory is a nullptr then loading of the plugin failed for some reason. Print the reason to output.
+    auto jupyterPluginFactory = dynamic_cast<PluginFactory*>(jupyterPluginLoader.instance());
+    if (!jupyterPluginFactory) {
+        qWarning() << "Failed to load plugin: " << jupyterPluginPath << jupyterPluginLoader.errorString();
+        return false;
+    }
+
+    // Create the jupyter plugin
+    mv::plugin::Plugin* jupyterPluginInstance = jupyterPluginFactory->produce();
+
+    // Communicate the connection file path via the child action in the JupyterPlugin
+    auto connectionFileAction = jupyterPluginInstance->findChildByPath("Connection file");
+    if (connectionFileAction != nullptr) {
+        FilePickerAction* connectionFilePickerAction = static_cast<FilePickerAction*>(connectionFileAction);
+        connectionFilePickerAction->setFilePath(_connectionFilePath);
+    }
+
+    // Load the plugin but first set the environment to get 
+    // the correct python version
+    jupyterPluginInstance->init();
+
+    _initializedPythonInterpreters.insert(_selectedInterpreterVersion);
+
+    return true;
 }
 
 void JupyterLauncher::launchJupyterKernelAndNotebook(const QString& version)
@@ -694,61 +749,11 @@ void JupyterLauncher::launchJupyterKernelAndNotebook(const QString& version)
 
 void JupyterLauncher::createPythonPluginAndStartNotebook()
 {
-    initPython();
+    bool success = initPython();
 
-    QString serr = {};
-    QString sout = {};
-    int exitCode = {};
-
-    // Determine the path to the python library
-    exitCode = runPythonScript(":/text/find_libpython.py", sout, serr);
-    if (exitCode != 0) {
-        qDebug() << "JupyterLauncher::createPythonPluginAndStartNotebook: Finding python library failed";
-        qDebug() << sout;
-        qDebug() << serr;
+    if (!success)
         return;
-    }
 
-    QFileInfo pythonLibrary = QFileInfo(sout);
-
-    qDebug() << "Using python communication plugin library " << pythonLibrary.fileName() << " at: " << pythonLibrary.dir().absolutePath();
-    if (!loadDynamicLibray(pythonLibrary))
-        qWarning() << "Failed to load/locate python communication plugin";
-
-    QString jupyterPluginPath           = QCoreApplication::applicationDirPath() + "/PluginDependencies/JupyterLauncher/bin/JupyterPlugin" + _selectedInterpreterVersion.remove(".");
-    QLibrary jupyterPluginLib           = QLibrary(jupyterPluginPath);
-    QPluginLoader jupyterPluginLoader   = QPluginLoader(jupyterPluginLib.fileName());
-
-    qDebug() << "Using python plugin at: " << jupyterPluginLib.fileName();
-
-    // Check if the plugin was loaded successfully
-    if (!jupyterPluginLoader.load()) {
-        qWarning() << "Failed to load plugin:" << jupyterPluginLoader.errorString();
-        return;
-    }
-
-    // If pluginFactory is a nullptr then loading of the plugin failed for some reason. Print the reason to output.
-    auto jupyterPluginFactory = dynamic_cast<PluginFactory*>(jupyterPluginLoader.instance());
-    if (!jupyterPluginFactory)
-    {
-        qWarning() << "Failed to load plugin: " << jupyterPluginPath << jupyterPluginLoader.errorString();
-        return;
-    }
-
-    // Create the jupyter plugin
-    mv::plugin::Plugin* jupyterPluginInstance = jupyterPluginFactory->produce();
-
-    // Communicate the connection file path via the child action in the JupyterPlugin
-    auto connectionFileAction = jupyterPluginInstance->findChildByPath("Connection file");
-    if (connectionFileAction != nullptr)
-    {
-        FilePickerAction* connectionFilePickerAction = static_cast<FilePickerAction*>(connectionFileAction);
-        connectionFilePickerAction->setFilePath(_connectionFilePath);
-    }
-
-    // Load the plugin but first set the environment to get 
-    // the correct python version
-    jupyterPluginInstance->init();
     startJupyterServerProcess();
 }
 
@@ -767,7 +772,10 @@ void JupyterLauncher::initPythonScripts(const QString& version)
 
 void JupyterLauncher::addPythonScripts()
 {
-    initPython();
+    bool success = initPython();
+
+    if (!success)
+        return;
 
     // Look for all available scripts
     const QString jupyterPluginPath = QCoreApplication::applicationDirPath() + "/examples/JupyterPlugin/scripts";
@@ -825,12 +833,17 @@ void JupyterLauncher::addPythonScripts()
             continue;
         }
 
+        // Get the absolute directory path
+        QFileInfo fileInfo(file);
+        QDir dir(fileInfo.absolutePath());
+        QString scriptPath = dir.filePath(json["script"].toString());
+
         const QString scriptName = json.value("name").toString();
 
         auto scriptTrigger = new TriggerAction(this, scriptName);
-        connect(scriptTrigger, &TriggerAction::triggered, this, [json]() {
+        connect(scriptTrigger, &TriggerAction::triggered, this, [json, scriptPath]() {
             // TODO: only open dialog if necessary, i.e. if user input is needed
-            auto scriptDialog = new ScriptDialog(nullptr, json);
+            auto scriptDialog = new ScriptDialog(nullptr, json, scriptPath);
             scriptDialog->show();
             });
 
