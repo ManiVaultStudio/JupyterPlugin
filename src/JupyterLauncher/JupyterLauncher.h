@@ -86,7 +86,7 @@ public: // Global settings
 
     bool getShowInterpreterPathDialog();
 
-public slots:
+private:
     void jupyterServerError(QProcess::ProcessError error);
     void jupyterServerFinished(int exitCode, QProcess::ExitStatus exitStatus);
     void jupyterServerStateChanged(QProcess::ProcessState newState);

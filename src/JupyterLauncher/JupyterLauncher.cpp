@@ -627,7 +627,6 @@ void JupyterLauncher::logProcessOutput()
 
 }
 
-
 void JupyterLauncher::initPython()
 {
     // Check if the user set a python interpreter path
