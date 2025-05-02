@@ -223,17 +223,17 @@ bool JupyterLauncher::checkPythonVersion()
 
 QString JupyterLauncher::getPythonInterpreterPath()
 {
-    return mv::settings().getPluginGlobalSettingsGroupAction<GlobalSettingsAction>(this)->getDefaultPythonPathAction().getFilePath();
+    return mv::settings().getPluginGlobalSettingsGroupAction<GlobalSettingsAction>("Jupyter Launcher")->getDefaultPythonPathAction().getFilePath();
 }
 
 void JupyterLauncher::setPythonInterpreterPath(const QString& p)
 {
-    mv::settings().getPluginGlobalSettingsGroupAction<GlobalSettingsAction>(this)->getDefaultPythonPathAction().setFilePath(p);
+    mv::settings().getPluginGlobalSettingsGroupAction<GlobalSettingsAction>("Jupyter Launcher")->getDefaultPythonPathAction().setFilePath(p);
 }
 
 bool JupyterLauncher::getShowInterpreterPathDialog()
 {
-    return !mv::settings().getPluginGlobalSettingsGroupAction<GlobalSettingsAction>(this)->getDoNotShowAgainButton().isChecked();
+    return !mv::settings().getPluginGlobalSettingsGroupAction<GlobalSettingsAction>("Jupyter Launcher")->getDoNotShowAgainButton().isChecked();
 }
 
 // Emulate the environment changes from a venv activate script

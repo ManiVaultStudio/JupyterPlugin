@@ -80,11 +80,17 @@ public:
 
 public: // Global settings
     // Python interpreter path
-    QString getPythonInterpreterPath();
+    static QString getPythonInterpreterPath();
 
-    void setPythonInterpreterPath(const QString& p);
+    static void setPythonInterpreterPath(const QString& p);
 
-    bool getShowInterpreterPathDialog();
+    static bool getShowInterpreterPathDialog();
+
+public: // Call python
+    // TBD merge the two runPythonScript signatures
+    /** Run a python script from the resources return the exit code and stderr and stdout */
+    static int runPythonScript(const QString& scriptName, QString& sout, QString& serr, const QStringList& params = {});
+    static bool runPythonCommand(const QStringList& params);
 
 private:
     void jupyterServerError(QProcess::ProcessError error);
@@ -94,11 +100,6 @@ private:
     void shutdownJupyterServer();
 
 private:
-    // TBD merge the two runPythonScript signatures
-    /** Run a python script from the resources return the exit code and stderr and stdout */
-    int runPythonScript(const QString& scriptName, QString& sout, QString& serr, const QStringList& params = {}); 
-    bool runPythonCommand(const QStringList& params);
-
     void setPythonEnv();
     bool installKernel();
     bool optionallyInstallMVWheel();
