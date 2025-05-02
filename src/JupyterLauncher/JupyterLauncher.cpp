@@ -610,7 +610,7 @@ void JupyterLauncher::startJupyterServerProcess()
     _serverPollTimer = new QTimer(this);
     _serverPollTimer->setInterval(20); // poll every 20ms
 
-    QObject::connect(_serverPollTimer, &QTimer::timeout, [=]() { 
+    QObject::connect(_serverPollTimer, &QTimer::timeout, [this]() { 
         logProcessOutput(); 
         });
 
