@@ -1,6 +1,7 @@
 #include "JupyterLauncher.h"
 
 #include "GlobalSettingsAction.h"
+#include "ScriptDialogAction.h"
 
 #include <Application.h>
 #include <CoreInterface.h>
@@ -817,17 +818,21 @@ void JupyterLauncher::addPythonScripts()
 
         const QJsonObject json = document.object();
 
-        std::vector<QString> requiredEntries = { "script", "name", "type"};
-        if (!std::all_of(requiredEntries.begin(), requiredEntries.end(), [&json](QString& entry) { return json.contains(entry); })) {
+        const std::vector<QString> requiredEntries = { "script", "name", "type"};
+
+        if (!std::all_of(requiredEntries.begin(), requiredEntries.end(), [&json](const QString& entry) { return json.contains(entry); })) {
             qWarning() << "Does not contain all required entries: " << scriptDescriptor;
+            qWarning().noquote() << document.toJson(QJsonDocument::Indented);
             continue;
         }
 
         const QString scriptName = json.value("name").toString();
 
         auto scriptTrigger = new TriggerAction(this, scriptName);
-        connect(scriptTrigger, &TriggerAction::triggered, this, [scriptName]() {
-            qDebug() << scriptName;
+        connect(scriptTrigger, &TriggerAction::triggered, this, [json]() {
+            // TODO: only open dialog if necessary, i.e. if user input is needed
+            auto scriptDialog = new ScriptDialog(nullptr, json);
+            scriptDialog->show();
             });
 
         statusBarAction->addMenuAction(scriptTrigger);

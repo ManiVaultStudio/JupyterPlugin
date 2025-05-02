@@ -5,12 +5,20 @@
     "requirements": "load_cell_image_and_mask_requirements.txt",
     "arguments": [
         {
-        "name": "input-file-image",
-        "type": "str",
+        "argument": "input-file-image",
+        "name": "Input image",
+        "type": "file-in",
         "required": true
         },
         {
-        "name": "input-file-json",
+        "argument": "input-file-json",
+        "name": "Input json",
+        "type": "file-in",
+        "required": true
+        },
+        {
+        "argument": "output-file-name",
+        "name": "Output name",
         "type": "str",
         "required": true
         }

@@ -57,8 +57,9 @@ def main(args):
         mv = mvstudio.data.Hierarchy()
 
         # Push image and mask
-        image_mv_ref = mv.addImageItem(image, "Cell Image")
-        mask_mv_ref = mv.addImageItem(mask, "Mask Image")
+        dataName = args.output_file_name
+        image_mv_ref = mv.addImageItem(image, f"{dataName} Image")
+        mask_mv_ref = mv.addImageItem(mask, f"{dataName} Mask")
     except:
         sys.exit(1) # Exit with a non-zero status code to indicate failure
 
@@ -82,6 +83,12 @@ def parse_arguments():
         "-j", "--input-file-json",
         required=True,
         help="Path to the input json (required)."
+    )
+
+    parser.add_argument(
+        "-o", "--output-file-name",
+        required=True,
+        help="Name of the output datasets (required)."
     )
 
     return parser.parse_args()
