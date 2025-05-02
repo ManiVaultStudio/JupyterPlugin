@@ -30,7 +30,7 @@ ScriptDialog::ScriptDialog(QWidget* parent, const QJsonObject json) :
             if (!argument.isObject()) continue;
 
             const QJsonObject argObj = argument.toObject();
-            const QString argument   = argObj["argument"].toString();
+            const QString arg        = argObj["argument"].toString();
             const QString name       = argObj["name"].toString();
             const QString type       = argObj["type"].toString();
             const bool required      = argObj["required"].toBool();
