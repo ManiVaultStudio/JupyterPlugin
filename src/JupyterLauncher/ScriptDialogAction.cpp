@@ -46,9 +46,12 @@ ScriptDialog::ScriptDialog(QWidget* parent, const QJsonObject json, const QStrin
 
             if (type == "file-in") {
                 auto widgetAction = _argumentActions.emplace_back(new mv::gui::FilePickerAction(this, name));
+                widgetAction->setSettingsPrefix(_launcherPlugin, "Scripts/file-in", false);
+
                 auto filePickerAction = static_cast<mv::gui::FilePickerAction*>(widgetAction);
                 filePickerAction->setUseNativeFileDialog(true);
                 filePickerAction->getFilePathAction().setText(name);
+
                 layout->addWidget(widgetAction->createWidget(this), ++row, 0, 1, -1);
 
                 connect(filePickerAction, &mv::gui::FilePickerAction::filePathChanged, this, [this, arg](const QString filePath) {
