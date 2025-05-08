@@ -7,6 +7,7 @@
 #include <memory>
 
 #include <QStringList>
+#include <QThread>
 
 #undef slots
 #include <pybind11/embed.h>
@@ -79,3 +80,18 @@ public:
     /** Returns the data types that are supported by the example view plugin */
     mv::DataTypes supportedDataTypes() const override;
 };
+
+class PythonWorker : public QThread {
+    Q_OBJECT
+public:
+    explicit PythonWorker(QObject* parent, const QString& scriptPath, const QStringList& args);
+protected:
+    void run() override;
+signals:
+    void resultReady(const QString& s);
+    void errorMessage(const QString& s);
+private:
+    QString     _scriptPath;
+    QStringList _args;
+};
+

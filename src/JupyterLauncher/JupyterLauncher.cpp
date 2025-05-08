@@ -658,7 +658,7 @@ void JupyterLauncher::logProcessOutput()
 
 }
 
-bool JupyterLauncher::initPython()
+bool JupyterLauncher::initPython(bool activateXeus)
 {
     if (_initializedPythonInterpreters.contains(_selectedInterpreterVersion)) {
         qDebug() << "JupyterLauncher::initPython: already initialized: " << _selectedInterpreterVersion;
@@ -756,9 +756,12 @@ bool JupyterLauncher::initPython()
         connectionFilePickerAction->setFilePath(_connectionFilePath);
     }
 
-    // Load the plugin but first set the environment to get 
-    // the correct python version
-    jupyterPluginInstance->init();
+    // Do init python in script mode
+    // We currently cannot run Jupyter Kernel and enable script execution
+    // simultaneously, since we do not know how to handle the GIL in this setting
+    if (activateXeus) {
+        jupyterPluginInstance->init();
+    }
 
     _initializedPythonInterpreters.insert({ _selectedInterpreterVersion, jupyterPluginInstance });
 
@@ -780,7 +783,7 @@ void JupyterLauncher::launchJupyterKernelAndNotebook(const QString& version)
 
 void JupyterLauncher::createPythonPluginAndStartNotebook()
 {
-    bool success = initPython();
+    bool success = initPython(/* activateXeus */ true);
 
     if (!success)
         return;
@@ -803,7 +806,7 @@ void JupyterLauncher::initPythonScripts(const QString& version)
 
 void JupyterLauncher::addPythonScripts()
 {
-    bool success = initPython();
+    bool success = initPython(/* activateXeus */ false);
 
     if (!success)
         return;

@@ -106,7 +106,7 @@ private:
     void setPythonEnv();
     bool installKernel();
     bool optionallyInstallMVWheel();
-    bool initPython();
+    bool initPython(bool activateXeus = true);
 
     bool checkPythonVersion() const;
 
