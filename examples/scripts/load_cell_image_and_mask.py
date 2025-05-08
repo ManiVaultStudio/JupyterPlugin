@@ -49,16 +49,18 @@ def main(args):
     print("ENTER MAIN")
     try:
         # Load data
+        print(f"load_tiff {args.input_file_image}")
         image = load_tiff(args.input_file_image)
+        print(f"load_json {args.input_file_json}")
         geojson = load_json(args.input_file_json)
 
         # Convert QuPath segmentation to mask
         mask = extract_mask_from_geojson(geojson, (image.shape[0], image.shape[1]))
 
-        print(f"Also works: {len(mask)}")
+        print(f"Loaded mask: {len(mask)}")
 
         # Connect to ManiVault
-        print(f"About to import")
+        print(f"About to import mvstudio")
         import mvstudio.data
         print(f"Done Importing")
         mv = mvstudio.data.Hierarchy()
@@ -83,6 +85,8 @@ def parse_arguments():
                     prog='load_cell_image_and_mask',
                     description='Loads tiff files and associate masks')
     
+    print("ADD ARGUMENTS")
+
     parser.add_argument(
         "-i", "--input-file-image",
         required=True,
@@ -101,10 +105,24 @@ def parse_arguments():
         help="Name of the output datasets (required)."
     )
 
-    return parser.parse_args()
+    print("PARSE ARGUMENTS")
+
+    args = parser.parse_args()
+
+    print("PRINT ARGUMENTS")
+
+    print(args)
+
+    print("LEAVE PARSE ARGUMENTS")
+
+    return args
 
 
 if __name__ == "__main__":
     print("ENTER SCRIPT")
+
+    if len(sys.argv) > 1:
+        print(sys.argv[:])
+
     parsed_args = parse_arguments()
     main(parsed_args)
