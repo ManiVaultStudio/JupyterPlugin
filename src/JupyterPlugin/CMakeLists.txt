@@ -160,6 +160,13 @@ install(FILES
     COMPONENT PLUGIN
 )
 
+install(DIRECTORY 
+    ${PROJECT_SOURCE_DIR}/examples/projects
+    ${PROJECT_SOURCE_DIR}/examples/scripts
+    DESTINATION examples/JupyterPlugin
+    COMPONENT PLUGIN
+)
+
 add_custom_command(TARGET ${JUPYTERPLUGIN} POST_BUILD
     COMMAND "${CMAKE_COMMAND}"
     --install ${CMAKE_CURRENT_BINARY_DIR}

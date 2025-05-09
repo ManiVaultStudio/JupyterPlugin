@@ -1,6 +1,6 @@
 #include "XeusInterpreter.h"
 
-#include "MVData.h"
+#include "JupyterPlugin.h"
 #include "PythonBuildVersion.h"
 
 #include <iostream>
@@ -40,11 +40,15 @@ void XeusInterpreter::configure_impl()
 
         py::gil_scoped_acquire acquire;
 
-        py::module MVData_module = get_MVData_module();
-        MVData_module.doc() = "Provides access to low level ManiVaultStudio core functions";
-
         py::module sys = py::module::import("sys");
-        sys.attr("modules")["mvstudio_core"] = MVData_module;
+        py::dict modules = sys.attr("modules");
+
+        if (!modules.contains("mvstudio_core")) {
+            JupyterPlugin::init_mv_communication_module();
+            py::module MVData_module = *(JupyterPlugin::mv_communication_module.get());
+
+            sys.attr("modules")["mvstudio_core"] = MVData_module;
+        }
     }
     catch (const std::runtime_error& e)
     {

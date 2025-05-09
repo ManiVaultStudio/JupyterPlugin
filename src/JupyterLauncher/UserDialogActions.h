@@ -20,6 +20,14 @@ public:
 
     mv::gui::ToggleAction& getDoNotShowAgainButton() { return _doNotShowAgainButton; }
 
+    int getMode() const {
+        return _mode;
+    }
+
+    void setMode(int m) {
+        _mode = m;
+    }
+
 private:
     mv::gui::FilePickerAction   _interpreterFileAction;
     mv::gui::TriggerAction      _okButton;
@@ -34,6 +42,8 @@ private:
 
     int const                   _dialogPreferredWidth = 700;
     int const                   _dialogPreferredHeight = 195;
+
+    int                         _mode = 0;  // 0 calls notebook, 1 calls init scripts
 
     JupyterLauncher*            _launcherLauncher = nullptr;
 };
