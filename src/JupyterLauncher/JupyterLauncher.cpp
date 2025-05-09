@@ -994,7 +994,7 @@ void JupyterLauncherFactory::initialize()
         _statusBarAction->addMenuAction(launchJupyterPython);
 
         // Python Scripts
-        auto initPythonScripts = new TriggerAction(this, "Init Python Scripts (" + pythonVersionOfPlugin + ")");
+        auto initPythonScripts = new TriggerAction(this, "Init Python Scripts (" + pythonVersionOfPlugin + ") [BETA]");
         connect(initPythonScripts, &TriggerAction::triggered, this, [this, pythonVersionOfPlugin, getJupyterLauncherPlugin]() {
 
             JupyterLauncher* plugin = getJupyterLauncherPlugin();
