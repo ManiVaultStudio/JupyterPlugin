@@ -57,7 +57,7 @@ def main(args):
         # Convert QuPath segmentation to mask
         mask = extract_mask_from_geojson(geojson, (image.shape[0], image.shape[1]))
 
-        print(f"Loaded mask: {len(mask)}")
+        print(f"Loaded mask: {mask.shape}")
 
         # Connect to ManiVault
         print(f"About to import mvstudio")
@@ -65,17 +65,21 @@ def main(args):
         print(f"Done Importing")
         mv = mvstudio.data.Hierarchy()
 
-        print(f"mvstudio.data.Hierarchy: {mv}")
+        #print(f"mvstudio.data.Hierarchy: {mv}")
+
+        print("Start pushing")
 
         # Push image and mask
-        dataName = args.output_file_name
-        image_mv_ref = mv.addImageItem(image, f"{dataName} Image")
-        mask_mv_ref = mv.addImageItem(mask, f"{dataName} Mask")
+        dataName        = args.output_file_name
+        image_mv_ref    = mv.addImageItem(image, f"{dataName} Image")
+        mask_mv_ref     = mv.addImageItem(mask, f"{dataName} Mask")
+
+        print("Finished pushing")
+
     except Exception as e:
         print("An error occurred:", e)
-        sys.exit(1) # Exit with a non-zero status code to indicate failure
 
-    sys.exit(0) # Explicitly exit with 0 for success
+    print("DONE MAIN")
 
 
 def parse_arguments():
@@ -121,8 +125,7 @@ def parse_arguments():
 if __name__ == "__main__":
     print("ENTER SCRIPT")
 
-    if len(sys.argv) > 1:
-        print(sys.argv[:])
-
     parsed_args = parse_arguments()
     main(parsed_args)
+
+    print("DONE SCRIPT")
