@@ -25,7 +25,6 @@ Q_PLUGIN_METADATA(IID "studio.manivault.JupyterPlugin")
 
 using namespace mv;
 namespace py = pybind11;
-namespace py = pybind11;
 
 std::unique_ptr<pybind11::module> JupyterPlugin::mv_communication_module = {};
 
@@ -77,7 +76,7 @@ void JupyterPlugin::runScriptWithArgs(const QString& scriptPath, const QStringLi
     std::ifstream file(scriptPath.toStdString());
     std::stringstream buffer;
     buffer << file.rdbuf();
-    std::string script_code = buffer.str();
+    const std::string script_code = buffer.str();
 
     // Acquire GIL
     py::gil_scoped_acquire acquire;
@@ -90,7 +89,14 @@ void JupyterPlugin::runScriptWithArgs(const QString& scriptPath, const QStringLi
 
         if (!modules.contains("mvstudio_core")) {
             JupyterPlugin::init_mv_communication_module();
-            sys.attr("modules")["mvstudio_core"] = *(JupyterPlugin::mv_communication_module.get());
+            modules["mvstudio_core"] = *(JupyterPlugin::mv_communication_module.get());
+        }
+
+        if (_base_modules.empty()) {
+            for (auto& [key, item] : modules) {
+                std::string name = py::str(key);
+                _base_modules.insert(name);
+            }
         }
 
         // Set sys.argv
@@ -106,6 +112,19 @@ void JupyterPlugin::runScriptWithArgs(const QString& scriptPath, const QStringLi
         py::object main_namespace = main_module.attr("__dict__");
 
         py::exec(script_code, main_namespace);
+
+        // Run garbage collection
+        py::module gc = py::module::import("gc");
+        gc.attr("collect")();
+
+        // Clean up modules for fresh start
+        for (auto& [key, item] : modules) {
+            std::string name = py::str(key);
+            if (!_base_modules.contains(name)) {
+                modules.attr("pop")(name, py::none());
+            }
+        }
+
     }
     catch (const py::error_already_set& e) {
         QString err = QStringLiteral("Python error (probably form script): ") + e.what();

@@ -5,6 +5,7 @@
 #include <actions/FilePickerAction.h>
 
 #include <memory>
+#include <unordered_set>
 
 #include <QStringList>
 
@@ -49,6 +50,8 @@ public:
 private:
     std::unique_ptr<XeusKernel>     _pKernel;
     FilePickerAction                _connectionFilePath;        /** Settings action */
+
+    std::unordered_set<std::string> _base_modules = {};
 
     std::unique_ptr<pybind11::scoped_interpreter>   _init_guard = {};
 };
