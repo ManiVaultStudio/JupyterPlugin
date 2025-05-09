@@ -3,7 +3,6 @@
 #include <QDebug>
 #include <QDir>
 #include <QStandardPaths>
-#include <QtConcurrent>
 
 #include "MVData.h"
 #include "XeusKernel.h"
