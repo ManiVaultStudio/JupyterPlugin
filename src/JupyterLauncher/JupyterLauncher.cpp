@@ -981,25 +981,33 @@ void JupyterLauncherFactory::initialize()
 
         qDebug() << "pythonVersionOfPlugin:" << pythonVersionOfPlugin;
 
-        // Jupyter Notebooks
         auto launchJupyterPython = new TriggerAction(this, "Start Jupyter Kernel and Lab (" + pythonVersionOfPlugin + ")");
-        connect(launchJupyterPython, &TriggerAction::triggered, this, [this, pythonVersionOfPlugin, getJupyterLauncherPlugin]() {
+        auto initPythonScripts   = new TriggerAction(this, "Init Python Scripts (" + pythonVersionOfPlugin + ") [BETA]");
+
+        auto setTriggersEnabled = [launchJupyterPython, initPythonScripts](bool enabled) {
+            launchJupyterPython->setEnabled(enabled);
+            initPythonScripts->setEnabled(enabled);
+            };
+
+        // Jupyter Notebooks
+        connect(launchJupyterPython, &TriggerAction::triggered, this, [this, pythonVersionOfPlugin, getJupyterLauncherPlugin, setTriggersEnabled]() {
 
             JupyterLauncher* plugin = getJupyterLauncherPlugin();
             if (plugin) {
                 plugin->launchJupyterKernelAndNotebook(pythonVersionOfPlugin);
+                setTriggersEnabled(false);
             }
         });
 
         _statusBarAction->addMenuAction(launchJupyterPython);
 
         // Python Scripts
-        auto initPythonScripts = new TriggerAction(this, "Init Python Scripts (" + pythonVersionOfPlugin + ") [BETA]");
-        connect(initPythonScripts, &TriggerAction::triggered, this, [this, pythonVersionOfPlugin, getJupyterLauncherPlugin]() {
+        connect(initPythonScripts, &TriggerAction::triggered, this, [this, pythonVersionOfPlugin, getJupyterLauncherPlugin, setTriggersEnabled]() {
 
             JupyterLauncher* plugin = getJupyterLauncherPlugin();
             if (plugin) {
                 plugin->initPythonScripts(pythonVersionOfPlugin);
+                setTriggersEnabled(false);
             }
             });
 
