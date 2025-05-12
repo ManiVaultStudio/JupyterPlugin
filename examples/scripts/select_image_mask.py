@@ -43,10 +43,10 @@ def main(args):
         sel_guid    = args.input_sel_data_guid
         sel_mv_ref  = get_data_from_mv(sel_guid)
 
-        # The internal image indexing in ManiVault is flipped compared to numpy's data model
+        # Set selection
         import numpy as np
         thresh      = args.selection_threshold
-        mask_selection = np.flatnonzero(np.flipud(mask_mv_ref.points) > thresh)
+        mask_selection = np.flatnonzero(mask_mv_ref.points > thresh)
 
         sel_mv_ref.setSelection(mask_selection)
 
