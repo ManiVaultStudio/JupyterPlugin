@@ -3,7 +3,6 @@
 #include "JupyterLauncher.h"
 
 #include <DataSet.h>
-#include <DataType.h>
 #include <Set.h>
 
 #include <actions/DatasetPickerAction.h>
@@ -84,7 +83,15 @@ ScriptDialog::ScriptDialog(QWidget* parent, const QJsonObject json, const QStrin
                 auto widgetAction   = _argumentActions.emplace_back(new mv::gui::DecimalAction(this, name));
                 auto decimalAction  = static_cast<mv::gui::DecimalAction*>(widgetAction);
 
-                layout->addWidget(decimalAction->createWidget(this), ++row, 0, 1, 1);
+                layout->addWidget(widgetAction->createLabelWidget(this), ++row, 0, 1, 1);
+                layout->addWidget(decimalAction->createWidget(this), row, 1, 1, -1);
+
+                if (argObj.contains("default")) {
+                    decimalAction->setValue(argObj["default"].toDouble());
+                }
+
+
+                _argumentMap[arg] = QString::number(decimalAction->getValue());
 
                 connect(decimalAction, &mv::gui::DecimalAction::valueChanged, this, [this, arg](const float value) {
                     _argumentMap[arg] = QString::number(value);
@@ -95,7 +102,15 @@ ScriptDialog::ScriptDialog(QWidget* parent, const QJsonObject json, const QStrin
                 auto widgetAction   = _argumentActions.emplace_back(new mv::gui::IntegralAction(this, name));
                 auto integralAction = static_cast<mv::gui::IntegralAction*>(widgetAction);
 
-                layout->addWidget(integralAction->createWidget(this), ++row, 0, 1, 1);
+                layout->addWidget(widgetAction->createLabelWidget(this), ++row, 0, 1, 1);
+                layout->addWidget(integralAction->createWidget(this), row, 1, 1, -1);
+
+                if (argObj.contains("default")) {
+                    integralAction->setValue(argObj["default"].toInt());
+                }
+
+
+                _argumentMap[arg] = QString::number(integralAction->getValue());
 
                 connect(integralAction, &mv::gui::IntegralAction::valueChanged, this, [this, arg](const int32_t value) {
                     _argumentMap[arg] = QString::number(value);
@@ -106,14 +121,14 @@ ScriptDialog::ScriptDialog(QWidget* parent, const QJsonObject json, const QStrin
                 auto widgetAction           = _argumentActions.emplace_back(new mv::gui::DatasetPickerAction(this, name));
                 auto datasetPickerAction    = static_cast<mv::gui::DatasetPickerAction*>(widgetAction);
 
-                std::unordered_set<mv::DataType> allowed_types;
+                std::unordered_set<QString> allowed_types;
 
                 if (argObj.contains("datatypes")) {
                     const QJsonArray datatypesArray = argObj["datatypes"].toArray();
 
                     for (const QJsonValue& val : datatypesArray) {
                         if (val.isString()) {
-                            allowed_types.insert(mv::DataType(QString(val.toString())));
+                            allowed_types.insert(val.toString());
                         }
                     }
                 }
@@ -122,12 +137,13 @@ ScriptDialog::ScriptDialog(QWidget* parent, const QJsonObject json, const QStrin
                     if (allowed_types.empty())
                         return true;
                     
-                    return std::any_of(allowed_types.cbegin(), allowed_types.cend(), [&dataset](const mv::DataType& type) {
-                        return dataset->getDataType() == type;
+                    return std::any_of(allowed_types.cbegin(), allowed_types.cend(), [&dataset](const QString& type) {
+                        return dataset->getRawDataKind() == type;
                         });
                     });
 
-                layout->addWidget(datasetPickerAction->createWidget(this), ++row, 0, 1, -1);
+                layout->addWidget(widgetAction->createLabelWidget(this), ++row, 0, 1, 1);
+                layout->addWidget(datasetPickerAction->createWidget(this), row, 1, 1, -1);
 
                 connect(datasetPickerAction, &mv::gui::DatasetPickerAction::datasetPicked, this, [this, arg](const mv::Dataset<mv::DatasetImpl>& dataset) {
                     _argumentMap[arg] = dataset.getDatasetId();
