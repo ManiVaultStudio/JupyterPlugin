@@ -1,6 +1,6 @@
 {
     "script": "select_image_mask.py",
-    "name": "Select Image Mask",
+    "name": "Set selection using mask",
     "type": "Analysis",
     "requirements": "select_image_mask_requirements.txt",
     "analysis-input-datatypes" : ["Points"],
@@ -22,8 +22,10 @@
         {
         "argument": "--selection-threshold",
         "name": "Selection threshold",
-        "type": "float",
+        "type": "int",
         "default": 0,
+        "range-min": 0,
+        "range-max": 100,
         "required": false
         }
     ]

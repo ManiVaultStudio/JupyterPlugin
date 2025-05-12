@@ -90,6 +90,21 @@ ScriptDialog::ScriptDialog(QWidget* parent, const QJsonObject json, const QStrin
                     decimalAction->setValue(argObj["default"].toDouble());
                 }
 
+                if (argObj.contains("range-min")) {
+                    decimalAction->setMinimum(argObj["range-min"].toDouble());
+                }
+
+                if (argObj.contains("range-max")) {
+                    decimalAction->setMaximum(argObj["range-max"].toDouble());
+                }
+
+                if (argObj.contains("step-size")) {
+                    decimalAction->setSingleStep(argObj["step-size"].toDouble());
+                }
+
+                if (argObj.contains("num-decimals")) {
+                    decimalAction->setNumberOfDecimals(argObj["step-size"].toInt());
+                }
 
                 _argumentMap[arg] = QString::number(decimalAction->getValue());
 
@@ -109,6 +124,13 @@ ScriptDialog::ScriptDialog(QWidget* parent, const QJsonObject json, const QStrin
                     integralAction->setValue(argObj["default"].toInt());
                 }
 
+                if (argObj.contains("range-min")) {
+                    integralAction->setMinimum(argObj["range-min"].toInt());
+                }
+
+                if (argObj.contains("range-max")) {
+                    integralAction->setMaximum(argObj["range-max"].toInt());
+                }
 
                 _argumentMap[arg] = QString::number(integralAction->getValue());
 
