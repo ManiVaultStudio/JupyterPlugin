@@ -1,0 +1,25 @@
+{
+    "script": "write_image_as_png.py",
+    "name": "Export image as PNG",
+    "type": "Writer",
+    "requirements": "write_image_as_png_requirements.txt",
+    "analysis-input-datatypes" : ["Images"],
+    "arguments": [
+        {
+        "argument": "--input-image-data-guid",
+        "name": "Export image",
+        "type": "mv-data-in",
+        "datatypes":  ["Images"],
+        "required": true
+        },
+        {
+        "argument": "--export-path",
+        "name": "Out file",
+        "type": "file-out",
+        "required": true,
+        "file-extension": "png",
+        "dialog-caption": "Save image as PNG",
+        "dialog-filter": "PNG Files (*.png)"
+        }
+    ]
+}

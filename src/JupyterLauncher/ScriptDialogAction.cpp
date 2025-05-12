@@ -18,6 +18,7 @@
 
 #include <QJsonArray>
 #include <QGridLayout>
+#include <QFileDialog>
 #include <QStringList>
 #include <QWidget>
 
@@ -66,7 +67,39 @@ ScriptDialog::ScriptDialog(QWidget* parent, const QJsonObject json, const QStrin
                     });
             }
             else if (type == "file-out") {
-                // TODO
+                QString caption = "Save as...";
+                QString directoryPath = _launcherPlugin->getSetting("Scripts/file-in", "").toString();
+                QString filter = "Save as...";
+
+                if (argObj.contains("dialog-caption")) {
+                    caption = argObj["dialog-caption"].toString();
+                }
+
+                if (argObj.contains("dialog-filter")) {
+                    filter = argObj["dialog-filter"].toString();
+                }
+
+                QString outputFileName = QFileDialog::getSaveFileName(
+                    nullptr,
+                    caption,
+                    directoryPath,
+                    filter
+                );
+
+                if (!outputFileName.isNull() && !outputFileName.isEmpty()) {
+                    _launcherPlugin->setSetting("Scripts/file-in", QFileInfo(outputFileName).absolutePath());
+                }
+
+                if (argObj.contains("file-extension")) {
+                    QString fileExtention = argObj["file-extension"].toString();
+
+                    if (!outputFileName.endsWith(fileExtention, Qt::CaseInsensitive)) {
+                        outputFileName += QString(".%1").arg(fileExtention);
+                    }
+
+                }
+
+                _argumentMap[arg] = outputFileName;
             }
             else if (type == "str") {
                 auto widgetAction = _argumentActions.emplace_back(new mv::gui::StringAction(this, name));
