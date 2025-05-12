@@ -77,6 +77,7 @@ def parse_arguments():
         "-t", "--selection-threshold",
         required=False,
         default=0,
+        type=int,
         help="Selection threshold value (optional)."
     )
 
