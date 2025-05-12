@@ -878,6 +878,7 @@ void JupyterLauncher::addPythonScripts()
         connect(scriptTrigger, &TriggerAction::triggered, this, [this, json, scriptPath]() {
             // TODO: only open dialog if necessary, i.e. if user input is needed
             auto scriptDialog = new ScriptDialog(nullptr, json, scriptPath, _selectedInterpreterVersion, this);
+            connect(scriptDialog, &QDialog::finished, scriptDialog, &QObject::deleteLater);
             scriptDialog->show();
             });
 
