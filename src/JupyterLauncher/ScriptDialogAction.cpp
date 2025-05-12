@@ -2,7 +2,7 @@
 
 #include "JupyterLauncher.h"
 
-#include <DataSet.h>
+#include <Dataset.h>
 #include <Set.h>
 
 #include <actions/DatasetPickerAction.h>
