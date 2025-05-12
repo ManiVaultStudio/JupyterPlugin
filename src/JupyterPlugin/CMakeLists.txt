@@ -157,14 +157,14 @@ install(FILES
     ${PROJECT_SOURCE_DIR}/examples/demo_data_loading.ipynb
     ${PROJECT_SOURCE_DIR}/examples/requirements.txt
     DESTINATION examples/JupyterPlugin 
-    COMPONENT PLUGIN
+    COMPONENT PYTHONEXAMPLES
 )
 
 install(DIRECTORY 
     ${PROJECT_SOURCE_DIR}/examples/projects
     ${PROJECT_SOURCE_DIR}/examples/scripts
     DESTINATION examples/JupyterPlugin
-    COMPONENT PLUGIN
+    COMPONENT PYTHONEXAMPLES
 )
 
 add_custom_command(TARGET ${JUPYTERPLUGIN} POST_BUILD
@@ -180,6 +180,14 @@ add_custom_command(TARGET ${JUPYTERPLUGIN} POST_BUILD
     --install ${CMAKE_CURRENT_BINARY_DIR}
     --config $<CONFIGURATION>
     --component PYTHONWHEELS
+    --prefix ${ManiVault_INSTALL_DIR}/$<CONFIGURATION>
+)
+
+add_custom_command(TARGET ${JUPYTERPLUGIN} POST_BUILD
+    COMMAND "${CMAKE_COMMAND}"
+    --install ${CMAKE_CURRENT_BINARY_DIR}
+    --config $<CONFIGURATION>
+    --component PYTHONEXAMPLES
     --prefix ${ManiVault_INSTALL_DIR}/$<CONFIGURATION>
 )
 
