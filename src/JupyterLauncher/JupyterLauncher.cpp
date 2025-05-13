@@ -820,6 +820,8 @@ void JupyterLauncher::addPythonScripts()
     const QString jupyterPluginPath = QCoreApplication::applicationDirPath() + "/examples/JupyterPlugin/scripts";
     QDir dir(jupyterPluginPath);
 
+    qDebug() << "JupyterLauncher: Loading scripts from " << jupyterPluginPath;
+
     QStringList filters;
     filters << "*.json";
 
@@ -853,6 +855,8 @@ void JupyterLauncher::addPythonScripts()
 
         return requirementsAreInstalled;
         };
+
+    uint32_t numLoadedScripts = 0;
 
     for (const auto& scriptDescriptor : scriptDescriptors) {
         QFile file(scriptDescriptor);
@@ -915,8 +919,10 @@ void JupyterLauncher::addPythonScripts()
             });
 
         statusBarAction->addMenuAction(scriptTrigger);
+        numLoadedScripts++;
     }
 
+    qDebug().noquote() << QString("JupyterLauncher: Loaded %1 scripts").arg(numLoadedScripts);
 }
 
 /// ////////////////////// ///
