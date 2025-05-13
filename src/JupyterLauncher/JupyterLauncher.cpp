@@ -828,23 +828,7 @@ void JupyterLauncher::addPythonScripts()
     std::vector<QString> scriptDescriptors;
 
     for (const QFileInfo& fileInfo : fileList) {
-
         QString scriptFilePath = fileInfo.absoluteFilePath();
-
-        // check requirements
-        QString requirementsFilePath = QDir::cleanPath(fileInfo.absolutePath() + "/" + fileInfo.baseName() + "_requirements.txt");
-        QFileInfo requirementsFileInfo(requirementsFilePath);
-        if (requirementsFileInfo.exists() && requirementsFileInfo.isFile()) {
-            QStringList params = {"-m", "pip", "install", "-r", requirementsFilePath, "--dry-run"};
-
-            bool requirementsAreInstalled = runPythonCommand(params, /*verbose*/ false);
-
-            if (!requirementsAreInstalled) {
-                qDebug() << "Requirements are not installed for Python script: " << fileInfo.absoluteFilePath();
-                continue;
-            }
-        }
-
         scriptDescriptors.push_back(scriptFilePath);
     }
 
@@ -855,6 +839,20 @@ void JupyterLauncher::addPythonScripts()
     int numberOfPermanentWidgets = statusBar->findChildren<QWidget*>(Qt::FindDirectChildrenOnly).count();
     int widetIndex = std::max(0, numberOfPermanentWidgets - 1);
     statusBar->insertPermanentWidget(widetIndex, statusBarAction->createWidget(Application::getMainWindow()), statusBarAction->getStretch());
+
+    auto checkRequirements = [](const QString& requirementsFilePath) -> bool {
+        QFileInfo requirementsFileInfo(requirementsFilePath);
+
+        if (!requirementsFileInfo.exists() || !requirementsFileInfo.isFile()) {
+            qDebug() << "Requirementsfile is listed but not found: " << requirementsFileInfo;
+            return false;
+        }
+
+        QStringList params              = { "-m", "pip", "install", "-r", requirementsFilePath, "--dry-run" };
+        bool requirementsAreInstalled   = runPythonCommand(params, /*verbose*/ false);
+
+        return requirementsAreInstalled;
+        };
 
     for (const auto& scriptDescriptor : scriptDescriptors) {
         QFile file(scriptDescriptor);
@@ -891,9 +889,22 @@ void JupyterLauncher::addPythonScripts()
         // Get the absolute directory path
         QFileInfo fileInfo(file);
         QDir dir(fileInfo.absolutePath());
-        QString scriptPath = dir.filePath(json["script"].toString());
 
-        const QString scriptName = json.value("name").toString();
+        // check requirements
+        if (json.contains("requirements")) {
+
+            QString requirementsFilePath    = dir.filePath(json["requirements"].toString());
+            bool requirementsAreInstalled   = checkRequirements(requirementsFilePath);
+
+            if (!requirementsAreInstalled) {
+                qDebug() << "Requirements are not installed for Python script: " << fileInfo.absoluteFilePath();
+                continue;
+            }
+
+        }
+
+        const QString scriptPath = dir.filePath(json["script"].toString());
+        const QString scriptName = json["name"].toString();
 
         auto scriptTrigger = new TriggerAction(this, scriptName);
         connect(scriptTrigger, &TriggerAction::triggered, this, [this, json, scriptPath]() {
