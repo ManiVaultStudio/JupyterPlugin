@@ -12,7 +12,7 @@ XeusServer::XeusServer(xeus::xcontext& context, const xeus::xconfiguration& conf
     m_pollTimer = new QTimer();
     m_pollTimer->setInterval(10);
 
-    QObject::connect(m_pollTimer, &QTimer::timeout, [=]() { 
+    QObject::connect(m_pollTimer, &QTimer::timeout, [this]() { 
         auto msg = poll_channels(0);
         if (msg)
         {
