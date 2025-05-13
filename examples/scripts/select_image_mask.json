@@ -1,0 +1,32 @@
+{
+    "script": "select_image_mask.py",
+    "name": "Set selection using mask",
+    "type": "Analysis",
+    "requirements": "select_image_mask_requirements.txt",
+    "analysis-input-datatypes" : ["Points"],
+    "arguments": [
+        {
+        "argument": "--input-mask-data-guid",
+        "name": "Input mask",
+        "type": "mv-data-in",
+        "datatypes":  ["Points"],
+        "required": true
+        },
+        {
+        "argument": "--input-sel-data-guid",
+        "name": "Selection output",
+        "type": "mv-data-in",
+        "datatypes":  ["Points"],
+        "required": true
+        },
+        {
+        "argument": "--selection-threshold",
+        "name": "Selection threshold",
+        "type": "int",
+        "default": 0,
+        "range-min": 0,
+        "range-max": 100,
+        "required": false
+        }
+    ]
+}

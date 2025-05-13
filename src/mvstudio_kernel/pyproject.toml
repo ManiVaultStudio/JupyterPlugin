@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "mvstudio_kernel"
-version = "0.4.0"
+version = "0.5.0"
 authors = ["Baldur van Lew <b.van_lew@lumc.nl>"]
 readme = "README.md"
 description = 'Python kernel manager for the ManiVaultStudio (mvstudio)'
@@ -27,6 +27,7 @@ jupyter_client = "~=8.6"
 jupyterlab = "~=4.2"
 xeus-python-shell = "~0.6"
 ipython = "~8.28"
+pip = ">=23.1"
 
 [build-system]
 requires = ["poetry-core"]

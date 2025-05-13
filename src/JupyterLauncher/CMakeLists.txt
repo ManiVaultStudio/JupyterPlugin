@@ -17,6 +17,8 @@ set(SOURCES
     GlobalSettingsAction.cpp
     UserDialogActions.h
     UserDialogActions.cpp
+    ScriptDialogAction.h
+    ScriptDialogAction.cpp
 )
 
 set (RESOURCES

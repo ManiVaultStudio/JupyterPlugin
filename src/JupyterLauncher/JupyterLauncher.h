@@ -15,6 +15,7 @@
 #include <QTimer>
 
 #include <memory>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -74,15 +75,27 @@ public:
     // There  must be a JupyterPlugin (a kernel provider) that matches the python version for this to work.
     void launchJupyterKernelAndNotebook(const QString& version);
 
+    // The pyversion should correspond to a python major.minor version
+    // e.g. "3.11", "3.12"
+    void initPythonScripts(const QString& version);
+
 public: // Global settings
     // Python interpreter path
-    QString getPythonInterpreterPath();
+    static QString getPythonInterpreterPath();
 
-    void setPythonInterpreterPath(const QString& p);
+    static void setPythonInterpreterPath(const QString& p);
 
-    bool getShowInterpreterPathDialog();
+    static bool getShowInterpreterPathDialog();
 
-public slots:
+public: // Call python
+    // TBD merge the two runPythonScript signatures
+    /** Run a python script from the resources return the exit code and stderr and stdout */
+    static int runPythonScript(const QString& scriptName, QString& sout, QString& serr, const QStringList& params = {});
+    static bool runPythonCommand(const QStringList& params, bool verbose = true);
+
+    bool runScriptInKernel(const QString& scriptPath, QString interpreterVersion, const QStringList& params = {});
+
+private:
     void jupyterServerError(QProcess::ProcessError error);
     void jupyterServerFinished(int exitCode, QProcess::ExitStatus exitStatus);
     void jupyterServerStateChanged(QProcess::ProcessState newState);
@@ -90,16 +103,12 @@ public slots:
     void shutdownJupyterServer();
 
 private:
-    // TBD merge the two runPythonScript signatures
-    /** Run a python script from the resources return the exit code and stderr and stdout */
-    int runPythonScript(const QString& scriptName, QString& sout, QString& serr, const QStringList& params = {}); 
-    bool runPythonCommand(const QStringList& params);
-
     void setPythonEnv();
     bool installKernel();
     bool optionallyInstallMVWheel();
+    bool initPython(bool activateXeus = true);
 
-    bool checkPythonVersion();
+    bool checkPythonVersion() const;
 
     void startJupyterServerProcess();
 
@@ -108,13 +117,16 @@ private:
     // Distinguish between python in a regular or conda directory and python in a venv
     std::pair<bool, QString> getPythonHomePath(const QString& pyInterpreterPath);
     
-private slots:
-    void launchJupyterKernelAndNotebookImpl();
+    void createPythonPluginAndStartNotebook();
+    void addPythonScripts();
 
 private:
     QString                         _connectionFilePath;
     QString                         _selectedInterpreterVersion;
     QString                         _jupyterPluginFolder;
+
+    using LoadedPythonInterpreters = std::unordered_map<QString, mv::plugin::Plugin*>;
+    LoadedPythonInterpreters        _initializedPythonInterpreters;
 
     mv::BackgroundTask*             _serverBackgroundTask = nullptr;      /** The background task monitoring the Jupyter Server */
     QProcess                        _serverProcess;             /** A detached process for running the Jupyter server */
