@@ -91,7 +91,7 @@ public: // Call python
     // TBD merge the two runPythonScript signatures
     /** Run a python script from the resources return the exit code and stderr and stdout */
     static int runPythonScript(const QString& scriptName, QString& sout, QString& serr, const QStringList& params = {});
-    static bool runPythonCommand(const QStringList& params);
+    static bool runPythonCommand(const QStringList& params, bool verbose = true);
 
     bool runScriptInKernel(const QString& scriptPath, QString interpreterVersion, const QStringList& params = {});
 

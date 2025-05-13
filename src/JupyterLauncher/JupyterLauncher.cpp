@@ -374,16 +374,21 @@ int JupyterLauncher::runPythonScript(const QString& scriptName, QString& sout, Q
     return result;
 }
 
-bool JupyterLauncher::runPythonCommand(const QStringList& params)
+bool JupyterLauncher::runPythonCommand(const QStringList& params, bool verbose)
 {
     QString pyInterpreter = QDir::toNativeSeparators(getPythonInterpreterPath());
 
-    qDebug() << "pyInterpreter: " << pyInterpreter;
-    qDebug() << "Command " << params.join(" ");
+    if (verbose) {
+        qDebug() << "pyInterpreter: " << pyInterpreter;
+        qDebug() << "Command " << params.join(" ");
+    }
 
     QProcess pythonProcess;
 
-    auto printOut = [](const QString& output) {
+    auto printOut = [verbose](const QString& output) {
+        if (!verbose)
+            return;
+
         for (const QString& outline : output.split("\n"))
             if (!outline.isEmpty())
                 qDebug() << outline;
@@ -823,8 +828,24 @@ void JupyterLauncher::addPythonScripts()
     std::vector<QString> scriptDescriptors;
 
     for (const QFileInfo& fileInfo : fileList) {
-        scriptDescriptors.push_back(fileInfo.absoluteFilePath());
-        qDebug() << fileInfo.absoluteFilePath();
+
+        QString scriptFilePath = fileInfo.absoluteFilePath();
+
+        // check requirements
+        QString requirementsFilePath = QDir::cleanPath(fileInfo.absolutePath() + "/" + fileInfo.baseName() + "_requirements.txt");
+        QFileInfo requirementsFileInfo(requirementsFilePath);
+        if (requirementsFileInfo.exists() && requirementsFileInfo.isFile()) {
+            QStringList params = {"-m", "pip", "install", "-r", requirementsFilePath, "--dry-run"};
+
+            bool requirementsAreInstalled = runPythonCommand(params, /*verbose*/ false);
+
+            if (!requirementsAreInstalled) {
+                qDebug() << "Requirements are not installed for Python script: " << fileInfo.absoluteFilePath();
+                continue;
+            }
+        }
+
+        scriptDescriptors.push_back(scriptFilePath);
     }
 
     // Add UI entries for the scripts
