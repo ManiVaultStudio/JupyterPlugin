@@ -2,7 +2,7 @@
 
 This project provides [Python](https://en.wikipedia.org/wiki/Python_(programming_language)) integration into [ManiVault](https://github.com/ManiVaultStudio/core). It implements two modes of operation: 
 1. a connection to [Jupyter notebooks](https://jupyter.org/), and
-2. the ability to run individual Python scripts. 
+2. the ability to run [individual Python scripts](./docs/Python_scripts_for_ManiVault.md). 
 An additional Python module is provided which  allows users to push data from Python to ManiVault and retrieve data from ManiVault in Python. 
 
 ```bash
