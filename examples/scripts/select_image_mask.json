@@ -3,7 +3,7 @@
     "name": "Set selection using mask",
     "type": "Analysis",
     "requirements": "select_image_mask_requirements.txt",
-    "analysis-input-datatypes" : ["Points"],
+    "input-datatypes" : ["Points"],
     "arguments": [
         {
         "argument": "--input-mask-data-guid",

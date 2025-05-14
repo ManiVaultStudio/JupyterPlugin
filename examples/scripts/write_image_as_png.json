@@ -3,7 +3,7 @@
     "name": "Export image as PNG",
     "type": "Writer",
     "requirements": "write_image_as_png_requirements.txt",
-    "analysis-input-datatypes" : ["Images"],
+    "input-datatypes" : ["Images"],
     "arguments": [
         {
         "argument": "--input-image-data-guid",
