@@ -33,7 +33,7 @@ logo-32x32.png
 logo-64x54.png
 ```
 
-These can be installed using assum these are in a directory called /temp/ManiVaultStudio then they can be installed using 
+Assuming these are in a directory called `/temp/ManiVaultStudio`, they can be installed using 
 
 ```
 jupyter kernelspec install /temp/ManiVaultStudio --user
@@ -73,4 +73,4 @@ Refer to the [jupyterlab-server doc](https://jupyterlab-server.readthedocs.io/en
 Baldur van Lew
 2024-02-06
 
-Note: In principle Jupyverse show be capable of connecting to an external kernel but this does not seem to work https://github.com/jupyter-server/jupyverse/issues/385
+Note: In principle Jupyverse should be capable of connecting to an external kernel but this does not seem to work https://github.com/jupyter-server/jupyverse/issues/385
