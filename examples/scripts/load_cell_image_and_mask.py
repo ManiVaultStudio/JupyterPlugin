@@ -108,7 +108,7 @@ def parse_arguments():
     parser.add_argument(
         "-o", "--output-file-name",
         required=True,
-        help="Name of the output datasets (required)."
+        help="Name of the output datasets in ManiVault (required)."
     )
 
     return parser.parse_args()
