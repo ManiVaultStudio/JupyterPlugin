@@ -81,6 +81,10 @@ print(h)
 Upon starting the Jupyter integration, a notebook is automatically opened.
 When executing scripts, an UI is automatically populated to provide user input for any argument that the script may expect.
 
+### Limitations
+
+Currently, ManiVault cannot make a notebook connection and script execution available at the same time. 
+
 ### Running on Linux
 
 When using a non-system python interpreter, we have to make sure that the environment variable `LD_PRELOAD` contains the interpreter path that we intend to use in order to [prevent a conflict between the system libstdc++ and the python environment libstdc++](https://www.scivision.dev/conda-python-libstdc-/):
