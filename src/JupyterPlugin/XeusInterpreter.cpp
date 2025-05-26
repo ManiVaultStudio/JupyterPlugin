@@ -30,6 +30,7 @@ XeusInterpreter::XeusInterpreter(const QString& pluginVersion):
 
 void XeusInterpreter::configure_impl()
 {
+    this->redirect_output();
     auto handle_comm_opened = [](xeus::xcomm&& comm, const xeus::xmessage&) {
         std::cerr << "Comm opened for target: " << comm.target().name() << std::endl;
     };
