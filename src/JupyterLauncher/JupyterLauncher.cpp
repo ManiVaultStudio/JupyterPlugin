@@ -509,14 +509,14 @@ bool JupyterLauncher::optionallyInstallMVWheel()
         
         qDebug() << "kernelWheel paths: " << kernelWheel;
 
-        if (!runPythonCommand({ "-m", "pip", "install", kernelWheel })) {
+        if (!runPythonCommand({ "-m", "pip", "install", kernelWheel, "--only-binary=:all:"})) {
             qWarning() << "Installing the mvstudio_kernel package failed. See logging for more information";
             return false;
         }
 
         qDebug() << "dataWheel paths: " << dataWheel;
 
-        if (!runPythonCommand({ "-m", "pip", "install", dataWheel })) {
+        if (!runPythonCommand({ "-m", "pip", "install", dataWheel, "--only-binary=:all:" })) {
             qWarning() << "Installing the mvstudio_data package failed. See logging for more information";
             return false;
         }
