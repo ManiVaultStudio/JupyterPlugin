@@ -157,7 +157,19 @@ public:
 
     /** Perform post-construction initialization */
     void initialize() override;
-    
+
+    /**
+     * Get the read me markdown file URL
+     * @return URL of the read me markdown file
+     */
+    QUrl getReadmeMarkdownUrl() const override;
+
+    /**
+     * Get the URL of the GitHub repository
+     * @return URL of the GitHub repository
+     */
+    QUrl getRepositoryUrl() const override;
+
     /** Creates an instance of the example view plugin */
     ViewPlugin* produce() override;
 

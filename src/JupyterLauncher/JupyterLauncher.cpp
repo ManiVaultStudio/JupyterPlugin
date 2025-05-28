@@ -1062,3 +1062,13 @@ mv::DataTypes JupyterLauncherFactory::supportedDataTypes() const
 {
     return { };
 }
+
+QUrl JupyterLauncherFactory::getReadmeMarkdownUrl() const 
+{
+    return QUrl("https://raw.githubusercontent.com/ManiVaultStudio/JupyterPlugin/main/README.md");
+}
+
+QUrl JupyterLauncherFactory::getRepositoryUrl() const
+{
+    return QUrl("https://github.com/ManiVaultStudio/JupyterPlugin");
+}
