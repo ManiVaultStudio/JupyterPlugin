@@ -733,6 +733,17 @@ bool JupyterLauncher::initPython(bool activateXeus)
     }
 
     QString jupyterPluginPath = QCoreApplication::applicationDirPath() + "/PluginDependencies/JupyterLauncher/bin/JupyterPlugin" + _selectedInterpreterVersion.remove(".");
+
+    // plugin lib version suffix
+    const auto coreVersion  = mv::Application::current()->getVersion();
+    QString coreVersionStr  = QString("%1.%2.%3").arg(QString::number(coreVersion.getMajor()), QString::number(coreVersion.getMinor()), QString::number(coreVersion.getPatch()));
+
+    QString versionSuffix = QString("_p%1_c%2").arg(
+        /*1: plugin version */ QString::fromStdString(getVersion().getVersionString()),
+        /*1: core version   */ coreVersionStr
+    );
+    jupyterPluginPath.append(versionSuffix);
+
     QLibrary jupyterPluginLib = QLibrary(jupyterPluginPath);
     QPluginLoader jupyterPluginLoader = QPluginLoader(jupyterPluginLib.fileName());
 
