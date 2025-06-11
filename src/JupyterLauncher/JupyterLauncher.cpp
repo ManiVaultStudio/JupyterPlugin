@@ -911,9 +911,10 @@ void JupyterLauncher::addPythonScripts()
         QDir dir(fileInfo.absolutePath());
 
         // check requirements
-        if (json.contains("requirements")) {
+        if (json.contains("requirements") && json["requirements"].isString()) {
 
             QString requirementsFilePath    = dir.filePath(json["requirements"].toString());
+            qDebug() << "Checking and installing requirements for: " << requirementsFilePath;
             bool requirementsAreInstalled   = checkRequirements(requirementsFilePath);
 
             if (!requirementsAreInstalled) {

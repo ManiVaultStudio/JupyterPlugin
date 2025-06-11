@@ -3,6 +3,7 @@
     "name": "Export image as PNG",
     "type": "Writer",
     "requirements": "write_image_as_png_requirements.txt",
+    "description": "Writes an image as a PNG file to disk",
     "input-datatypes" : ["Images"],
     "arguments": [
         {

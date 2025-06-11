@@ -38,6 +38,17 @@ ScriptDialog::ScriptDialog(QWidget* parent, const QJsonObject json, const QStrin
     layout->setContentsMargins(10, 10, 10, 10);
     int row = 0;
 
+    if (json.contains("description") && json["description"].isString()) {
+        QString description = json["description"].toString();
+
+        auto widgetAction = _argumentActions.emplace_back(new mv::gui::StringAction(this, "Description"));
+        auto stringAction = static_cast<mv::gui::StringAction*>(widgetAction);
+        stringAction->setDefaultWidgetFlags(mv::gui::StringAction::WidgetFlag::Label);
+        stringAction->setString(description);
+        layout->addWidget(widgetAction->createLabelWidget(this), ++row, 0, 1, 1);
+        layout->addWidget(widgetAction->createWidget(this), row, 1, 1, -1);
+    }
+
     if (json.contains("arguments") && json["arguments"].isArray()) {
         QJsonArray arguments = json["arguments"].toArray();
 
