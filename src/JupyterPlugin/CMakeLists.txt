@@ -23,16 +23,19 @@ set(JUPYTERPLUGIN_SOURCES
     MVData.cpp
     MVData.h
     PythonBuildVersion.h
-    JupyterPlugin.json
 )
 
-source_group(Plugin FILES ${JUPYTERPLUGIN_SOURCES})
+set(JUPYTERPLUGIN_AUX
+    PluginInfo.json
+)
+
+source_group(Plugin FILES ${JUPYTERPLUGIN_SOURCES} ${JUPYTERPLUGIN_AUX})
 
 # -----------------------------------------------------------------------------
 # CMake Target
 # -----------------------------------------------------------------------------
 # Create dynamic library for the plugin
-add_library(${JUPYTERPLUGIN} SHARED ${JUPYTERPLUGIN_SOURCES})
+add_library(${JUPYTERPLUGIN} SHARED ${JUPYTERPLUGIN_SOURCES} ${JUPYTERPLUGIN_AUX})
 
 # -----------------------------------------------------------------------------
 # Target include directories
@@ -190,6 +193,8 @@ add_custom_command(TARGET ${JUPYTERPLUGIN} POST_BUILD
     --component PYTHONEXAMPLES
     --prefix ${ManiVault_INSTALL_DIR}/$<CONFIGURATION>
 )
+
+mv_handle_plugin_config(${JUPYTERPLUGIN} 0)
 
 # -----------------------------------------------------------------------------
 # Miscellaneous

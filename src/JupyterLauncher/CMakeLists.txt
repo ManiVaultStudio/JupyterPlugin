@@ -7,12 +7,12 @@ message(STATUS "Plugin: ${JUPYTERLAUNCHER}")
 # Source files
 # -----------------------------------------------------------------------------
 
-qt6_add_resources(RESOURCE_FILES res/jupyter_launcher_resources.qrc)
+qt6_add_resources(JUPYTERLAUNCHER_RESOURCE_FILES res/jupyter_launcher_resources.qrc)
 
-set(SOURCES
+set(JUPYTERLAUNCHER_SOURCES
     JupyterLauncher.h
     JupyterLauncher.cpp
-    JupyterLauncher.json
+    PluginInfo.json
     GlobalSettingsAction.h
     GlobalSettingsAction.cpp
     UserDialogActions.h
@@ -21,18 +21,22 @@ set(SOURCES
     ScriptDialogAction.cpp
 )
 
-set (RESOURCES
+set(JUPYTERLAUNCHER_AUX
+    PluginInfo.json
+)
+
+set(JUPYTERLAUNCHER_RESOURCES
     res/jupyter_launcher_resources.qrc
 )
 
-source_group( Plugin FILES ${SOURCES})
-source_group( ResourceFiles FILES ${RESOURCES})
+source_group( Plugin FILES ${JUPYTERLAUNCHER_SOURCES} ${JUPYTERLAUNCHER_AUX})
+source_group( ResourceFiles FILES ${JUPYTERLAUNCHER_RESOURCES})
 source_group( ResourceFiles\\generated FILES ${CMAKE_CURRENT_BINARY_DIR}/qrc_jupyter_launcher_resources.cpp)
 
 # -----------------------------------------------------------------------------
 # CMake Target
 # -----------------------------------------------------------------------------
-add_library(${JUPYTERLAUNCHER} SHARED ${SOURCES} ${RESOURCES} ${RESOURCE_FILES})
+add_library(${JUPYTERLAUNCHER} SHARED ${JUPYTERLAUNCHER_SOURCES} ${JUPYTERLAUNCHER_AUX} ${JUPYTERLAUNCHER_RESOURCES} ${JUPYTERLAUNCHER_RESOURCE_FILES})
 
 # -----------------------------------------------------------------------------
 # Target include directories
@@ -76,6 +80,8 @@ add_custom_command(TARGET ${JUPYTERLAUNCHER} POST_BUILD
         --component PLUGIN
         --prefix ${ManiVault_INSTALL_DIR}/$<CONFIGURATION>
 )
+
+mv_handle_plugin_config(${JUPYTERLAUNCHER} 0)
 
 # -----------------------------------------------------------------------------
 # Miscellaneous
