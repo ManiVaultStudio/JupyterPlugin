@@ -135,6 +135,7 @@ With a corresponding ManiVault extension files, a `example_script.json`:
     "script": "example_script.py",
     "name": "Example script",
     "type": "Loader",
+    "description": "Load data of arbitrary shape and form",
     "requirements": "example_script_requirements.txt",
     "arguments": [
         {
