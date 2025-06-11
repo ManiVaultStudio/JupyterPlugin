@@ -30,6 +30,7 @@ Fields of the extension file:
 - `name` (required): Name of the script as to be displayed in ManiVault
 - `type` (required): Corresponding to ManiVault's plugin types, i.e., "Loader", "Writer", "Analysis", "transform" and "View"
 - `requirements` (optional): Name of a requirements file
+- `description` (optional): Description of what the script does. Will be displayed in the user-input dialog
 - `input-datatypes` (optional): ManiVault dataset types to which the script might apply (_currently not used_)
 - `arguments` (optional): List of arguments passed to the script. Used to automatically populate a user dialog
     - `name` (required): Name of the argument as shown in the user dialog
