@@ -733,6 +733,17 @@ bool JupyterLauncher::initPython(bool activateXeus)
     }
 
     QString jupyterPluginPath = QCoreApplication::applicationDirPath() + "/PluginDependencies/JupyterLauncher/bin/JupyterPlugin" + _selectedInterpreterVersion.remove(".");
+
+    // plugin lib version suffix
+    const auto coreVersion  = mv::Application::current()->getVersion();
+    QString coreVersionStr  = QString("%1.%2.%3").arg(QString::number(coreVersion.getMajor()), QString::number(coreVersion.getMinor()), QString::number(coreVersion.getPatch()));
+
+    QString versionSuffix = QString("_p%1_c%2").arg(
+        /*1: plugin version */ QString::fromStdString(getVersion().getVersionString()),
+        /*1: core version   */ coreVersionStr
+    );
+    jupyterPluginPath.append(versionSuffix);
+
     QLibrary jupyterPluginLib = QLibrary(jupyterPluginPath);
     QPluginLoader jupyterPluginLoader = QPluginLoader(jupyterPluginLib.fileName());
 
@@ -846,14 +857,19 @@ void JupyterLauncher::addPythonScripts()
         QFileInfo requirementsFileInfo(requirementsFilePath);
 
         if (!requirementsFileInfo.exists() || !requirementsFileInfo.isFile()) {
-            qDebug() << "Requirementsfile is listed but not found: " << requirementsFileInfo;
+            qDebug() << "Requirements file is listed but not found: " << requirementsFileInfo;
             return false;
         }
 
         QStringList params              = { "-m", "pip", "install", "-r", requirementsFilePath, "--dry-run" };
-        bool requirementsAreInstalled   = runPythonCommand(params, /*verbose*/ false);
 
-        return requirementsAreInstalled;
+#ifdef NDEBUG
+        bool verbose = false;
+#else
+        bool verbose = true;
+#endif
+
+        return runPythonCommand(params, verbose);
         };
 
     uint32_t numLoadedScripts = 0;
