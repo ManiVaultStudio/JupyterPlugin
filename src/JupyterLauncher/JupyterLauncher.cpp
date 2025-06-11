@@ -857,14 +857,19 @@ void JupyterLauncher::addPythonScripts()
         QFileInfo requirementsFileInfo(requirementsFilePath);
 
         if (!requirementsFileInfo.exists() || !requirementsFileInfo.isFile()) {
-            qDebug() << "Requirementsfile is listed but not found: " << requirementsFileInfo;
+            qDebug() << "Requirements file is listed but not found: " << requirementsFileInfo;
             return false;
         }
 
         QStringList params              = { "-m", "pip", "install", "-r", requirementsFilePath, "--dry-run" };
-        bool requirementsAreInstalled   = runPythonCommand(params, /*verbose*/ false);
 
-        return requirementsAreInstalled;
+#ifdef NDEBUG
+        bool verbose = false;
+#else
+        bool verbose = true;
+#endif
+
+        return runPythonCommand(params, verbose);
         };
 
     uint32_t numLoadedScripts = 0;
