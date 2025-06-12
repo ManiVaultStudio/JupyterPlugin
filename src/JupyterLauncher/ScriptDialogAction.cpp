@@ -22,8 +22,14 @@
 #include <QStringList>
 #include <QWidget>
 
+inline static QString insertDotAfter3(const QString& v) {
+    QString temp = v;
+    temp.insert(1, ".");
+    return temp;
+}
+
 PythonScript::PythonScript(const QString& title, const Type& type, const QString& location, const mv::Datasets& datasets, const QString& interpreterVersion, const QJsonObject& json, JupyterLauncher* launcher, QObject* parent) :
-    Script(title, type, Language::Python, mv::util::Version(interpreterVersion), location, datasets, parent),
+    Script(title, type, Language::Python, mv::util::Version(insertDotAfter3(interpreterVersion)), location, datasets, parent),
     _dialog(nullptr, json, location, interpreterVersion, launcher)
 {
 
