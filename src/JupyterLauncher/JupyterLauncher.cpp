@@ -903,7 +903,7 @@ void JupyterLauncher::addPythonScripts()
 
         const std::vector<QString> requiredEntries = { "script", "name", "type"};
 
-        if (!std::all_of(requiredEntries.begin(), requiredEntries.end(), [&json](const QString& entry) { return json.contains(entry); })) {
+        if (!std::all_of(requiredEntries.begin(), requiredEntries.end(), [&json](const QString& entry) { return json.contains(entry) && json[entry].isString(); })) {
             qWarning() << "Does not contain all required entries: " << scriptDescriptor;
             qWarning().noquote() << document.toJson(QJsonDocument::Indented);
             continue;
