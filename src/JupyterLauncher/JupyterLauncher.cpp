@@ -927,20 +927,25 @@ void JupyterLauncher::addPythonScripts()
         const QString scriptPath = dir.filePath(json["script"].toString());
         const QString scriptName = json["name"].toString();
 
-        auto scriptTrigger = new TriggerAction(this, scriptName);
-        connect(scriptTrigger, &TriggerAction::triggered, this, [this, json, scriptPath]() {
-            // TODO: only open dialog if necessary, i.e. if user input is needed
-            auto scriptDialog = new ScriptDialog(nullptr, json, scriptPath, _selectedInterpreterVersion, this);
-            connect(scriptDialog, &QDialog::finished, scriptDialog, &QObject::deleteLater);
-            scriptDialog->show();
-            });
+        _scriptTriggerActions.clear();
+        mv::Datasets dummy = {};
+        _scriptTriggerActions.push_back(std::make_shared<PythonScript>(scriptName, util::Script::Type::Writer, scriptPath, dummy, _selectedInterpreterVersion, json, this, nullptr));
 
-        statusBarAction->addMenuAction(scriptTrigger);
         numLoadedScripts++;
     }
 
     qDebug().noquote() << QString("JupyterLauncher: Loaded %1 scripts").arg(numLoadedScripts);
 }
+
+mv::gui::ScriptTriggerActions JupyterLauncher::getScriptTriggerActions(const mv::Datasets& datasets) const {
+    ScriptTriggerActions scriptTriggerActions;
+
+    for(auto& scriptTriggerAction: _scriptTriggerActions)
+        scriptTriggerActions << new ScriptTriggerAction(nullptr, scriptTriggerAction, "Test");
+
+    return scriptTriggerActions;
+}
+
 
 /// ////////////////////// ///
 /// JupyterLauncherFactory ///

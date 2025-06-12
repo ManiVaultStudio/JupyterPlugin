@@ -1,6 +1,7 @@
 #pragma once
 
 #include "UserDialogActions.h"
+#include "ScriptDialogAction.h"
 
 #include <BackgroundTask.h>
 #include <ViewPlugin.h>
@@ -79,6 +80,13 @@ public:
     // e.g. "3.11", "3.12"
     void initPythonScripts(const QString& version);
 
+    /**
+     * Get script trigger actions given \p datasets
+     * @param datasets Vector of input datasets
+     * @return Vector of script trigger actions
+     */
+    mv::gui::ScriptTriggerActions getScriptTriggerActions(const mv::Datasets& datasets) const override;
+
 public: // Global settings
     // Python interpreter path
     static QString getPythonInterpreterPath();
@@ -125,8 +133,11 @@ private:
     QString                         _selectedInterpreterVersion;
     QString                         _jupyterPluginFolder;
 
-    using LoadedPythonInterpreters = std::unordered_map<QString, mv::plugin::Plugin*>;
+    using LoadedPythonInterpreters  = std::unordered_map<QString, mv::plugin::Plugin*>;
     LoadedPythonInterpreters        _initializedPythonInterpreters;
+
+    using PythonScripts             = std::vector<std::shared_ptr<PythonScript>>;
+    PythonScripts                   _scriptTriggerActions = {};
 
     mv::BackgroundTask*             _serverBackgroundTask = nullptr;      /** The background task monitoring the Jupyter Server */
     QProcess                        _serverProcess;             /** A detached process for running the Jupyter server */

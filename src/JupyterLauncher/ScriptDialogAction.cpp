@@ -22,7 +22,14 @@
 #include <QStringList>
 #include <QWidget>
 
-ScriptDialog::ScriptDialog(QWidget* parent, const QJsonObject json, const QString scriptPath, const QString interpreterVersion, JupyterLauncher* launcher) :
+PythonScript::PythonScript(const QString& title, const Type& type, const QString& location, const mv::Datasets& datasets, const QString& interpreterVersion, const QJsonObject& json, JupyterLauncher* launcher, QObject* parent) :
+    Script(title, type, Language::Python, mv::util::Version(interpreterVersion), location, datasets, parent),
+    _dialog(nullptr, json, location, interpreterVersion, launcher)
+{
+
+}
+
+ScriptDialog::ScriptDialog(QWidget* parent, const QJsonObject& json, const QString& scriptPath, const QString& interpreterVersion, JupyterLauncher* launcher) :
     QDialog(parent),
     _okButton(this, "Run script"),
     _argumentActions(),
