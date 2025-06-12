@@ -114,6 +114,7 @@ private:
     void setPythonEnv();
     bool installKernel();
     bool optionallyInstallMVWheel();
+    bool initLauncher(const QString& version, int mode);
     bool initPython(bool activateXeus = true);
 
     bool checkPythonVersion() const;

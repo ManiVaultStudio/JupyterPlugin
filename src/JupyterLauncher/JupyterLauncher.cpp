@@ -784,15 +784,23 @@ bool JupyterLauncher::initPython(bool activateXeus)
     return true;
 }
 
-void JupyterLauncher::launchJupyterKernelAndNotebook(const QString& version)
+bool JupyterLauncher::initLauncher(const QString& version, int mode)
 {
     _selectedInterpreterVersion = version;
 
     if (getShowInterpreterPathDialog()) {
-        _launcherDialog->setMode(0);
+        _launcherDialog->setMode(mode);
         _launcherDialog->show();                // by default ask user for python path
-        return;
+        return false;
     }
+
+    return true;
+}
+
+void JupyterLauncher::launchJupyterKernelAndNotebook(const QString& version)
+{
+    if (!initLauncher(version, /*mode*/ 0))
+        return;
 
     createPythonPluginAndStartNotebook();   // open notebook immediately if user has set do-not-show-dialog option
 }
@@ -809,13 +817,8 @@ void JupyterLauncher::createPythonPluginAndStartNotebook()
 
 void JupyterLauncher::initPythonScripts(const QString& version)
 {
-    _selectedInterpreterVersion = version;
-
-    if (getShowInterpreterPathDialog()) {
-        _launcherDialog->setMode(1);
-        _launcherDialog->show();                // by default ask user for python path
+    if (!initLauncher(version, /*mode*/ 1))
         return;
-    }
 
     addPythonScripts();
 }
