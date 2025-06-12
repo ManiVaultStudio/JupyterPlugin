@@ -21,6 +21,8 @@ class ScriptDialog : public QDialog
 public:
     ScriptDialog(QWidget* parent, const QJsonObject& json, const QString& scriptPath, const QString& interpreterVersion, JupyterLauncher* launcher);
 
+    void populateDialog();
+
 private:
     void runScript();
 
@@ -30,6 +32,7 @@ private:
 
     QString                                 _interpreterVersion;
     QString                                 _scriptPath;
+    QJsonObject                             _json;
     std::unordered_map<QString, QString>    _argumentMap;
 
     JupyterLauncher*                        _launcherPlugin = nullptr;
@@ -54,6 +57,7 @@ public:
 
     /** Runs the script */
     void run() override {
+        _dialog.populateDialog();
         _dialog.show();
     }
 

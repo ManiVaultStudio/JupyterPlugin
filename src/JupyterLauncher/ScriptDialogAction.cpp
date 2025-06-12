@@ -35,18 +35,25 @@ ScriptDialog::ScriptDialog(QWidget* parent, const QJsonObject& json, const QStri
     _argumentActions(),
     _interpreterVersion(interpreterVersion),
     _scriptPath(scriptPath),
+    _json(json),
     _argumentMap(),
     _launcherPlugin(launcher)
 {
     setWindowTitle(json["name"].toString());
     setWindowIcon(mv::util::StyledIcon("gears"));
 
+    connect(&_okButton, &mv::gui::TriggerAction::triggered, this, &QDialog::accept);
+    connect(this, &QDialog::accepted, this, &ScriptDialog::runScript);
+}
+
+void ScriptDialog::populateDialog() 
+{
     auto* layout = new QGridLayout(this);
     layout->setContentsMargins(10, 10, 10, 10);
     int row = 0;
 
-    if (json.contains("description") && json["description"].isString()) {
-        QString description = json["description"].toString();
+    if (_json.contains("description") && _json["description"].isString()) {
+        QString description = _json["description"].toString();
 
         auto widgetAction = _argumentActions.emplace_back(new mv::gui::StringAction(this, "Description"));
         auto stringAction = static_cast<mv::gui::StringAction*>(widgetAction);
@@ -56,17 +63,17 @@ ScriptDialog::ScriptDialog(QWidget* parent, const QJsonObject& json, const QStri
         layout->addWidget(widgetAction->createWidget(this), row, 1, 1, -1);
     }
 
-    if (json.contains("arguments") && json["arguments"].isArray()) {
-        QJsonArray arguments = json["arguments"].toArray();
+    if (_json.contains("arguments") && _json["arguments"].isArray()) {
+        QJsonArray arguments = _json["arguments"].toArray();
 
         for (const QJsonValue& argument : arguments) {
             if (!argument.isObject()) continue;
 
             const QJsonObject argObj = argument.toObject();
-            const QString arg        = argObj["argument"].toString();
-            const QString name       = argObj["name"].toString();
-            const QString type       = argObj["type"].toString();
-            const bool required      = argObj["required"].toBool();
+            const QString arg = argObj["argument"].toString();
+            const QString name = argObj["name"].toString();
+            const QString type = argObj["type"].toString();
+            const bool required = argObj["required"].toBool();
 
             _argumentMap.insert({ arg, "" });
 
@@ -131,8 +138,8 @@ ScriptDialog::ScriptDialog(QWidget* parent, const QJsonObject& json, const QStri
 
             }
             else if (type == "float") {
-                auto widgetAction   = _argumentActions.emplace_back(new mv::gui::DecimalAction(this, name));
-                auto decimalAction  = static_cast<mv::gui::DecimalAction*>(widgetAction);
+                auto widgetAction = _argumentActions.emplace_back(new mv::gui::DecimalAction(this, name));
+                auto decimalAction = static_cast<mv::gui::DecimalAction*>(widgetAction);
 
                 layout->addWidget(widgetAction->createLabelWidget(this), ++row, 0, 1, 1);
                 layout->addWidget(decimalAction->createWidget(this), row, 1, 1, -1);
@@ -165,7 +172,7 @@ ScriptDialog::ScriptDialog(QWidget* parent, const QJsonObject& json, const QStri
 
             }
             else if (type == "int") {
-                auto widgetAction   = _argumentActions.emplace_back(new mv::gui::IntegralAction(this, name));
+                auto widgetAction = _argumentActions.emplace_back(new mv::gui::IntegralAction(this, name));
                 auto integralAction = static_cast<mv::gui::IntegralAction*>(widgetAction);
 
                 layout->addWidget(widgetAction->createLabelWidget(this), ++row, 0, 1, 1);
@@ -191,8 +198,8 @@ ScriptDialog::ScriptDialog(QWidget* parent, const QJsonObject& json, const QStri
 
             }
             else if (type == "mv-data-in") {
-                auto widgetAction           = _argumentActions.emplace_back(new mv::gui::DatasetPickerAction(this, name));
-                auto datasetPickerAction    = static_cast<mv::gui::DatasetPickerAction*>(widgetAction);
+                auto widgetAction = _argumentActions.emplace_back(new mv::gui::DatasetPickerAction(this, name));
+                auto datasetPickerAction = static_cast<mv::gui::DatasetPickerAction*>(widgetAction);
 
                 std::unordered_set<QString> allowed_types;
 
@@ -209,7 +216,7 @@ ScriptDialog::ScriptDialog(QWidget* parent, const QJsonObject& json, const QStri
                 datasetPickerAction->setFilterFunction([allowed_types](const mv::Dataset<mv::DatasetImpl>& dataset) -> bool {
                     if (allowed_types.empty())
                         return true;
-                    
+
                     return std::any_of(allowed_types.cbegin(), allowed_types.cend(), [&dataset](const QString& type) {
                         return dataset->getRawDataKind() == type;
                         });
@@ -230,10 +237,8 @@ ScriptDialog::ScriptDialog(QWidget* parent, const QJsonObject& json, const QStri
     layout->addWidget(_okButton.createWidget(this), ++row, 0, 1, -1, Qt::AlignRight);
 
     setLayout(layout);
-
-    connect(&_okButton, &mv::gui::TriggerAction::triggered, this, &QDialog::accept);
-    connect(this, &QDialog::accepted, this, &ScriptDialog::runScript);
 }
+
 
 void ScriptDialog::runScript() {
     if (!_launcherPlugin) {
