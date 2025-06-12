@@ -849,13 +849,6 @@ void JupyterLauncher::addPythonScripts()
     }
 
     // Add UI entries for the scripts
-    auto statusBarAction = new StatusBarAction(this, "Python Scripts " + _selectedInterpreterVersion, mv::util::StyledIcon("python"));
-    auto statusBar = Application::getMainWindow()->statusBar();
-
-    int numberOfPermanentWidgets = statusBar->findChildren<QWidget*>(Qt::FindDirectChildrenOnly).count();
-    int widetIndex = std::max(0, numberOfPermanentWidgets - 1);
-    statusBar->insertPermanentWidget(widetIndex, statusBarAction->createWidget(Application::getMainWindow()), statusBarAction->getStretch());
-
     auto checkRequirements = [](const QString& requirementsFilePath) -> bool {
         QFileInfo requirementsFileInfo(requirementsFilePath);
 
@@ -864,7 +857,7 @@ void JupyterLauncher::addPythonScripts()
             return false;
         }
 
-        QStringList params              = { "-m", "pip", "install", "-r", requirementsFilePath, "--dry-run" };
+        QStringList params = { "-m", "pip", "install", "-r", requirementsFilePath, "--dry-run" };
 
 #ifdef NDEBUG
         bool verbose = false;
@@ -875,7 +868,7 @@ void JupyterLauncher::addPythonScripts()
         return runPythonCommand(params, verbose);
         };
 
-    uint32_t numLoadedScripts = 0;
+    uint32_t numLoadedScripts   = 0;
 
     for (const auto& scriptDescriptor : scriptDescriptors) {
         QFile file(scriptDescriptor);
