@@ -923,9 +923,10 @@ void JupyterLauncher::addPythonScripts()
 
         const QString scriptPath = dir.filePath(json["script"].toString());
         const QString scriptName = json["name"].toString();
+        const QString scriptType = json["type"].toString();
 
         mv::Datasets dummy = {};
-        _scriptTriggerActions.push_back(std::make_shared<PythonScript>(scriptName, util::Script::Type::Writer, scriptPath, dummy, _selectedInterpreterVersion, json, this, nullptr));
+        _scriptTriggerActions.push_back(std::make_shared<PythonScript>(scriptName, mv::util::Script::getTypeEnum(scriptType), scriptPath, dummy, _selectedInterpreterVersion, json, this, nullptr));
 
         numLoadedScripts++;
     }
@@ -935,9 +936,11 @@ void JupyterLauncher::addPythonScripts()
 
 mv::gui::ScriptTriggerActions JupyterLauncher::getScriptTriggerActions(const mv::Datasets& datasets) const {
     ScriptTriggerActions scriptTriggerActions;
-
-    for(auto& scriptTriggerAction: _scriptTriggerActions)
-        scriptTriggerActions << new ScriptTriggerAction(nullptr, scriptTriggerAction, "Test");
+    
+    for (auto& scriptTriggerAction : _scriptTriggerActions) {
+        auto menuLocation = QString("%1/%2").arg(mv::util::Script::getTypeName(scriptTriggerAction->getType()), scriptTriggerAction->getTitle());
+        scriptTriggerActions << new ScriptTriggerAction(nullptr, scriptTriggerAction, menuLocation);
+    }
 
     return scriptTriggerActions;
 }
