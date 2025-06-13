@@ -5,6 +5,7 @@
 
 #include <Application.h>
 #include <CoreInterface.h>
+#include <Set.h>
 
 #include <actions/StatusBarAction.h>
 #include <actions/WidgetAction.h>
@@ -13,6 +14,7 @@
 #include <QDebug>
 #include <QDir>
 #include <QDirIterator>
+#include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QLibrary>
@@ -46,7 +48,31 @@ using namespace mv;
 
 Q_PLUGIN_METADATA(IID "studio.manivault.JupyterLauncher")
 
-static inline bool loadDynamicLibray(const QFileInfo& pythonLibrary)
+static inline bool containsMemberString(const QJsonObject& json, const QString& entry) {
+    return json.contains(entry) && json[entry].isString();
+}
+
+static inline bool containsMemberArray(const QJsonObject& json, const QString& entry) {
+    return json.contains(entry) && json[entry].isArray();
+}
+
+static inline std::vector<QString> readStringArray(const QJsonObject& json, const QString& entry) {
+    if (!containsMemberArray(json, entry))
+        return {};
+
+    std::vector<QString> res;
+
+    const QJsonArray array = json[entry].toArray();
+    for (const QJsonValue& val : array) {
+        if (val.isString()) {
+            res.push_back(val.toString());
+        }
+    }
+
+    return res;
+}
+
+static inline bool loadDynamicLibrary(const QFileInfo& pythonLibrary)
 {
 #ifdef WIN32
     // Adds a directory to the search path used to locate DLLs for the application.
@@ -728,7 +754,7 @@ bool JupyterLauncher::initPython(bool activateXeus)
     QFileInfo pythonLibrary = QFileInfo(sout);
 
     qDebug() << "Using python communication plugin library " << pythonLibrary.fileName() << " at: " << pythonLibrary.dir().absolutePath();
-    if (!loadDynamicLibray(pythonLibrary)) {
+    if (!loadDynamicLibrary(pythonLibrary)) {
         qWarning() << "Failed to load/locate python communication plugin";
     }
 
@@ -784,15 +810,23 @@ bool JupyterLauncher::initPython(bool activateXeus)
     return true;
 }
 
-void JupyterLauncher::launchJupyterKernelAndNotebook(const QString& version)
+bool JupyterLauncher::initLauncher(const QString& version, int mode)
 {
     _selectedInterpreterVersion = version;
 
     if (getShowInterpreterPathDialog()) {
-        _launcherDialog->setMode(0);
+        _launcherDialog->setMode(mode);
         _launcherDialog->show();                // by default ask user for python path
-        return;
+        return false;
     }
+
+    return true;
+}
+
+void JupyterLauncher::launchJupyterKernelAndNotebook(const QString& version)
+{
+    if (!initLauncher(version, /*mode*/ 0))
+        return;
 
     createPythonPluginAndStartNotebook();   // open notebook immediately if user has set do-not-show-dialog option
 }
@@ -809,13 +843,8 @@ void JupyterLauncher::createPythonPluginAndStartNotebook()
 
 void JupyterLauncher::initPythonScripts(const QString& version)
 {
-    _selectedInterpreterVersion = version;
-
-    if (getShowInterpreterPathDialog()) {
-        _launcherDialog->setMode(1);
-        _launcherDialog->show();                // by default ask user for python path
+    if (!initLauncher(version, /*mode*/ 1))
         return;
-    }
 
     addPythonScripts();
 }
@@ -846,13 +875,6 @@ void JupyterLauncher::addPythonScripts()
     }
 
     // Add UI entries for the scripts
-    auto statusBarAction = new StatusBarAction(this, "Python Scripts " + _selectedInterpreterVersion, mv::util::StyledIcon("python"));
-    auto statusBar = Application::getMainWindow()->statusBar();
-
-    int numberOfPermanentWidgets = statusBar->findChildren<QWidget*>(Qt::FindDirectChildrenOnly).count();
-    int widetIndex = std::max(0, numberOfPermanentWidgets - 1);
-    statusBar->insertPermanentWidget(widetIndex, statusBarAction->createWidget(Application::getMainWindow()), statusBarAction->getStretch());
-
     auto checkRequirements = [](const QString& requirementsFilePath) -> bool {
         QFileInfo requirementsFileInfo(requirementsFilePath);
 
@@ -861,7 +883,7 @@ void JupyterLauncher::addPythonScripts()
             return false;
         }
 
-        QStringList params              = { "-m", "pip", "install", "-r", requirementsFilePath, "--dry-run" };
+        QStringList params = { "-m", "pip", "install", "-r", requirementsFilePath, "--dry-run" };
 
 #ifdef NDEBUG
         bool verbose = false;
@@ -873,6 +895,7 @@ void JupyterLauncher::addPythonScripts()
         };
 
     uint32_t numLoadedScripts = 0;
+    _scriptTriggerActions.clear();
 
     for (const auto& scriptDescriptor : scriptDescriptors) {
         QFile file(scriptDescriptor);
@@ -900,7 +923,7 @@ void JupyterLauncher::addPythonScripts()
 
         const std::vector<QString> requiredEntries = { "script", "name", "type"};
 
-        if (!std::all_of(requiredEntries.begin(), requiredEntries.end(), [&json](const QString& entry) { return json.contains(entry); })) {
+        if (!std::all_of(requiredEntries.begin(), requiredEntries.end(), [&json](const QString& entry) { return containsMemberString(json, entry); })) {
             qWarning() << "Does not contain all required entries: " << scriptDescriptor;
             qWarning().noquote() << document.toJson(QJsonDocument::Indented);
             continue;
@@ -911,8 +934,7 @@ void JupyterLauncher::addPythonScripts()
         QDir dir(fileInfo.absolutePath());
 
         // check requirements
-        if (json.contains("requirements") && json["requirements"].isString()) {
-
+        if (containsMemberString(json, "requirements")) {
             QString requirementsFilePath    = dir.filePath(json["requirements"].toString());
             qDebug() << "Checking and installing requirements for: " << requirementsFilePath;
             bool requirementsAreInstalled   = checkRequirements(requirementsFilePath);
@@ -926,21 +948,66 @@ void JupyterLauncher::addPythonScripts()
 
         const QString scriptPath = dir.filePath(json["script"].toString());
         const QString scriptName = json["name"].toString();
+        const QString scriptType = json["type"].toString();
 
-        auto scriptTrigger = new TriggerAction(this, scriptName);
-        connect(scriptTrigger, &TriggerAction::triggered, this, [this, json, scriptPath]() {
-            // TODO: only open dialog if necessary, i.e. if user input is needed
-            auto scriptDialog = new ScriptDialog(nullptr, json, scriptPath, _selectedInterpreterVersion, this);
-            connect(scriptDialog, &QDialog::finished, scriptDialog, &QObject::deleteLater);
-            scriptDialog->show();
-            });
+        auto& scriptTriggerAction = _scriptTriggerActions.emplace_back(std::make_shared<PythonScript>(scriptName, mv::util::Script::getTypeEnum(scriptType), scriptPath, _selectedInterpreterVersion, json, this, nullptr));
 
-        statusBarAction->addMenuAction(scriptTrigger);
+        // check if script contains input-datatypes, convert to mv::DataTypes
+        if (containsMemberArray(json, "input-datatypes")) {
+            const std::vector<QString> dataTypeStrings = readStringArray(json, "input-datatypes");
+            mv:DataTypes dataTypes;
+
+            for (const auto& dataTypeString : dataTypeStrings) {
+                dataTypes.push_back(mv::DataType(dataTypeString));
+            }
+
+            scriptTriggerAction->setDataTypes(dataTypes);
+        }
+
         numLoadedScripts++;
     }
-
+    
     qDebug().noquote() << QString("JupyterLauncher: Loaded %1 scripts").arg(numLoadedScripts);
 }
+
+mv::gui::ScriptTriggerActions JupyterLauncher::getScriptTriggerActions(const mv::Datasets& datasets) const {
+
+    // Currently, do not show scripts for multi-dataset selection
+    if (datasets.count() > 1)
+        return {};
+
+    ScriptTriggerActions scriptTriggerActions;
+    
+    for (auto& scriptTriggerAction : _scriptTriggerActions) {
+        const auto menuLocation = QString("%1/%2").arg(scriptTriggerAction->getTypeName(), scriptTriggerAction->getTitle());
+
+        bool addScript = false;
+
+        // Add loader only for datasets == {}
+        if (datasets.count() == 0 && scriptTriggerAction->getType() == mv::util::Script::Type::Loader) {
+            addScript = true;
+        }
+        
+        if (datasets.count() > 0) {
+
+            const auto inputDataType    = datasets.first()->getDataType();
+            const auto scriptDataTypes  = scriptTriggerAction->getDataTypes();
+    
+            // Add script only if datasets are of same type as input-datatypes
+            if (!scriptDataTypes.isEmpty() && scriptDataTypes.contains(inputDataType)) {
+                addScript = true;
+            }
+
+        }
+
+        if (addScript) {
+            scriptTriggerActions << new ScriptTriggerAction(nullptr, scriptTriggerAction, menuLocation);
+        }
+    }
+
+    return scriptTriggerActions;
+}
+
 
 /// ////////////////////// ///
 /// JupyterLauncherFactory ///

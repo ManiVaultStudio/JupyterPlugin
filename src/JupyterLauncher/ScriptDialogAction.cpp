@@ -22,24 +22,56 @@
 #include <QStringList>
 #include <QWidget>
 
-ScriptDialog::ScriptDialog(QWidget* parent, const QJsonObject json, const QString scriptPath, const QString interpreterVersion, JupyterLauncher* launcher) :
+inline static QString insertDotAfter3(const QString& v) {
+    QString temp = v;
+    temp.insert(1, ".");
+    return temp;
+}
+
+static inline bool containsMemberString(const QJsonObject& json, const QString& entry) {
+    return json.contains(entry) && json[entry].isString();
+}
+
+static inline bool containsMemberArray(const QJsonObject& json, const QString& entry) {
+    return json.contains(entry) && json[entry].isArray();
+}
+
+static inline bool containsMemberDouble(const QJsonObject& json, const QString& entry) {
+    return json.contains(entry) && json[entry].isDouble();
+}
+
+PythonScript::PythonScript(const QString& title, const Type& type, const QString& location, const QString& interpreterVersion, const QJsonObject& json, JupyterLauncher* launcher, QObject* parent) :
+    Script(title, type, Language::Python, mv::util::Version(insertDotAfter3(interpreterVersion)), location, parent),
+    _dialog(nullptr, json, location, interpreterVersion, launcher)
+{
+
+}
+
+ScriptDialog::ScriptDialog(QWidget* parent, const QJsonObject& json, const QString& scriptPath, const QString& interpreterVersion, JupyterLauncher* launcher) :
     QDialog(parent),
     _okButton(this, "Run script"),
     _argumentActions(),
     _interpreterVersion(interpreterVersion),
     _scriptPath(scriptPath),
+    _json(json),
     _argumentMap(),
     _launcherPlugin(launcher)
 {
     setWindowTitle(json["name"].toString());
     setWindowIcon(mv::util::StyledIcon("gears"));
 
+    connect(&_okButton, &mv::gui::TriggerAction::triggered, this, &QDialog::accept);
+    connect(this, &QDialog::accepted, this, &ScriptDialog::runScript);
+}
+
+void ScriptDialog::populateDialog() 
+{
     auto* layout = new QGridLayout(this);
     layout->setContentsMargins(10, 10, 10, 10);
     int row = 0;
 
-    if (json.contains("description") && json["description"].isString()) {
-        QString description = json["description"].toString();
+    if (containsMemberString(_json, "description")) {
+        QString description = _json["description"].toString();
 
         auto widgetAction = _argumentActions.emplace_back(new mv::gui::StringAction(this, "Description"));
         auto stringAction = static_cast<mv::gui::StringAction*>(widgetAction);
@@ -49,17 +81,17 @@ ScriptDialog::ScriptDialog(QWidget* parent, const QJsonObject json, const QStrin
         layout->addWidget(widgetAction->createWidget(this), row, 1, 1, -1);
     }
 
-    if (json.contains("arguments") && json["arguments"].isArray()) {
-        QJsonArray arguments = json["arguments"].toArray();
+    if (containsMemberArray(_json, "arguments")) {
+        QJsonArray arguments = _json["arguments"].toArray();
 
         for (const QJsonValue& argument : arguments) {
             if (!argument.isObject()) continue;
 
             const QJsonObject argObj = argument.toObject();
-            const QString arg        = argObj["argument"].toString();
-            const QString name       = argObj["name"].toString();
-            const QString type       = argObj["type"].toString();
-            const bool required      = argObj["required"].toBool();
+            const QString arg = argObj["argument"].toString();
+            const QString name = argObj["name"].toString();
+            const QString type = argObj["type"].toString();
+            const bool required = argObj["required"].toBool();
 
             _argumentMap.insert({ arg, "" });
 
@@ -82,11 +114,11 @@ ScriptDialog::ScriptDialog(QWidget* parent, const QJsonObject json, const QStrin
                 QString directoryPath = _launcherPlugin->getSetting("Scripts/file-in", "").toString();
                 QString filter = "Save as...";
 
-                if (argObj.contains("dialog-caption")) {
+                if (containsMemberString(argObj, "dialog-caption")) {
                     caption = argObj["dialog-caption"].toString();
                 }
 
-                if (argObj.contains("dialog-filter")) {
+                if (containsMemberString(argObj, "dialog-filter")) {
                     filter = argObj["dialog-filter"].toString();
                 }
 
@@ -101,11 +133,11 @@ ScriptDialog::ScriptDialog(QWidget* parent, const QJsonObject json, const QStrin
                     _launcherPlugin->setSetting("Scripts/file-in", QFileInfo(outputFileName).absolutePath());
                 }
 
-                if (argObj.contains("file-extension")) {
-                    QString fileExtention = argObj["file-extension"].toString();
+                if (containsMemberString(argObj, "file-extension")) {
+                    QString fileExtension = argObj["file-extension"].toString();
 
-                    if (!outputFileName.endsWith(fileExtention, Qt::CaseInsensitive)) {
-                        outputFileName += QString(".%1").arg(fileExtention);
+                    if (!outputFileName.endsWith(fileExtension, Qt::CaseInsensitive)) {
+                        outputFileName += QString(".%1").arg(fileExtension);
                     }
 
                 }
@@ -124,30 +156,30 @@ ScriptDialog::ScriptDialog(QWidget* parent, const QJsonObject json, const QStrin
 
             }
             else if (type == "float") {
-                auto widgetAction   = _argumentActions.emplace_back(new mv::gui::DecimalAction(this, name));
-                auto decimalAction  = static_cast<mv::gui::DecimalAction*>(widgetAction);
+                auto widgetAction = _argumentActions.emplace_back(new mv::gui::DecimalAction(this, name));
+                auto decimalAction = static_cast<mv::gui::DecimalAction*>(widgetAction);
 
                 layout->addWidget(widgetAction->createLabelWidget(this), ++row, 0, 1, 1);
                 layout->addWidget(decimalAction->createWidget(this), row, 1, 1, -1);
 
-                if (argObj.contains("default")) {
+                if (containsMemberDouble(argObj, "default")) {
                     decimalAction->setValue(argObj["default"].toDouble());
                 }
 
-                if (argObj.contains("range-min")) {
+                if (containsMemberDouble(argObj, "range-min")) {
                     decimalAction->setMinimum(argObj["range-min"].toDouble());
                 }
 
-                if (argObj.contains("range-max")) {
+                if (containsMemberDouble(argObj, "range-max")) {
                     decimalAction->setMaximum(argObj["range-max"].toDouble());
                 }
 
-                if (argObj.contains("step-size")) {
+                if (containsMemberDouble(argObj, "step-size")) {
                     decimalAction->setSingleStep(argObj["step-size"].toDouble());
                 }
 
-                if (argObj.contains("num-decimals")) {
-                    decimalAction->setNumberOfDecimals(argObj["step-size"].toInt());
+                if (containsMemberDouble(argObj, "num-decimals")) {
+                    decimalAction->setNumberOfDecimals(argObj["num-decimals"].toInt());
                 }
 
                 _argumentMap[arg] = QString::number(decimalAction->getValue());
@@ -158,21 +190,21 @@ ScriptDialog::ScriptDialog(QWidget* parent, const QJsonObject json, const QStrin
 
             }
             else if (type == "int") {
-                auto widgetAction   = _argumentActions.emplace_back(new mv::gui::IntegralAction(this, name));
+                auto widgetAction = _argumentActions.emplace_back(new mv::gui::IntegralAction(this, name));
                 auto integralAction = static_cast<mv::gui::IntegralAction*>(widgetAction);
 
                 layout->addWidget(widgetAction->createLabelWidget(this), ++row, 0, 1, 1);
                 layout->addWidget(integralAction->createWidget(this), row, 1, 1, -1);
 
-                if (argObj.contains("default")) {
+                if (containsMemberDouble(argObj, "default")) {
                     integralAction->setValue(argObj["default"].toInt());
                 }
 
-                if (argObj.contains("range-min")) {
+                if (containsMemberDouble(argObj, "range-min")) {
                     integralAction->setMinimum(argObj["range-min"].toInt());
                 }
 
-                if (argObj.contains("range-max")) {
+                if (containsMemberDouble(argObj, "range-max")) {
                     integralAction->setMaximum(argObj["range-max"].toInt());
                 }
 
@@ -184,12 +216,12 @@ ScriptDialog::ScriptDialog(QWidget* parent, const QJsonObject json, const QStrin
 
             }
             else if (type == "mv-data-in") {
-                auto widgetAction           = _argumentActions.emplace_back(new mv::gui::DatasetPickerAction(this, name));
-                auto datasetPickerAction    = static_cast<mv::gui::DatasetPickerAction*>(widgetAction);
+                auto widgetAction = _argumentActions.emplace_back(new mv::gui::DatasetPickerAction(this, name));
+                auto datasetPickerAction = static_cast<mv::gui::DatasetPickerAction*>(widgetAction);
 
                 std::unordered_set<QString> allowed_types;
 
-                if (argObj.contains("datatypes")) {
+                if (containsMemberArray(argObj, "datatypes")) {
                     const QJsonArray datatypesArray = argObj["datatypes"].toArray();
 
                     for (const QJsonValue& val : datatypesArray) {
@@ -202,7 +234,7 @@ ScriptDialog::ScriptDialog(QWidget* parent, const QJsonObject json, const QStrin
                 datasetPickerAction->setFilterFunction([allowed_types](const mv::Dataset<mv::DatasetImpl>& dataset) -> bool {
                     if (allowed_types.empty())
                         return true;
-                    
+
                     return std::any_of(allowed_types.cbegin(), allowed_types.cend(), [&dataset](const QString& type) {
                         return dataset->getRawDataKind() == type;
                         });
@@ -223,10 +255,8 @@ ScriptDialog::ScriptDialog(QWidget* parent, const QJsonObject json, const QStrin
     layout->addWidget(_okButton.createWidget(this), ++row, 0, 1, -1, Qt::AlignRight);
 
     setLayout(layout);
-
-    connect(&_okButton, &mv::gui::TriggerAction::triggered, this, &QDialog::accept);
-    connect(this, &QDialog::accepted, this, &ScriptDialog::runScript);
 }
+
 
 void ScriptDialog::runScript() {
     if (!_launcherPlugin) {
