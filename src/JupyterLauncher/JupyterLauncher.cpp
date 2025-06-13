@@ -167,10 +167,7 @@ QString getPythonVersion(const QString& pythonInterpreterPath)
 
 JupyterLauncher::JupyterLauncher(const PluginFactory* factory) :
     ViewPlugin(factory),
-    _connectionFilePath(""),
-    _selectedInterpreterVersion(""),
     _jupyterPluginFolder(QCoreApplication::applicationDirPath() + "/PluginDependencies/JupyterLauncher/bin/"),
-    _initializedPythonInterpreters(),
     _serverProcess(this),
     _launcherDialog(std::make_unique<LauncherDialog>(nullptr, this))
 {

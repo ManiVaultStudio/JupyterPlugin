@@ -130,20 +130,20 @@ private:
     void addPythonScripts();
 
 private:
-    QString                         _connectionFilePath;
-    QString                         _selectedInterpreterVersion;
-    QString                         _currentInterpreterPatchVersion;
-    QString                         _jupyterPluginFolder;
+    QString                         _connectionFilePath = {};
+    QString                         _selectedInterpreterVersion = {};
+    QString                         _currentInterpreterPatchVersion = {};
+    QString                         _jupyterPluginFolder = {};
 
     using LoadedPythonInterpreters  = std::unordered_map<QString, mv::plugin::Plugin*>;
-    LoadedPythonInterpreters        _initializedPythonInterpreters;
+    LoadedPythonInterpreters        _initializedPythonInterpreters = {};
 
     using PythonScripts             = std::vector<std::shared_ptr<PythonScript>>;
     PythonScripts                   _scriptTriggerActions = {};
 
-    mv::BackgroundTask*             _serverBackgroundTask = nullptr;      /** The background task monitoring the Jupyter Server */
-    QProcess                        _serverProcess;             /** A detached process for running the Jupyter server */
-    QTimer*                         _serverPollTimer = nullptr;           /** Poll the server process output at a regular interval */
+    mv::BackgroundTask*             _serverBackgroundTask = nullptr;    /** The background task monitoring the Jupyter Server */
+    QProcess                        _serverProcess;                     /** A detached process for running the Jupyter server */
+    QTimer*                         _serverPollTimer = nullptr;         /** Poll the server process output at a regular interval */
     std::unique_ptr<LauncherDialog> _launcherDialog;
 
 };
