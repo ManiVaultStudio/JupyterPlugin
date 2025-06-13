@@ -868,7 +868,8 @@ void JupyterLauncher::addPythonScripts()
         return runPythonCommand(params, verbose);
         };
 
-    uint32_t numLoadedScripts   = 0;
+    uint32_t numLoadedScripts = 0;
+    _scriptTriggerActions.clear();
 
     for (const auto& scriptDescriptor : scriptDescriptors) {
         QFile file(scriptDescriptor);
@@ -923,7 +924,6 @@ void JupyterLauncher::addPythonScripts()
         const QString scriptPath = dir.filePath(json["script"].toString());
         const QString scriptName = json["name"].toString();
 
-        _scriptTriggerActions.clear();
         mv::Datasets dummy = {};
         _scriptTriggerActions.push_back(std::make_shared<PythonScript>(scriptName, util::Script::Type::Writer, scriptPath, dummy, _selectedInterpreterVersion, json, this, nullptr));
 
