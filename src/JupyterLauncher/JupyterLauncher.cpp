@@ -116,15 +116,27 @@ static QString extractSingleNumber(const QString &input) {
     return QString();
 }
 
-static QString extractVersionNumber(const QString &input) {
-    QRegularExpression regex(R"(Python\s+(\d+\.\d+))");
+static QString extractRegex(const QString& input, const QString& pattern, int group = 1) {
+    QRegularExpression regex(pattern);
     QRegularExpressionMatch match = regex.match(input);
 
     if (match.hasMatch()) {
-        return match.captured(1); // Return the matched number
+        return match.captured(group); // Return the matched number
     }
 
     return QString();
+}
+
+static QString extractVersionNumber(const QString& input) {
+    return extractRegex(input, R"(Python\s+(\d+\.\d+.\d+))");
+}
+
+static QString extractShortVersionNumber(const QString& input) {
+    return extractRegex(input, R"(^(\d+\.\d+))");
+}
+
+static QString extractPatchVersionNumber(const QString& input) {
+    return extractRegex(input, R"(^\d+\.\d+\.(\d+)$)");
 }
 
 QString getPythonVersion(const QString& pythonInterpreterPath)
@@ -233,21 +245,23 @@ std::pair<bool, QString> JupyterLauncher::getPythonHomePath(const QString& pyInt
     return { isVenv, QDir::toNativeSeparators(pyHomePath) };
 }
 
-bool JupyterLauncher::checkPythonVersion() const
+bool JupyterLauncher::checkPythonVersion()
 {
-    QString givenInterpreterVersion = getPythonVersion(getPythonInterpreterPath());
+    QString currentInterpreterVersion = getPythonVersion(getPythonInterpreterPath());
+    QString currentShortVersion = extractShortVersionNumber(currentInterpreterVersion);
 
-    bool match = _selectedInterpreterVersion == givenInterpreterVersion;
+    const bool match = (_selectedInterpreterVersion == currentShortVersion);
 
-    if(!match)
-    {
-        qDebug() << "Version of Python interpreter: " << givenInterpreterVersion;
+    if (match) {
+        _currentInterpreterPatchVersion = extractPatchVersionNumber(currentInterpreterVersion);
+    }
+    else {
+        qDebug() << "Version of Python interpreter: " << currentInterpreterVersion;
         qDebug() << "Version selected in launcher:  " << _selectedInterpreterVersion;
     }
 
     return match;
 }
-
 
 QString JupyterLauncher::getPythonInterpreterPath()
 {
@@ -950,7 +964,9 @@ void JupyterLauncher::addPythonScripts()
         const QString scriptName = json["name"].toString();
         const QString scriptType = json["type"].toString();
 
-        auto& scriptTriggerAction = _scriptTriggerActions.emplace_back(std::make_shared<PythonScript>(scriptName, mv::util::Script::getTypeEnum(scriptType), scriptPath, _selectedInterpreterVersion, json, this, nullptr));
+        const QString fullPyVersion = QString("%1.%2").arg(_selectedInterpreterVersion, _currentInterpreterPatchVersion);
+
+        auto& scriptTriggerAction = _scriptTriggerActions.emplace_back(std::make_shared<PythonScript>(scriptName, mv::util::Script::getTypeEnum(scriptType), scriptPath, fullPyVersion, json, this, nullptr));
 
         // check if script contains input-datatypes, convert to mv::DataTypes
         if (containsMemberArray(json, "input-datatypes")) {

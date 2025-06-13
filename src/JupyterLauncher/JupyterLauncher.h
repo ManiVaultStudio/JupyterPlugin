@@ -117,7 +117,7 @@ private:
     bool initLauncher(const QString& version, int mode);
     bool initPython(bool activateXeus = true);
 
-    bool checkPythonVersion() const;
+    bool checkPythonVersion();
 
     void startJupyterServerProcess();
 
@@ -132,6 +132,7 @@ private:
 private:
     QString                         _connectionFilePath;
     QString                         _selectedInterpreterVersion;
+    QString                         _currentInterpreterPatchVersion;
     QString                         _jupyterPluginFolder;
 
     using LoadedPythonInterpreters  = std::unordered_map<QString, mv::plugin::Plugin*>;
