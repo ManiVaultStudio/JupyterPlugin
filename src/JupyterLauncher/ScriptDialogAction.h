@@ -49,11 +49,10 @@ public:
      * @param title Script title
      * @param type Script type
      * @param location Script location
-     * @param datasets List of datasets that the script can work with (optional, default is empty)
      * @param languageVersion Version of the scripting language
      * @param parent Pointer to parent object (optional, default is nullptr)
      */
-    explicit PythonScript(const QString& title, const Type& type, const QString& location, const mv::Datasets& datasets, const QString& interpreterVersion, const QJsonObject& json, JupyterLauncher* launcher, QObject* parent = nullptr);
+    explicit PythonScript(const QString& title, const Type& type, const QString& location, const QString& interpreterVersion, const QJsonObject& json, JupyterLauncher* launcher, QObject* parent = nullptr);
 
     /** Runs the script */
     void run() override {
