@@ -28,7 +28,7 @@ When executing a script, a user dialog is automatically populated with input fie
 Fields of the extension file:
 - `script` (required): Name of the python script file
 - `name` (required): Name of the script as to be displayed in ManiVault
-- `type` (required): Corresponding to ManiVault's plugin types, i.e., "Loader", "Writer", "Analysis", "transform" and "View"
+- `type` (required): Corresponding to ManiVault's plugin types, i.e., "Loader", "Writer", "Analysis", "Transformation" and "View"
 - `requirements` (optional): Name of a requirements file
 - `description` (optional): Description of what the script does. Will be displayed in the user-input dialog
 - `input-datatypes` (optional): ManiVault dataset types to which the script might apply (_currently not used_)
