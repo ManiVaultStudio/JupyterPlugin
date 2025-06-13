@@ -28,8 +28,20 @@ inline static QString insertDotAfter3(const QString& v) {
     return temp;
 }
 
-PythonScript::PythonScript(const QString& title, const Type& type, const QString& location, const mv::Datasets& datasets, const QString& interpreterVersion, const QJsonObject& json, JupyterLauncher* launcher, QObject* parent) :
-    Script(title, type, Language::Python, mv::util::Version(insertDotAfter3(interpreterVersion)), location, datasets, parent),
+static inline bool containsMemberString(const QJsonObject& json, const QString& entry) {
+    return json.contains(entry) && json[entry].isString();
+}
+
+static inline bool containsMemberArray(const QJsonObject& json, const QString& entry) {
+    return json.contains(entry) && json[entry].isArray();
+}
+
+static inline bool containsMemberDouble(const QJsonObject& json, const QString& entry) {
+    return json.contains(entry) && json[entry].isDouble();
+}
+
+PythonScript::PythonScript(const QString& title, const Type& type, const QString& location, const QString& interpreterVersion, const QJsonObject& json, JupyterLauncher* launcher, QObject* parent) :
+    Script(title, type, Language::Python, mv::util::Version(insertDotAfter3(interpreterVersion)), location, parent),
     _dialog(nullptr, json, location, interpreterVersion, launcher)
 {
 
@@ -58,7 +70,7 @@ void ScriptDialog::populateDialog()
     layout->setContentsMargins(10, 10, 10, 10);
     int row = 0;
 
-    if (_json.contains("description") && _json["description"].isString()) {
+    if (containsMemberString(_json, "description")) {
         QString description = _json["description"].toString();
 
         auto widgetAction = _argumentActions.emplace_back(new mv::gui::StringAction(this, "Description"));
@@ -69,7 +81,7 @@ void ScriptDialog::populateDialog()
         layout->addWidget(widgetAction->createWidget(this), row, 1, 1, -1);
     }
 
-    if (_json.contains("arguments") && _json["arguments"].isArray()) {
+    if (containsMemberArray(_json, "arguments")) {
         QJsonArray arguments = _json["arguments"].toArray();
 
         for (const QJsonValue& argument : arguments) {
@@ -102,11 +114,11 @@ void ScriptDialog::populateDialog()
                 QString directoryPath = _launcherPlugin->getSetting("Scripts/file-in", "").toString();
                 QString filter = "Save as...";
 
-                if (argObj.contains("dialog-caption")) {
+                if (containsMemberString(argObj, "dialog-caption")) {
                     caption = argObj["dialog-caption"].toString();
                 }
 
-                if (argObj.contains("dialog-filter")) {
+                if (containsMemberString(argObj, "dialog-filter")) {
                     filter = argObj["dialog-filter"].toString();
                 }
 
@@ -121,11 +133,11 @@ void ScriptDialog::populateDialog()
                     _launcherPlugin->setSetting("Scripts/file-in", QFileInfo(outputFileName).absolutePath());
                 }
 
-                if (argObj.contains("file-extension")) {
-                    QString fileExtention = argObj["file-extension"].toString();
+                if (containsMemberString(argObj, "file-extension")) {
+                    QString fileExtension = argObj["file-extension"].toString();
 
-                    if (!outputFileName.endsWith(fileExtention, Qt::CaseInsensitive)) {
-                        outputFileName += QString(".%1").arg(fileExtention);
+                    if (!outputFileName.endsWith(fileExtension, Qt::CaseInsensitive)) {
+                        outputFileName += QString(".%1").arg(fileExtension);
                     }
 
                 }
@@ -150,24 +162,24 @@ void ScriptDialog::populateDialog()
                 layout->addWidget(widgetAction->createLabelWidget(this), ++row, 0, 1, 1);
                 layout->addWidget(decimalAction->createWidget(this), row, 1, 1, -1);
 
-                if (argObj.contains("default")) {
+                if (containsMemberDouble(argObj, "default")) {
                     decimalAction->setValue(argObj["default"].toDouble());
                 }
 
-                if (argObj.contains("range-min")) {
+                if (containsMemberDouble(argObj, "range-min")) {
                     decimalAction->setMinimum(argObj["range-min"].toDouble());
                 }
 
-                if (argObj.contains("range-max")) {
+                if (containsMemberDouble(argObj, "range-max")) {
                     decimalAction->setMaximum(argObj["range-max"].toDouble());
                 }
 
-                if (argObj.contains("step-size")) {
+                if (containsMemberDouble(argObj, "step-size")) {
                     decimalAction->setSingleStep(argObj["step-size"].toDouble());
                 }
 
-                if (argObj.contains("num-decimals")) {
-                    decimalAction->setNumberOfDecimals(argObj["step-size"].toInt());
+                if (containsMemberDouble(argObj, "num-decimals")) {
+                    decimalAction->setNumberOfDecimals(argObj["num-decimals"].toInt());
                 }
 
                 _argumentMap[arg] = QString::number(decimalAction->getValue());
@@ -184,15 +196,15 @@ void ScriptDialog::populateDialog()
                 layout->addWidget(widgetAction->createLabelWidget(this), ++row, 0, 1, 1);
                 layout->addWidget(integralAction->createWidget(this), row, 1, 1, -1);
 
-                if (argObj.contains("default")) {
+                if (containsMemberDouble(argObj, "default")) {
                     integralAction->setValue(argObj["default"].toInt());
                 }
 
-                if (argObj.contains("range-min")) {
+                if (containsMemberDouble(argObj, "range-min")) {
                     integralAction->setMinimum(argObj["range-min"].toInt());
                 }
 
-                if (argObj.contains("range-max")) {
+                if (containsMemberDouble(argObj, "range-max")) {
                     integralAction->setMaximum(argObj["range-max"].toInt());
                 }
 
@@ -209,7 +221,7 @@ void ScriptDialog::populateDialog()
 
                 std::unordered_set<QString> allowed_types;
 
-                if (argObj.contains("datatypes")) {
+                if (containsMemberArray(argObj, "datatypes")) {
                     const QJsonArray datatypesArray = argObj["datatypes"].toArray();
 
                     for (const QJsonValue& val : datatypesArray) {
