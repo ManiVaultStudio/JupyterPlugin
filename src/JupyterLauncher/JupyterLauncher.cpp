@@ -1034,6 +1034,8 @@ JupyterLauncherFactory::JupyterLauncherFactory() :
 {
     setIcon(QIcon(":/images/logo.svg"));
     setMaximumNumberOfInstances(1);
+
+    getTutorialsDsnsAction().addString("https://raw.githubusercontent.com/ManiVaultStudio/JupyterPlugin/refs/heads/feature/TutorialTest/tutorials/test.json");
 }
 
 ViewPlugin* JupyterLauncherFactory::produce()
