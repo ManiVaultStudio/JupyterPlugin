@@ -1,0 +1,13 @@
+[
+  {
+    "title":"How to use the Jupyter Launcher",
+    "tags":["Python", "Jupyter"],
+    "date":"2025-06-20 12:00:00 +0000",
+    "icon":"plug",
+    "summary":"Explains how to work with the examples.",
+    "fullpost":"<p>This how remote tutorials work</p>",
+    "minimum-version-major":1,
+    "minimum-version-minor":4,
+    "plugins":["Jupyter Launcher"]
+  }
+]
