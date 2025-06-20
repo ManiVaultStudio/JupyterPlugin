@@ -7,6 +7,7 @@
       "icon":"plug",
       "summary":"Explains how to work with the examples.",
       "fullpost":"<p>This is how remote tutorials work</p>",
+      "url":"https://github.com/ManiVaultStudio/JupyterPlugin",
       "minimum-version-major":1,
       "minimum-version-minor":4,
       "plugins":["Data hierarchy","Data properties","Jupyter Launcher"]
