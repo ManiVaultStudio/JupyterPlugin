@@ -1,6 +1,7 @@
 #include "ScriptDialogAction.h"
 
 #include "JupyterLauncher.h"
+#include "Utils.h"
 
 #include <Dataset.h>
 #include <Set.h>
@@ -26,18 +27,6 @@ inline static QString insertDotAfter3(const QString& v) {
     QString temp = v;
     temp.insert(1, ".");
     return temp;
-}
-
-static inline bool containsMemberString(const QJsonObject& json, const QString& entry) {
-    return json.contains(entry) && json[entry].isString();
-}
-
-static inline bool containsMemberArray(const QJsonObject& json, const QString& entry) {
-    return json.contains(entry) && json[entry].isArray();
-}
-
-static inline bool containsMemberDouble(const QJsonObject& json, const QString& entry) {
-    return json.contains(entry) && json[entry].isDouble();
 }
 
 PythonScript::PythonScript(const QString& title, const Type& type, const QString& location, const QString& interpreterVersion, const QJsonObject& json, JupyterLauncher* launcher, QObject* parent) :

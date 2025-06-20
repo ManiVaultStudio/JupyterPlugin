@@ -125,3 +125,12 @@ if(UNIX)
     set_target_properties(libzmq-static PROPERTIES POSITION_INDEPENDENT_CODE ON)
     set_target_properties(cppzmq-static PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
+
+CPMAddPackage(
+    NAME md4qt
+    GIT_REPOSITORY https://invent.kde.org/libraries/md4qt.git
+    GIT_TAG 6c07e69824a269e0f6903caa4b59c905650a0749
+    VERSION 4.2.0           # see md4qt/CMakeLists.txt
+     DOWNLOAD_ONLY     YES
+     EXCLUDE_FROM_ALL  YES
+)
