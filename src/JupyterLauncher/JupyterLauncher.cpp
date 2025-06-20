@@ -2,6 +2,7 @@
 
 #include "GlobalSettingsAction.h"
 #include "ScriptDialogAction.h"
+#include "Utils.h"
 
 #include <Application.h>
 #include <CoreInterface.h>
@@ -1036,9 +1037,15 @@ JupyterLauncherFactory::JupyterLauncherFactory() :
     setMaximumNumberOfInstances(1);
 
     const auto applicationDir   = QDir(QCoreApplication::applicationDirPath());
-    const QString filePath      = applicationDir.filePath("tutorials/test.json");
+    const QString filePath      = applicationDir.filePath("tutorials/JupyterLauncher/test.json");
     const QUrl fileUrl          = QUrl::fromLocalFile(filePath);
     const QString urlString     = fileUrl.toString();
+
+    qDebug() << "Test start";
+    const QString mdPath = applicationDir.filePath("tutorials/JupyterLauncher/test.md");
+    const QString hmtlPath = applicationDir.filePath("tutorials/JupyterLauncher/test.html");
+    convert_md_to_html(mdPath, hmtlPath);
+    qDebug() << "Test end";
 
     getTutorialsDsnsAction().addString(urlString);
 }

@@ -19,6 +19,8 @@ set(JUPYTERLAUNCHER_SOURCES
     UserDialogActions.cpp
     ScriptDialogAction.h
     ScriptDialogAction.cpp
+    Utils.h
+    Utils.cpp
 )
 
 set(JUPYTERLAUNCHER_AUX
@@ -42,6 +44,8 @@ add_library(${JUPYTERLAUNCHER} SHARED ${JUPYTERLAUNCHER_SOURCES} ${JUPYTERLAUNCH
 # Target include directories
 # -----------------------------------------------------------------------------
 target_include_directories(${JUPYTERLAUNCHER} PRIVATE "${ManiVault_INCLUDE_DIR}")
+
+target_include_directories(${JUPYTERLAUNCHER} PRIVATE ${md4qt_SOURCE_DIR})
 
 # -----------------------------------------------------------------------------
 # Target properties
@@ -82,6 +86,21 @@ add_custom_command(TARGET ${JUPYTERLAUNCHER} POST_BUILD
 )
 
 mv_handle_plugin_config(${JUPYTERLAUNCHER} 0)
+
+install(FILES 
+    ${PROJECT_SOURCE_DIR}/tutorials/test.json
+    ${PROJECT_SOURCE_DIR}/tutorials/test.md
+    DESTINATION tutorials/JupyterLauncher 
+    COMPONENT PYTHONTUTORIALS
+)
+
+add_custom_command(TARGET ${JUPYTERLAUNCHER} POST_BUILD
+    COMMAND "${CMAKE_COMMAND}"
+        --install ${CMAKE_CURRENT_BINARY_DIR}
+        --config $<CONFIGURATION>
+        --component PYTHONTUTORIALS
+        --prefix ${ManiVault_INSTALL_DIR}/$<CONFIGURATION>
+)
 
 # -----------------------------------------------------------------------------
 # Miscellaneous
