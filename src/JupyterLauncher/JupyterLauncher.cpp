@@ -1019,6 +1019,8 @@ JupyterLauncherFactory::JupyterLauncherFactory() :
             // convert local file path to Qt URL to trick ManiVault into "downloading" the tutorials
             const QUrl fileUrl = QUrl::fromLocalFile(tutorial_file);
             const QString urlString = fileUrl.toString();
+
+            // register tutorial with the core
             getTutorialsDsnsAction().addString(urlString);
         }
     }
