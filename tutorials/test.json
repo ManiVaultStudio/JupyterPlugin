@@ -9,7 +9,7 @@
       "fullpost":"<p>This is how remote tutorials work</p>",
       "minimum-version-major":1,
       "minimum-version-minor":4,
-      "plugins":["Jupyter Launcher"]
+      "plugins":["Data hierarchy","Data properties","Jupyter Launcher"]
     }
   ]
 }
