@@ -49,30 +49,6 @@ using namespace mv;
 
 Q_PLUGIN_METADATA(IID "studio.manivault.JupyterLauncher")
 
-static inline bool containsMemberString(const QJsonObject& json, const QString& entry) {
-    return json.contains(entry) && json[entry].isString();
-}
-
-static inline bool containsMemberArray(const QJsonObject& json, const QString& entry) {
-    return json.contains(entry) && json[entry].isArray();
-}
-
-static inline std::vector<QString> readStringArray(const QJsonObject& json, const QString& entry) {
-    if (!containsMemberArray(json, entry))
-        return {};
-
-    std::vector<QString> res;
-
-    const QJsonArray array = json[entry].toArray();
-    for (const QJsonValue& val : array) {
-        if (val.isString()) {
-            res.push_back(val.toString());
-        }
-    }
-
-    return res;
-}
-
 static inline bool loadDynamicLibrary(const QFileInfo& pythonLibrary)
 {
 #ifdef WIN32
