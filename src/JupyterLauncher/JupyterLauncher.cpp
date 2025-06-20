@@ -1019,8 +1019,13 @@ JupyterLauncherFactory::JupyterLauncherFactory() :
 
     qDebug() << "Test start";
     const QString mdPath = applicationDir.filePath("tutorials/JupyterLauncher/test.md");
-    const QString hmtlPath = applicationDir.filePath("tutorials/JupyterLauncher/test.html");
-    convert_md_to_html(mdPath, hmtlPath);
+    QString html = convert_md_to_html(mdPath);
+    html.replace('"', '\"');
+    html.remove('\n');
+    html.remove('\r');
+
+    replace_json_entry(filePath, "tutorials", "fullpost", html);
+
     qDebug() << "Test end";
 
     getTutorialsDsnsAction().addString(urlString);
