@@ -1012,23 +1012,16 @@ JupyterLauncherFactory::JupyterLauncherFactory() :
     setIcon(QIcon(":/images/logo.svg"));
     setMaximumNumberOfInstances(1);
 
-    const auto applicationDir   = QDir(QCoreApplication::applicationDirPath());
-    const QString filePath      = applicationDir.filePath("tutorials/JupyterLauncher/test.json");
-    const QUrl fileUrl          = QUrl::fromLocalFile(filePath);
-    const QString urlString     = fileUrl.toString();
+    const auto tutorial_files = list_tutorial_files();
 
-    qDebug() << "Test start";
-    const QString mdPath = applicationDir.filePath("tutorials/JupyterLauncher/test.md");
-    QString html = convert_md_to_html(mdPath);
-    html.replace('"', '\"');
-    html.remove('\n');
-    html.remove('\r');
+    for (const auto& tutorial_file : tutorial_files) {
+        const QUrl fileUrl = QUrl::fromLocalFile(tutorial_file);
+        const QString urlString = fileUrl.toString();
+        if (insert_md_into_json(tutorial_file)) {
+            getTutorialsDsnsAction().addString(urlString);
+        }
+    }
 
-    replace_json_entry(filePath, "tutorials", "fullpost", html);
-
-    qDebug() << "Test end";
-
-    getTutorialsDsnsAction().addString(urlString);
 }
 
 ViewPlugin* JupyterLauncherFactory::produce()

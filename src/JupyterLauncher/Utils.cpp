@@ -3,6 +3,7 @@
 #include <optional>
 #include <vector>
 
+#include <QCoreApplication>
 #include <QString>
 #include <QFile>
 #include <QJsonDocument>
@@ -143,4 +144,46 @@ std::vector<QString> readStringArray(const QJsonObject& json, const QString& ent
     }
 
     return res;
+}
+
+bool insert_md_into_json(const QString& path_json) {
+
+    if (!path_json.endsWith(".json", Qt::CaseInsensitive)) {
+        return false;
+    }
+
+    QFileInfo path_json_info(path_json);
+    QString path_md = path_json_info.path() + "/" + path_json_info.completeBaseName() + ".md";
+
+    QString html = convert_md_to_html(path_md);
+
+    html.replace('"', '\"');
+    html.remove('\n');
+    html.remove('\r');
+
+    return replace_json_entry(path_json, "tutorials", "fullpost", html);
+}
+
+std::vector<QString> list_tutorial_files() {
+    const QDir applicationDir(QCoreApplication::applicationDirPath());
+
+    // Navigate to "tutorials" subdirectory
+    QDir tutorialsDir(applicationDir.filePath("tutorials/JupyterLauncher"));
+
+    if (!tutorialsDir.exists()) {
+        qWarning() << "Tutorials folder does not exist:" << tutorialsDir.absolutePath();
+        return {};
+    }
+
+    // Set filters: only JSON files
+    QStringList jsonFiles = tutorialsDir.entryList(QStringList() << "*.json", QDir::Files | QDir::NoSymLinks);
+    
+    std::vector<QString> result;
+    result.reserve(jsonFiles.size());
+
+    for (const QString& f : jsonFiles) {
+        result.push_back(tutorialsDir.filePath(f));
+    }
+
+    return result;
 }

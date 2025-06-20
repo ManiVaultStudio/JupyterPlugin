@@ -5,12 +5,6 @@
 #include <QString>
 #include <QJsonObject>
 
-bool convert_md_to_html(const QString& path_md_in, const QString& path_md_out);
-
-QString convert_md_to_html(const QString& path_md_in);
-
-bool replace_json_entry(const QString& path_json, const QString& array_name, const QString& entry_name, const QString& new_text);
-
 static inline bool containsMemberString(const QJsonObject& json, const QString& entry) {
     return json.contains(entry) && json[entry].isString();
 }
@@ -24,3 +18,13 @@ static inline bool containsMemberDouble(const QJsonObject& json, const QString& 
 }
 
 std::vector<QString> readStringArray(const QJsonObject& json, const QString& entry);
+
+bool convert_md_to_html(const QString& path_md_in, const QString& path_md_out);
+
+QString convert_md_to_html(const QString& path_md_in);
+
+bool replace_json_entry(const QString& path_json, const QString& array_name, const QString& entry_name, const QString& new_text);
+
+bool insert_md_into_json(const QString& path_json);
+
+std::vector<QString> list_tutorial_files();
