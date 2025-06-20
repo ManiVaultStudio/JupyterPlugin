@@ -1,3 +1,3 @@
-# This is how remote tutorials work
+## Actual instructions will follow
 
 And here goes the text

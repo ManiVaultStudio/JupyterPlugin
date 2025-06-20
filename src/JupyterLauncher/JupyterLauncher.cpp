@@ -1015,9 +1015,10 @@ JupyterLauncherFactory::JupyterLauncherFactory() :
     const auto tutorial_files = list_tutorial_files();
 
     for (const auto& tutorial_file : tutorial_files) {
-        const QUrl fileUrl = QUrl::fromLocalFile(tutorial_file);
-        const QString urlString = fileUrl.toString();
         if (insert_md_into_json(tutorial_file)) {
+            // convert local file path to Qt URL to trick ManiVault into "downloading" the tutorials
+            const QUrl fileUrl = QUrl::fromLocalFile(tutorial_file);
+            const QString urlString = fileUrl.toString();
             getTutorialsDsnsAction().addString(urlString);
         }
     }
