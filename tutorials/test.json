@@ -4,7 +4,7 @@
       "title":"How to use the Jupyter Launcher",
       "tags":["Python", "Jupyter", "GettingStarted"],
       "date":"2025-06-20 12:00:00 +0000",
-      "icon":"plug",
+      "icon":"python",
       "summary":"Explains how to work with the examples.",
       "fullpost":"<p>This is how remote tutorials work</p>",
       "url":"https://github.com/ManiVaultStudio/JupyterPlugin",
