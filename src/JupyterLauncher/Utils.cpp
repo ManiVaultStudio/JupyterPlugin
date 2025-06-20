@@ -101,7 +101,13 @@ bool replace_json_entry(const QString& path_json, const QString& array_name, con
 
     if (!jArray.isEmpty() && jArray[0].isObject()) {
         QJsonObject itemObj = jArray[0].toObject();
-        itemObj["entry_name"] = new_text;   // Replace PLACEHOLDER
+
+        if (!containsMemberString(itemObj, entry_name)) {
+            qWarning() << "Failed to handle json: Does not include entry named " << entry_name;
+            return false;
+        }
+
+        itemObj[entry_name] = new_text;     // Replace PLACEHOLDER
         jArray[0] = itemObj;                // Update array
         rootObj[array_name] = jArray;       // Update root
     }
