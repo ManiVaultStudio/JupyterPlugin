@@ -146,6 +146,78 @@ std::vector<QString> readStringArray(const QJsonObject& json, const QString& ent
     return res;
 }
 
+static QString generateIdFromText(const QString& text) {
+    // 1. Convert to lowercase
+    QString id = text.toLower();
+
+    // 2. Remove any HTML tags that might be in the header text
+    id.remove(QRegularExpression("<[^>]*>"));
+
+    // 3. Replace whitespace sequences with a single hyphen
+    id = id.replace(QRegularExpression(R"(\s+)"), "-");
+
+    // 4. Remove all characters that are not lowercase letters, numbers, or hyphens
+    id = id.remove(QRegularExpression(R"([^a-z0-9\-])"));
+
+    // 5. Collapse multiple hyphens into one (e.g., "a---b" -> "a-b")
+    id = id.replace(QRegularExpression(R"(-{2,})"), "-");
+
+    // 6. Remove leading or trailing hyphens
+    id = id.remove(QRegularExpression(R"(^-|-$)"));
+
+    return id;
+}
+
+static QString replaceHeaderIdsWithText(const QString& htmlInput) {
+    QString result;
+    int lastPos = 0;
+
+    // This regex captures the essential parts of a header tag:
+    // 1: The header level (1-6)
+    // 2: The existing attributes (like class="...")
+    // 3: The header's text content
+    QRegularExpression headerRegex(R"(<h([1-6])([^>]*)>(.*?)<\/h\1>)");
+    // Use the DotMatchesEverythingOption to correctly handle multi-line headers
+    headerRegex.setPatternOptions(QRegularExpression::DotMatchesEverythingOption);
+
+    QRegularExpressionMatchIterator it = headerRegex.globalMatch(htmlInput);
+
+    while (it.hasNext()) {
+        QRegularExpressionMatch match = it.next();
+
+        // Append the content between the previous header and this one
+        result.append(htmlInput.mid(lastPos, match.capturedStart() - lastPos));
+
+        QString level = match.captured(1);
+        QString attributes = match.captured(2);
+        QString content = match.captured(3);
+
+        // Generate the new ID from the header's text content
+        QString newId = generateIdFromText(content);
+
+        // Remove any old 'id' attribute from the attributes string
+        attributes.remove(QRegularExpression(R"(\s+id="[^"]*")"));
+
+        // Build the new header tag
+        result.append(QString("<h%1").arg(level)); // <h2
+        result.append(attributes);                // class="foo"
+        if (!newId.isEmpty()) {
+            result.append(QString(" id=\"%1\"").arg(newId)); // id="my-header"
+        }
+        result.append(">");                       // >
+        result.append(content);                   // My Header
+        result.append(QString("</h%1>").arg(level)); // </h2>
+
+        // Update our position in the string
+        lastPos = match.capturedEnd();
+    }
+
+    // Append any remaining text after the last header
+    result.append(htmlInput.mid(lastPos));
+
+    return result;
+}
+
 bool insert_md_into_json(const QString& path_json) {
 
     if (!path_json.endsWith(".json", Qt::CaseInsensitive)) {
@@ -157,6 +229,9 @@ bool insert_md_into_json(const QString& path_json) {
     QString path_assets = path_json_info.path() + "/assets";
 
     QString html = convert_md_to_html(path_md);
+
+    // replace filename in ids
+    html = replaceHeaderIdsWithText(html);
 
     // ensure all local assets are prefixed correctly
     QRegularExpression re(R"(<img\s+src\s*=\s*["'](?!file://)([^"']+)["'])", QRegularExpression::CaseInsensitiveOption);
