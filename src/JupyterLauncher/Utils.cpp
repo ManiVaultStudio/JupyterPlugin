@@ -38,17 +38,18 @@ static std::optional<QString> _convert_md_to_html_impl(const QString& path_md_in
         return {};
     }
 
-    MD::Parser<MD::QStringTrait> p;
-
-    auto doc = p.parse(path_md_in);
+    MD::Parser<MD::QStringTrait> parser;
+    auto doc = parser.parse(path_md_in);
 
     if (doc->isEmpty()) {
         qWarning() << "Parsed Markdown document is empty or invalid.";
         return {};
     }
 
-    const QString html = MD::toHtml(doc, /*wrapInBodyTag*/ false, {}, /*wrapInArticle*/ false);
-    return html;
+    return MD::toHtml(doc, 
+        /*wrapInBodyTag*/ false, 
+        /*hrefForRefBackImage*/ {},
+        /*wrapInArticle*/ false);
 }
 
 bool convert_md_to_html(const QString& path_md_in, const QString& path_html_out) {
