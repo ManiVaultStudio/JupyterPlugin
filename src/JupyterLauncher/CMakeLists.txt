@@ -38,6 +38,12 @@ set(JUPYTERLAUNCHER_TUTORIALS
 
 set(JUPYTERLAUNCHER_TUTORIAL_ASSETS
     ${PROJECT_SOURCE_DIR}/tutorials/assets/conda_create_env.gif
+    ${PROJECT_SOURCE_DIR}/tutorials/assets/launcher_dependencies.png
+    ${PROJECT_SOURCE_DIR}/tutorials/assets/launcher_interpreter.png
+    ${PROJECT_SOURCE_DIR}/tutorials/assets/notebook_empty.png
+    ${PROJECT_SOURCE_DIR}/tutorials/assets/notebook_run.gif
+    ${PROJECT_SOURCE_DIR}/tutorials/assets/taskbar_clicked.png
+    ${PROJECT_SOURCE_DIR}/tutorials/assets/taskbar_empty.png
 )
 
 source_group( Plugin FILES ${JUPYTERLAUNCHER_SOURCES} ${JUPYTERLAUNCHER_AUX})
