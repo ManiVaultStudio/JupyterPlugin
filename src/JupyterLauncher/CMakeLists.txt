@@ -36,6 +36,10 @@ set(JUPYTERLAUNCHER_TUTORIALS
     ${PROJECT_SOURCE_DIR}/tutorials/notebook_setup.md
 )
 
+set(JUPYTERLAUNCHER_TUTORIAL_ASSETS
+    ${PROJECT_SOURCE_DIR}/tutorials/assets/conda_create_env.gif
+)
+
 source_group( Plugin FILES ${JUPYTERLAUNCHER_SOURCES} ${JUPYTERLAUNCHER_AUX})
 source_group( ResourceFiles FILES ${JUPYTERLAUNCHER_RESOURCES})
 source_group( ResourceFiles\\generated FILES ${CMAKE_CURRENT_BINARY_DIR}/qrc_jupyter_launcher_resources.cpp)
@@ -103,11 +107,22 @@ install(FILES
     COMPONENT PYTHONTUTORIALS
 )
 
+install(FILES 
+    ${JUPYTERLAUNCHER_TUTORIAL_ASSETS}
+    DESTINATION tutorials/JupyterLauncher/assets
+    COMPONENT PYTHONTUTORIALASSETS
+)
+
 add_custom_command(TARGET ${JUPYTERLAUNCHER} POST_BUILD
     COMMAND "${CMAKE_COMMAND}"
         --install ${CMAKE_CURRENT_BINARY_DIR}
         --config $<CONFIGURATION>
         --component PYTHONTUTORIALS
+        --prefix ${ManiVault_INSTALL_DIR}/$<CONFIGURATION>
+    COMMAND "${CMAKE_COMMAND}"
+        --install ${CMAKE_CURRENT_BINARY_DIR}
+        --config $<CONFIGURATION>
+        --component PYTHONTUTORIALASSETS
         --prefix ${ManiVault_INSTALL_DIR}/$<CONFIGURATION>
 )
 

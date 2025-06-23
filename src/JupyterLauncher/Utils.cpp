@@ -154,14 +154,26 @@ bool insert_md_into_json(const QString& path_json) {
 
     QFileInfo path_json_info(path_json);
     QString path_md = path_json_info.path() + "/" + path_json_info.completeBaseName() + ".md";
+    QString path_assets = path_json_info.path() + "/assets";
 
     QString html = convert_md_to_html(path_md);
 
+    // ensure all local assets are prefixed correctly
+    QRegularExpression re(R"(<img\s+src\s*=\s*["'](?!file://)([^"']+)["'])", QRegularExpression::CaseInsensitiveOption);
+    html.replace(re, R"(<img src=")" + QStringLiteral("file://") + R"(\1")");
+
+    // replace and remove some characters to insert the entire html as a single line entry in json
     html.replace('"', '\"');
     html.remove('\n');
     html.remove('\r');
 
-    return replace_json_entry(path_json, "tutorials", "fullpost", html);
+    if (!replace_json_entry(path_json, "tutorials", "url", QUrl::fromLocalFile(path_assets).toString()))
+        return false;
+
+    if (!replace_json_entry(path_json, "tutorials", "fullpost", html))
+        return false;
+
+    return true;
 }
 
 std::vector<QString> list_tutorial_files() {
