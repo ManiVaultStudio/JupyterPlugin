@@ -31,14 +31,26 @@ set(JUPYTERLAUNCHER_RESOURCES
     res/jupyter_launcher_resources.qrc
 )
 
+set(JUPYTERLAUNCHER_TUTORIALS
+    ${PROJECT_SOURCE_DIR}/tutorials/notebook_setup.json
+    ${PROJECT_SOURCE_DIR}/tutorials/notebook_setup.md
+)
+
 source_group( Plugin FILES ${JUPYTERLAUNCHER_SOURCES} ${JUPYTERLAUNCHER_AUX})
 source_group( ResourceFiles FILES ${JUPYTERLAUNCHER_RESOURCES})
 source_group( ResourceFiles\\generated FILES ${CMAKE_CURRENT_BINARY_DIR}/qrc_jupyter_launcher_resources.cpp)
+source_group( Tutorials FILES ${JUPYTERLAUNCHER_TUTORIALS})
 
 # -----------------------------------------------------------------------------
 # CMake Target
 # -----------------------------------------------------------------------------
-add_library(${JUPYTERLAUNCHER} SHARED ${JUPYTERLAUNCHER_SOURCES} ${JUPYTERLAUNCHER_AUX} ${JUPYTERLAUNCHER_RESOURCES} ${JUPYTERLAUNCHER_RESOURCE_FILES})
+add_library(${JUPYTERLAUNCHER} SHARED 
+    ${JUPYTERLAUNCHER_SOURCES}
+    ${JUPYTERLAUNCHER_AUX} 
+    ${JUPYTERLAUNCHER_RESOURCES} 
+    ${JUPYTERLAUNCHER_RESOURCE_FILES}
+    ${JUPYTERLAUNCHER_TUTORIALS}
+)
 
 # -----------------------------------------------------------------------------
 # Target include directories
@@ -85,11 +97,8 @@ add_custom_command(TARGET ${JUPYTERLAUNCHER} POST_BUILD
         --prefix ${ManiVault_INSTALL_DIR}/$<CONFIGURATION>
 )
 
-mv_handle_plugin_config(${JUPYTERLAUNCHER} 0)
-
 install(FILES 
-    ${PROJECT_SOURCE_DIR}/tutorials/test.json
-    ${PROJECT_SOURCE_DIR}/tutorials/test.md
+    ${JUPYTERLAUNCHER_TUTORIALS}
     DESTINATION tutorials/JupyterLauncher 
     COMPONENT PYTHONTUTORIALS
 )
@@ -101,6 +110,8 @@ add_custom_command(TARGET ${JUPYTERLAUNCHER} POST_BUILD
         --component PYTHONTUTORIALS
         --prefix ${ManiVault_INSTALL_DIR}/$<CONFIGURATION>
 )
+
+mv_handle_plugin_config(${JUPYTERLAUNCHER} 0)
 
 # -----------------------------------------------------------------------------
 # Miscellaneous
