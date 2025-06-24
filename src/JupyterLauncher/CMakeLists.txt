@@ -19,6 +19,8 @@ set(JUPYTERLAUNCHER_SOURCES
     UserDialogActions.cpp
     ScriptDialogAction.h
     ScriptDialogAction.cpp
+    Utils.h
+    Utils.cpp
 )
 
 set(JUPYTERLAUNCHER_AUX
@@ -29,19 +31,43 @@ set(JUPYTERLAUNCHER_RESOURCES
     res/jupyter_launcher_resources.qrc
 )
 
+set(JUPYTERLAUNCHER_TUTORIALS
+    ${PROJECT_SOURCE_DIR}/tutorials/notebook_setup.json
+    ${PROJECT_SOURCE_DIR}/tutorials/notebook_setup.md
+)
+
+set(JUPYTERLAUNCHER_TUTORIAL_ASSETS
+    ${PROJECT_SOURCE_DIR}/tutorials/assets/conda_create_env.gif
+    ${PROJECT_SOURCE_DIR}/tutorials/assets/launcher_dependencies.png
+    ${PROJECT_SOURCE_DIR}/tutorials/assets/launcher_interpreter.png
+    ${PROJECT_SOURCE_DIR}/tutorials/assets/notebook_empty.png
+    ${PROJECT_SOURCE_DIR}/tutorials/assets/notebook_run.gif
+    ${PROJECT_SOURCE_DIR}/tutorials/assets/taskbar_clicked.png
+    ${PROJECT_SOURCE_DIR}/tutorials/assets/taskbar_empty.png
+)
+
 source_group( Plugin FILES ${JUPYTERLAUNCHER_SOURCES} ${JUPYTERLAUNCHER_AUX})
 source_group( ResourceFiles FILES ${JUPYTERLAUNCHER_RESOURCES})
 source_group( ResourceFiles\\generated FILES ${CMAKE_CURRENT_BINARY_DIR}/qrc_jupyter_launcher_resources.cpp)
+source_group( Tutorials FILES ${JUPYTERLAUNCHER_TUTORIALS})
 
 # -----------------------------------------------------------------------------
 # CMake Target
 # -----------------------------------------------------------------------------
-add_library(${JUPYTERLAUNCHER} SHARED ${JUPYTERLAUNCHER_SOURCES} ${JUPYTERLAUNCHER_AUX} ${JUPYTERLAUNCHER_RESOURCES} ${JUPYTERLAUNCHER_RESOURCE_FILES})
+add_library(${JUPYTERLAUNCHER} SHARED 
+    ${JUPYTERLAUNCHER_SOURCES}
+    ${JUPYTERLAUNCHER_AUX} 
+    ${JUPYTERLAUNCHER_RESOURCES} 
+    ${JUPYTERLAUNCHER_RESOURCE_FILES}
+    ${JUPYTERLAUNCHER_TUTORIALS}
+)
 
 # -----------------------------------------------------------------------------
 # Target include directories
 # -----------------------------------------------------------------------------
 target_include_directories(${JUPYTERLAUNCHER} PRIVATE "${ManiVault_INCLUDE_DIR}")
+
+target_include_directories(${JUPYTERLAUNCHER} PRIVATE ${md4qt_SOURCE_DIR})
 
 # -----------------------------------------------------------------------------
 # Target properties
@@ -78,6 +104,31 @@ add_custom_command(TARGET ${JUPYTERLAUNCHER} POST_BUILD
         --install ${CMAKE_CURRENT_BINARY_DIR}
         --config $<CONFIGURATION>
         --component PLUGIN
+        --prefix ${ManiVault_INSTALL_DIR}/$<CONFIGURATION>
+)
+
+install(FILES 
+    ${JUPYTERLAUNCHER_TUTORIALS}
+    DESTINATION tutorials/JupyterLauncher 
+    COMPONENT PYTHONTUTORIALS
+)
+
+install(FILES 
+    ${JUPYTERLAUNCHER_TUTORIAL_ASSETS}
+    DESTINATION tutorials/JupyterLauncher/assets
+    COMPONENT PYTHONTUTORIALASSETS
+)
+
+add_custom_command(TARGET ${JUPYTERLAUNCHER} POST_BUILD
+    COMMAND "${CMAKE_COMMAND}"
+        --install ${CMAKE_CURRENT_BINARY_DIR}
+        --config $<CONFIGURATION>
+        --component PYTHONTUTORIALS
+        --prefix ${ManiVault_INSTALL_DIR}/$<CONFIGURATION>
+    COMMAND "${CMAKE_COMMAND}"
+        --install ${CMAKE_CURRENT_BINARY_DIR}
+        --config $<CONFIGURATION>
+        --component PYTHONTUTORIALASSETS
         --prefix ${ManiVault_INSTALL_DIR}/$<CONFIGURATION>
 )
 

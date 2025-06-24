@@ -2,6 +2,7 @@
 
 #include "GlobalSettingsAction.h"
 #include "ScriptDialogAction.h"
+#include "Utils.h"
 
 #include <Application.h>
 #include <CoreInterface.h>
@@ -47,30 +48,6 @@
 using namespace mv;
 
 Q_PLUGIN_METADATA(IID "studio.manivault.JupyterLauncher")
-
-static inline bool containsMemberString(const QJsonObject& json, const QString& entry) {
-    return json.contains(entry) && json[entry].isString();
-}
-
-static inline bool containsMemberArray(const QJsonObject& json, const QString& entry) {
-    return json.contains(entry) && json[entry].isArray();
-}
-
-static inline std::vector<QString> readStringArray(const QJsonObject& json, const QString& entry) {
-    if (!containsMemberArray(json, entry))
-        return {};
-
-    std::vector<QString> res;
-
-    const QJsonArray array = json[entry].toArray();
-    for (const QJsonValue& val : array) {
-        if (val.isString()) {
-            res.push_back(val.toString());
-        }
-    }
-
-    return res;
-}
 
 static inline bool loadDynamicLibrary(const QFileInfo& pythonLibrary)
 {
@@ -1034,6 +1011,20 @@ JupyterLauncherFactory::JupyterLauncherFactory() :
 {
     setIcon(QIcon(":/images/logo.svg"));
     setMaximumNumberOfInstances(1);
+
+    const auto tutorial_files = list_tutorial_files();
+
+    for (const auto& tutorial_file : tutorial_files) {
+        if (insert_md_into_json(tutorial_file)) {
+            // convert local file path to Qt URL to trick ManiVault into "downloading" the tutorials
+            const QUrl fileUrl = QUrl::fromLocalFile(tutorial_file);
+            const QString urlString = fileUrl.toString();
+
+            // register tutorial with the core
+            getTutorialsDsnsAction().addString(urlString);
+        }
+    }
+
 }
 
 ViewPlugin* JupyterLauncherFactory::produce()
