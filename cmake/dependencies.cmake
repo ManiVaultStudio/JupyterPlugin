@@ -18,6 +18,13 @@ if (WIN32)
     
 endif()
 
+# Hack: ManiVault downloads nlohmann_json but only downloads it
+#       so we want to add the package again but also set it up
+list(FIND CPM_PACKAGES "nlohmann_json" index_cpm_nlohmann_json)
+if(NOT index_cpm_nlohmann_json EQUAL -1)
+    list(REMOVE_ITEM CPM_PACKAGES "nlohmann_json")
+endif()
+
 CPMAddPackage(
     NAME nlohmann_json
     GITHUB_REPOSITORY "nlohmann/json"
