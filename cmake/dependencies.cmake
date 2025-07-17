@@ -26,12 +26,14 @@ if(NOT index_cpm_nlohmann_json EQUAL -1)
 endif()
 
 CPMAddPackage(
-    NAME nlohmann_json
-    GITHUB_REPOSITORY "nlohmann/json"
-    GIT_TAG ${nlohmann_json_VERSION}
-    EXCLUDE_FROM_ALL YES
-    OPTIONS
-    "JSON_BuildTests OFF"
+  NAME              nlohmann_json
+  GITHUB_REPOSITORY	"nlohmann/json"
+  GIT_TAG           v3.12.0
+  DOWNLOAD_ONLY     NO
+  EXCLUDE_FROM_ALL  YES
+  OPTIONS
+      "JSON_BuildTests=OFF"            # skip upstream tests
+      "JSON_MultipleHeaders=ON"        # shave compile time (optional)
 )
 
 if(XEUS_BUILD_STATIC_DEPENDENCIES)
@@ -39,54 +41,58 @@ if(XEUS_BUILD_STATIC_DEPENDENCIES)
 endif()
 
 CPMAddPackage(
-    NAME xeus
-    GITHUB_REPOSITORY "jupyter-xeus/xeus"
-    GIT_TAG ${xeus_VERSION}
-    EXCLUDE_FROM_ALL YES
+    NAME                xeus
+    GITHUB_REPOSITORY   "jupyter-xeus/xeus"
+    GIT_TAG             ${xeus_VERSION}
+    EXCLUDE_FROM_ALL    YES
     CPM_USE_LOCAL_PACKAGES ON
-    OPTIONS "BUILD_EXAMPLES OFF"
-            "XEUS_BUILD_SHARED_LIBS OFF"
-            "XEUS_BUILD_STATIC_LIBS ON"
-            "XEUS_STATIC_DEPENDENCIES ${XEUS_BUILD_STATIC_DEPENDENCIES}"
+    OPTIONS 
+        "BUILD_EXAMPLES OFF"
+        "XEUS_BUILD_SHARED_LIBS OFF"
+        "XEUS_BUILD_STATIC_LIBS ON"
+        "XEUS_STATIC_DEPENDENCIES ${XEUS_BUILD_STATIC_DEPENDENCIES}"
 )
 
 # produces libzmq and libzmq-static depending on settings
 CPMAddPackage(
-    NAME libzmq
-    GITHUB_REPOSITORY "zeromq/libzmq"
-    GIT_TAG ${libzmq_VERSION}
-    EXCLUDE_FROM_ALL YES
-    OPTIONS "WITH_PERF_TOOL OFF"
-            "BUILD_TESTS OFF"
-            "ENABLE_CPACK OFF"
-            "BUILD_SHARED OFF"
-            "BUILD_STATIC ON"
-            "WITH_LIBSODIUM OFF"
-            "ENABLE_CURVE OFF"
-            "WITH_TLS OFF"
-            "WITH_DOC OFF"
+    NAME                libzmq
+    GITHUB_REPOSITORY   "zeromq/libzmq"
+    GIT_TAG             ${libzmq_VERSION}
+    EXCLUDE_FROM_ALL    YES
+    OPTIONS 
+        "WITH_PERF_TOOL OFF"
+        "BUILD_TESTS OFF"
+        "ENABLE_CPACK OFF"
+        "BUILD_SHARED OFF"
+        "BUILD_STATIC ON"
+        "WITH_LIBSODIUM OFF"
+        "ENABLE_CURVE OFF"
+        "WITH_TLS OFF"
+        "WITH_DOC OFF"
 )
 
 # produces cppzmq and cppzmq-static
 CPMAddPackage(
-    NAME cppzmq
-    GITHUB_REPOSITORY "zeromq/cppzmq"
-    GIT_TAG ${cppzmq_VERSION}
-    EXCLUDE_FROM_ALL YES
-    OPTIONS "CPPZMQ_BUILD_TESTS OFF"
+    NAME                cppzmq
+    GITHUB_REPOSITORY   "zeromq/cppzmq"
+    GIT_TAG             ${cppzmq_VERSION}
+    EXCLUDE_FROM_ALL    YES
+    OPTIONS 
+        "CPPZMQ_BUILD_TESTS OFF"
 )
 
 # XEUS_ZMQ_STATIC_DEPENDENCIES introduces libsodium dependency on linux
 CPMAddPackage(
-    NAME xeus-zmq
-    GITHUB_REPOSITORY "jupyter-xeus/xeus-zmq"
-    GIT_TAG ${xeus-zmq_VERSION}
-    EXCLUDE_FROM_ALL YES
+    NAME                xeus-zmq
+    GITHUB_REPOSITORY   "jupyter-xeus/xeus-zmq"
+    GIT_TAG             ${xeus-zmq_VERSION}
+    EXCLUDE_FROM_ALL    YES
     CPM_USE_LOCAL_PACKAGES ON
-    OPTIONS "XEUS_ZMQ_BUILD_TESTS OFF"
-            "XEUS_ZMQ_BUILD_SHARED_LIBS OFF"
-            "XEUS_ZMQ_BUILD_STATIC_LIBS ON"
-            "XEUS_ZMQ_STATIC_DEPENDENCIES ON"
+    OPTIONS 
+        "XEUS_ZMQ_BUILD_TESTS OFF"
+        "XEUS_ZMQ_BUILD_SHARED_LIBS OFF"
+        "XEUS_ZMQ_BUILD_STATIC_LIBS ON"
+        "XEUS_ZMQ_STATIC_DEPENDENCIES ON"
 )
 
 install(TARGETS nlohmann_json EXPORT xeus-targets)
@@ -95,34 +101,36 @@ install(TARGETS nlohmann_json EXPORT xeus-targets)
 set(PYTHON_EXECUTABLE "${Python_EXECUTABLE}")
 
 CPMAddPackage(
-    NAME pybind
-    GITHUB_REPOSITORY pybind/pybind11
-    GIT_TAG ${pybind11_VERSION}
-    EXCLUDE_FROM_ALL YES
-    OPTIONS "PYBIND11_FINDPYTHON ON"
+    NAME                pybind
+    GITHUB_REPOSITORY   pybind/pybind11
+    GIT_TAG             ${pybind11_VERSION}
+    EXCLUDE_FROM_ALL    YES
+    OPTIONS 
+        "PYBIND11_FINDPYTHON ON"
 )
 
 include("${pybind_SOURCE_DIR}/tools/pybind11Common.cmake")
 
 CPMAddPackage(
-    NAME pybind11_json
-    GITHUB_REPOSITORY pybind/pybind11_json
-    GIT_TAG ${pybind11_json_VERSION}
-    EXCLUDE_FROM_ALL YES
+    NAME                pybind11_json
+    GITHUB_REPOSITORY   pybind/pybind11_json
+    GIT_TAG             ${pybind11_json_VERSION}
+    EXCLUDE_FROM_ALL    YES
 )
 
 CPMAddPackage(
-    NAME xeus-python
-    URL "https://github.com/jupyter-xeus/xeus-python/archive/refs/tags/${xeus-python_VERSION}.tar.gz"
-    EXCLUDE_FROM_ALL YES
+    NAME                xeus-python
+    URL                 "https://github.com/jupyter-xeus/xeus-python/archive/refs/tags/${xeus-python_VERSION}.tar.gz"
+    EXCLUDE_FROM_ALL    YES
     CPM_USE_LOCAL_PACKAGES ON
-    OPTIONS "XPYT_BUILD_TESTS OFF"
-            "XPYT_BUILD_SHARED OFF"
-            "XPYT_BUILD_STATIC ON"
-            "XPYT_BUILD_XPYTHON_EXECUTABLE OFF"
-            "XPYT_USE_SHARED_XEUS_PYTHON OFF"
-            "XPYT_USE_SHARED_XEUS OFF"
-            "EMSCRIPTEN OFF"
+    OPTIONS 
+        "XPYT_BUILD_TESTS OFF"
+        "XPYT_BUILD_SHARED OFF"
+        "XPYT_BUILD_STATIC ON"
+        "XPYT_BUILD_XPYTHON_EXECUTABLE OFF"
+        "XPYT_USE_SHARED_XEUS_PYTHON OFF"
+        "XPYT_USE_SHARED_XEUS OFF"
+        "EMSCRIPTEN OFF"
 )
 
 if(UNIX)
@@ -134,10 +142,10 @@ if(UNIX)
 endif()
 
 CPMAddPackage(
-    NAME md4qt
-    GIT_REPOSITORY https://invent.kde.org/libraries/md4qt.git
-    GIT_TAG 6c07e69824a269e0f6903caa4b59c905650a0749
-    VERSION 4.2.0           # see md4qt/CMakeLists.txt
-     DOWNLOAD_ONLY     YES
-     EXCLUDE_FROM_ALL  YES
+    NAME                md4qt
+    GIT_REPOSITORY      https://invent.kde.org/libraries/md4qt.git
+    GIT_TAG             6c07e69824a269e0f6903caa4b59c905650a0749
+    VERSION             4.2.0           # see md4qt/CMakeLists.txt
+    DOWNLOAD_ONLY       YES
+    EXCLUDE_FROM_ALL    YES
 )
