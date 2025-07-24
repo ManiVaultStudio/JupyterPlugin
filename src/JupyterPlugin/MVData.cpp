@@ -590,15 +590,14 @@ static std::string add_cluster(const py::str& parentPointDatasetGuid, const std:
     Dataset<Clusters> clusters  = mv::data().createDataset("Cluster", clustersName.c_str(), parentDataset);
     guid                        = clusters.getDatasetId().toStdString();
 
-    bool hasNames               = clusterNames.size() == numClusters;
-    bool hasColors              = clusterColors.size() == numClusters;
+    const bool hasNames         = clusterNames.size() == numClusters;
+    const bool hasColors        = clusterColors.size() == numClusters;
 
     for (size_t i = 0; i < numClusters; ++i) {
         Cluster cluster;
 
-        auto indices = clusterIndices[i].cast<py::array>();
-        auto clusterIndices = py_array_to_vector<std::uint32_t>(indices);
-        cluster.setIndices(clusterIndices);
+        std::vector<std::uint32_t> clusterIndices_v = py_array_to_vector<std::uint32_t>(clusterIndices[i]);
+        cluster.setIndices(clusterIndices_v);
 
         QString clusterName = QString::fromStdString(std::to_string(i));
 
@@ -607,11 +606,9 @@ static std::string add_cluster(const py::str& parentPointDatasetGuid, const std:
 
         cluster.setName(clusterName);
 
-        if (hasColors)
-        {
-            auto colors = clusterColors[i].cast<py::array>();
-            auto clusterColors = py_array_to_vector<float>(colors);
-            QColor clusterColor = QColor::fromRgbF(clusterColors[0], clusterColors[1], clusterColors[2], 1);
+        if (hasColors) {
+            std::vector<float> clusterColors_v = py_array_to_vector<float>(clusterColors[i]);
+            QColor clusterColor = QColor::fromRgbF(clusterColors_v[0], clusterColors_v[1], clusterColors_v[2], 1);
             cluster.setColor(clusterColor);
         }
 
