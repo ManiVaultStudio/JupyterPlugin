@@ -228,7 +228,7 @@ void orient_multiband_imagedata_as_bip(const U* data_in, const std::vector<size_
 
 // when conversion is needed
 template<typename T, typename U>
-void conv_points_from_numpy_array(const void* data_in, const std::vector<size_t>& shape, mv::Dataset<Points> points, bool flip = false)
+void conv_points_from_numpy_array(const void* data_in, const std::vector<size_t>& shape, mv::Dataset<Points>& points, bool flip = false)
 {
     size_t band_size = shape[0] * shape[1];
     size_t num_bands = shape.size() == 3 ? shape[2] : shape[1];
@@ -256,7 +256,7 @@ void conv_points_from_numpy_array(const void* data_in, const std::vector<size_t>
 
 // when types are the same image
 template<class T>
-void set_img_points_from_numpy_array(const void* data_in, const std::vector<size_t>& shape, mv::Dataset<Points> points, bool flip=false)
+void set_img_points_from_numpy_array(const void* data_in, const std::vector<size_t>& shape, mv::Dataset<Points>& points, bool flip=false)
 {
     size_t band_size = shape[0] * shape[1];
     size_t num_bands = shape.size() == 3 ? shape[2] : shape[1];
@@ -275,7 +275,7 @@ void set_img_points_from_numpy_array(const void* data_in, const std::vector<size
 
 // when types are different, setting points
 template<typename T, typename U>
-void set_points_from_numpy_array_diff_type(const void* data_in, const std::vector<size_t>& shape, mv::Dataset<Points> points, bool flip)
+void set_points_from_numpy_array_diff_type(const void* data_in, const std::vector<size_t>& shape, mv::Dataset<Points>& points, bool flip)
 {
     if (shape.size() != 2)
         return;
@@ -300,7 +300,7 @@ void set_points_from_numpy_array_diff_type(const void* data_in, const std::vecto
 
 // when types are the same, setting points
 template<typename T>
-void set_points_from_numpy_array_same_type(const void* data_in, const std::vector<size_t>& shape, mv::Dataset<Points> points, bool flip)
+void set_points_from_numpy_array_same_type(const void* data_in, const std::vector<size_t>& shape, mv::Dataset<Points>& points, bool flip)
 {
     if (shape.size() != 2)
         return;
@@ -314,7 +314,7 @@ void set_points_from_numpy_array_same_type(const void* data_in, const std::vecto
 }
 
 template<typename T, typename U>
-void set_points_from_numpy_array(const void* data_in, const std::vector<size_t>& shape, mv::Dataset<Points> points, bool flip = false)
+void set_points_from_numpy_array(const void* data_in, const std::vector<size_t>& shape, mv::Dataset<Points>& points, bool flip = false)
 {
     if constexpr (std::is_same_v<T, U>)
         set_points_from_numpy_array_same_type<T>(data_in, shape, points, flip);
@@ -349,7 +349,7 @@ static py::buffer_info createBuffer(const py::array& data)
  * If successful returns a guid for the new point data
  * If unsuccessful return a empty string
  */
-static std::string add_new_mvdata(const py::array& data, std::string dataSetName, std::string dataSetParentID)
+static std::string add_new_mvdata(const py::array& data, const std::string& dataSetName, const std::string& dataSetParentID)
 {
     std::string guid            = "";
     const py::dtype dtype       = data.dtype();
@@ -357,7 +357,7 @@ static std::string add_new_mvdata(const py::array& data, std::string dataSetName
     void* ptr                   = buf_info.ptr;
     std::vector<size_t> shape   = { buf_info.shape.begin(), buf_info.shape.end() };
 
-    void (*point_setter)(const void* data_in, const std::vector<size_t>& shape, mv::Dataset<Points> points, bool flip) = nullptr;
+    void (*point_setter)(const void* data_in, const std::vector<size_t>& shape, mv::Dataset<Points>& points, bool flip) = nullptr;
 
     // PointData is limited in its type support - hopefully the commented types wil be added soon
     if (dtype.is(pybind11::dtype::of<std::uint8_t>()))
@@ -419,7 +419,7 @@ static std::string add_new_mvdata(const py::array& data, std::string dataSetName
 // This function is meant to deal only with the 
 // single image case however multiple RGB or RGBA bands may be present
 // as given by the number of components
-static std::string add_mvimage(const py::array& data, std::string dataSetName)
+static std::string add_mvimage(const py::array& data, const std::string& dataSetName)
 {
     std::string guid            = "";
     const py::dtype dtype       = data.dtype();
@@ -439,7 +439,7 @@ static std::string add_mvimage(const py::array& data, std::string dataSetName)
         return guid;
     }
     
-    void (*point_setter)(const void* data_in, const std::vector<size_t>& shape, mv::Dataset<Points> points, bool flip) = nullptr;
+    void (*point_setter)(const void* data_in, const std::vector<size_t>& shape, mv::Dataset<Points>& points, bool flip) = nullptr;
 
     // PointData is limited in its type support - hopefully the commented types wil be added soon
     if (dtype.is(pybind11::dtype::of<std::uint8_t>()))
@@ -577,9 +577,9 @@ static std::string add_cluster(const py::str& parentPointDatasetGuid, const std:
     auto builtins               = pybind11::module::import("builtins");
     std::string guid            = "";
 
-    QString parentGUID          = QString(parentPointDatasetGuid.cast<std::string>().c_str());
-    std::string clustersName    = datasetName.cast<std::string>();
-    size_t numClusters          = clusterIndices.size();
+    const QString parentGUID          = QString::fromStdString(parentPointDatasetGuid.cast<std::string>());
+    const std::string clustersName    = datasetName.cast<std::string>();
+    const size_t numClusters          = clusterIndices.size();
 
     auto checkDatasetExists = [](const QString& guid ) -> bool {
         QVector<Dataset<DatasetImpl>> datasets = mv::data().getAllDatasets(std::vector<DataType>({ PointType }));
