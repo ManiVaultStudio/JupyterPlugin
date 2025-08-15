@@ -78,17 +78,18 @@ class Hierarchy:
                 break
         return item
     
-    def addPointsItem(self, data: np.ndarray, name: str) ->Item|None:
+    def addPointsItem(self, data: np.ndarray, name: str, parentDataId : str = "") ->Item|None:
         """Add a points data item
 
         Args: 
             data: The numpy array contain the point data 
             name: A name for the point data set
+            parentDataId: Dataset ID of the parent data. If "", the data will be places at root without parent
 
         Returns:
             Item|None: Data hierarchy item reference ManiVault
         """
-        datasetId = mvstudio_core.add_new_data(data, name)
+        datasetId = mvstudio_core.add_new_data(data, name, parentDataId)
         if len(datasetId) == 0:
             warnings.warn("Could not add item", RuntimeWarning)
             return None

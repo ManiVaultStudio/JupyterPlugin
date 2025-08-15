@@ -349,7 +349,7 @@ static py::buffer_info createBuffer(const py::array& data)
  * If successful returns a guid for the new point data
  * If unsuccessful return a empty string
  */
-static std::string add_new_mvdata(const py::array& data, std::string dataSetName)
+static std::string add_new_mvdata(const py::array& data, std::string dataSetName, std::string dataSetParentID)
 {
     std::string guid            = "";
     const py::dtype dtype       = data.dtype();
@@ -387,7 +387,13 @@ static std::string add_new_mvdata(const py::array& data, std::string dataSetName
 
     if (point_setter != nullptr)
     {
-        mv::Dataset<Points> points = mv::data().createDataset<Points>("Points", dataSetName.c_str(), nullptr);
+        Dataset<DatasetImpl> parentData = Dataset<DatasetImpl>();
+
+        if (!dataSetParentID.empty()) {
+            parentData = mv::data().getDataset(QString::fromStdString(dataSetParentID));
+        }
+
+        mv::Dataset<Points> points = mv::data().createDataset<Points>("Points", dataSetName.c_str(), parentData);
         point_setter(ptr, shape, points, false);
         events().notifyDatasetDataChanged(points);
 
@@ -889,7 +895,8 @@ py::module get_MVData_module()
         "add_new_data",
         add_new_mvdata,
         py::arg("data") = py::array(),
-        py::arg("dataSetName") = py::str()
+        py::arg("dataSetName") = py::str(),
+        py::arg("dataSetParentID") = py::str()
     );
     MVData_module.def(
         "add_new_image",
