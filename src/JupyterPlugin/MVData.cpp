@@ -6,6 +6,7 @@
 #include <Dataset.h>
 #include <ImageData/ImageData.h>
 #include <ImageData/Images.h>
+#include <LinkedData.h>
 #include <PointData/PointData.h>
 
 #include <pybind11/buffer_info.h>
@@ -14,7 +15,7 @@
 #include "pybind11/numpy.h"
 #include "pybind11/pybind11.h"
 #include <pybind11/pytypes.h>
-#include <pybind11/stl.h>
+#include <pybind11/stl.h>       // a.o. for vector conversions
 
 #include <QColor>
 #include <QSize>
@@ -25,6 +26,7 @@
 #include <algorithm>
 #include <cstdint>
 #include <cstring>
+#include <iterator>
 #include <numeric>
 #include <string>
 #include <stdexcept>
@@ -862,6 +864,62 @@ static py::tuple get_cluster(const std::string& datasetGuid)
     return py::make_tuple(indexes_list, names, colors, ids);
 }
 
+static bool set_linked_data(const std::string& sourceDataGuid, const std::string& targetDataGuid, const std::vector<std::vector<int64_t>>& selectionFromAToB)
+{
+    auto sourceData = mv::data().getDataset<Points>(QString::fromStdString(sourceDataGuid));
+    auto targetData = mv::data().getDataset<Points>(QString::fromStdString(targetDataGuid));
+
+    if (!sourceData.isValid()) {
+        qWarning() << "set_linked_data:: sourceData cannot be found";
+        return false;
+    }
+    if (!targetData.isValid()) {
+        qWarning() << "set_linked_data:: targetData cannot be found";
+        return false;
+    }
+
+    const std::uint32_t numSource = sourceData->getNumPoints();
+    const std::uint32_t numTarget = targetData->getNumPoints();
+
+    if (static_cast<size_t>(numSource) != selectionFromAToB.size()) {
+        qWarning() << "set_linked_data:: selectionFromAToB must be of same size as sourceData";
+        return false;
+    }
+
+    mv::SelectionMap selectionMap;
+    std::map<std::uint32_t, std::vector<std::uint32_t>>& map = selectionMap.getMap();
+
+    auto convertToVui32 = [](const std::vector<int64_t>& vi64) -> std::vector<std::uint32_t> {
+        std::vector<std::uint32_t> vui32;
+        vui32.reserve(vi64.size()); // avoid reallocations
+
+        std::transform(vi64.begin(), vi64.end(), std::back_inserter(vui32),
+            [](int64_t val) { return static_cast<std::uint32_t>(val); });
+
+        std::sort(vui32.begin(), vui32.end());
+
+        return vui32;
+        };
+
+    int64_t maxIndB = 0;
+    for (std::uint32_t idA = 0; idA < numSource; idA++) {
+        const auto [it, success] = map.insert({ idA, convertToVui32(selectionFromAToB[idA]) });
+
+        if (it->second.back() > maxIndB)
+            maxIndB = it->second.back();
+    }
+
+    if(maxIndB > numTarget) {
+        qWarning() << "set_linked_data:: max mapped index is larger than the number if points in the target data set";
+        return false;
+    }
+
+    sourceData->removeLinkedDataset(targetData);
+    sourceData->addLinkedData(targetData, std::move(selectionMap));
+
+    return true;
+}
+
 py::module get_MVData_module()
 {
     py::module MVData_module = py::module_::create_extension_module("mvstudio_core", nullptr, new py::module_::module_def);
@@ -891,6 +949,12 @@ py::module get_MVData_module()
     MVData_module.def("find_image_dataset", find_image_dataset, py::arg("datasetGuid") = py::str());
     MVData_module.def("get_image_dimensions", get_image_dimensions, py::arg("datasetGuid") = py::str());
     MVData_module.def("get_cluster", get_cluster, py::arg("datasetGuid") = py::str());
+    MVData_module.def("set_linked_data", 
+        set_linked_data, 
+        py::arg("sourceDataGuid") = py::str(), 
+        py::arg("targetDataGuid") = py::str(), 
+        py::arg("selectionFromAToB") = py::str()
+    );
     MVData_module.def(
         "add_new_data",
         add_new_mvdata,

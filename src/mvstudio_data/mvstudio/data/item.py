@@ -139,6 +139,22 @@ class Item:
         """
         return mvstudio_core.set_selection_for_item(self.datasetId, selectionIDs)
 
+    def setLinkedData(self, target : Item, selectionMapping : npt.NDArray[np.object_]) -> bool:
+        """Set a selction mapping to link to data stes.
+        selectionMapping should be a np array of np arrays of int64, e.g.
+        data = np.array([
+            np.array([1, 2], dtype=np.int64),
+            np.array([3, 4, 5], dtype=np.int64),
+            np.array([6], dtype=np.int64)
+        ], dtype=object)
+        would map a source with three points to a target with six points
+        """
+        if self.type != ItemType.Points or target.type != ItemType.Points:
+            print("setLinkedData: currently only implemented for point data")
+            return False
+        
+        return mvstudio_core.set_linked_data(self.datasetId, target.datasetId, selectionMapping)
+
     @property
     def points(self) -> np.ndarray:
         return mvstudio_core.get_data_for_item(self.datasetId)
