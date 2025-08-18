@@ -139,7 +139,7 @@ class Item:
         """
         return mvstudio_core.set_selection_for_item(self.datasetId, selectionIDs)
 
-    def setLinkedData(self, target : Item, selectionMapping : npt.NDArray[np.object_]) -> bool:
+    def setLinkedData(self, target : Self, selectionMapping : npt.NDArray[np.object_]) -> bool:
         """Set a selction mapping to link to data stes.
         selectionMapping should be a np array of np arrays of int64, e.g.
         data = np.array([
