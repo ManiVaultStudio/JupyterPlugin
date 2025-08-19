@@ -27,6 +27,7 @@
 #include <cstdint>
 #include <cstring>
 #include <iterator>
+#include <map>
 #include <numeric>
 #include <string>
 #include <stdexcept>
