@@ -932,41 +932,41 @@ py::module get_MVData_module()
     MVData_module.def("get_info", get_info);
     MVData_module.def("get_top_level_item_names", get_top_level_item_names);
     MVData_module.def("get_top_level_guids", get_top_level_guids);
-    MVData_module.def("get_data_for_item", get_data_for_item, py::arg("datasetGuid") = py::str());
-    MVData_module.def("get_selection_for_item", get_selection_for_item, py::arg("datasetGuid") = py::str());
-    MVData_module.def("set_selection_for_item", set_selection_for_item, py::arg("datasetGuid") = py::str(), py::arg("selectionIDs") = py::array_t<uint32_t>());
-    MVData_module.def("get_image_item", get_mv_image, py::arg("datasetGuid") = py::str());
-    MVData_module.def("get_item_name", get_item_name, py::arg("datasetGuid") = py::str());
-    MVData_module.def("get_item_rawsize", get_item_rawsize, py::arg("datasetGuid") = py::str());
-    MVData_module.def("get_item_type", get_item_type, py::arg("datasetGuid") = py::str());
-    MVData_module.def("get_item_rawname", get_item_rawname, py::arg("datasetGuid") = py::str());
-    MVData_module.def("get_item_numdimensions", get_item_numdimensions, py::arg("datasetGuid") = py::str());
-    MVData_module.def("get_item_numpoints", get_item_numpoints, py::arg("datasetGuid") = py::str());
-    MVData_module.def("get_item_children", get_item_children, py::arg("datasetGuid") = py::str());
-    MVData_module.def("get_item_properties", get_item_properties, py::arg("datasetGuid") = py::str());
-    MVData_module.def("get_item_property", get_item_property, py::arg("datasetGuid") = py::str(), py::arg("propertyName") = py::str());
-    MVData_module.def("get_data_type", get_data_type, py::arg("datasetGuid") = py::str());
-    MVData_module.def("find_image_dataset", find_image_dataset, py::arg("datasetGuid") = py::str());
-    MVData_module.def("get_image_dimensions", get_image_dimensions, py::arg("datasetGuid") = py::str());
-    MVData_module.def("get_cluster", get_cluster, py::arg("datasetGuid") = py::str());
+    MVData_module.def("get_data_for_item", get_data_for_item, py::arg("datasetGuid") = std::string());
+    MVData_module.def("get_selection_for_item", get_selection_for_item, py::arg("datasetGuid") = std::string());
+    MVData_module.def("set_selection_for_item", set_selection_for_item, py::arg("datasetGuid") = std::string(), py::arg("selectionIDs") = py::array_t<uint32_t>());
+    MVData_module.def("get_image_item", get_mv_image, py::arg("datasetGuid") = std::string());
+    MVData_module.def("get_item_name", get_item_name, py::arg("datasetGuid") = std::string());
+    MVData_module.def("get_item_rawsize", get_item_rawsize, py::arg("datasetGuid") = std::string());
+    MVData_module.def("get_item_type", get_item_type, py::arg("datasetGuid") = std::string());
+    MVData_module.def("get_item_rawname", get_item_rawname, py::arg("datasetGuid") = std::string());
+    MVData_module.def("get_item_numdimensions", get_item_numdimensions, py::arg("datasetGuid") = std::string());
+    MVData_module.def("get_item_numpoints", get_item_numpoints, py::arg("datasetGuid") = std::string());
+    MVData_module.def("get_item_children", get_item_children, py::arg("datasetGuid") = std::string());
+    MVData_module.def("get_item_properties", get_item_properties, py::arg("datasetGuid") = std::string());
+    MVData_module.def("get_item_property", get_item_property, py::arg("datasetGuid") = std::string(), py::arg("propertyName") = std::string());
+    MVData_module.def("get_data_type", get_data_type, py::arg("datasetGuid") = std::string());
+    MVData_module.def("find_image_dataset", find_image_dataset, py::arg("datasetGuid") = std::string());
+    MVData_module.def("get_image_dimensions", get_image_dimensions, py::arg("datasetGuid") = std::string());
+    MVData_module.def("get_cluster", get_cluster, py::arg("datasetGuid") = std::string());
     MVData_module.def("set_linked_data", 
         set_linked_data, 
-        py::arg("sourceDataGuid") = py::str(), 
-        py::arg("targetDataGuid") = py::str(), 
+        py::arg("sourceDataGuid") = std::string(), 
+        py::arg("targetDataGuid") = std::string(), 
         py::arg("selectionFromAToB") = std::vector<std::vector<int64_t>>{}
     );
     MVData_module.def(
         "add_new_data",
         add_new_mvdata,
         py::arg("data") = py::array(),
-        py::arg("dataSetName") = py::str(),
-        py::arg("dataSetParentID") = py::str()
+        py::arg("dataSetName") = std::string(),
+        py::arg("dataSetParentID") = std::string()
     );
     MVData_module.def(
         "add_new_image",
         add_mvimage,
         py::arg("data") = py::array(),
-        py::arg("dataSetName") = py::str()
+        py::arg("dataSetName") = std::string()
     );
     // The cluster tuple contains the following lists
     // names
