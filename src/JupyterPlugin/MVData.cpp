@@ -953,7 +953,7 @@ py::module get_MVData_module()
         set_linked_data, 
         py::arg("sourceDataGuid") = py::str(), 
         py::arg("targetDataGuid") = py::str(), 
-        py::arg("selectionFromAToB") = py::str()
+        py::arg("selectionFromAToB") = std::vector<std::vector<int64_t>>{}
     );
     MVData_module.def(
         "add_new_data",
