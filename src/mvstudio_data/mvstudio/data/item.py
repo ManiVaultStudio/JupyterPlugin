@@ -149,7 +149,7 @@ class Item:
         ], dtype=object)
         would map a source with three points to a target with six points
         """
-        if self.type != ItemType.Points or target.type != ItemType.Points:
+        if self.type != Item.ItemType.Points or target.type != Item.ItemType.Points:
             print("setLinkedData: currently only implemented for point data")
             return False
         
