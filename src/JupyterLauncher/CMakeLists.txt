@@ -110,25 +110,25 @@ add_custom_command(TARGET ${JUPYTERLAUNCHER} POST_BUILD
 install(FILES 
     ${JUPYTERLAUNCHER_TUTORIALS}
     DESTINATION tutorials/JupyterLauncher 
-    COMPONENT PYTHONTUTORIALS
+    COMPONENT PYTHON-TUTORIALS
 )
 
 install(FILES 
     ${JUPYTERLAUNCHER_TUTORIAL_ASSETS}
     DESTINATION tutorials/JupyterLauncher/assets
-    COMPONENT PYTHONTUTORIALASSETS
+    COMPONENT PYTHON-TUTORIAL-ASSETS
 )
 
 add_custom_command(TARGET ${JUPYTERLAUNCHER} POST_BUILD
     COMMAND "${CMAKE_COMMAND}"
         --install ${CMAKE_CURRENT_BINARY_DIR}
         --config $<CONFIGURATION>
-        --component PYTHONTUTORIALS
+        --component PYTHON-TUTORIALS
         --prefix ${ManiVault_INSTALL_DIR}/$<CONFIGURATION>
     COMMAND "${CMAKE_COMMAND}"
         --install ${CMAKE_CURRENT_BINARY_DIR}
         --config $<CONFIGURATION>
-        --component PYTHONTUTORIALASSETS
+        --component PYTHON-TUTORIAL-ASSETS
         --prefix ${ManiVault_INSTALL_DIR}/$<CONFIGURATION>
 )
 

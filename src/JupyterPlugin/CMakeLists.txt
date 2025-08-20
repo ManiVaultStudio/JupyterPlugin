@@ -151,33 +151,33 @@ install(TARGETS ${JUPYTERPLUGIN}
 install(FILES 
     res/jupyter_server_config.py 
     DESTINATION PluginDependencies/JupyterLauncher/py 
-    COMPONENT PLUGIN
+    COMPONENT PYTHON-SERVER-CONFIG
 )
 
 install(FILES 
     ${PROJECT_SOURCE_DIR}/src/mvstudio_data/dist/mvstudio_data-${PROJECT_VERSION}-py3-none-any.whl 
     DESTINATION PluginDependencies/JupyterLauncher/py 
-    COMPONENT PYTHONWHEELS-DATA
+    COMPONENT PYTHON-WHEEL-DATA
 )
 
 install(FILES 
     ${PROJECT_SOURCE_DIR}/src/mvstudio_kernel/dist/mvstudio_kernel-${PROJECT_VERSION}-py3-none-any.whl 
     DESTINATION PluginDependencies/JupyterLauncher/py 
-    COMPONENT PYTHONWHEELS-KERNEL
+    COMPONENT PYTHON-WHEEL-KERNEL
 )
 
 install(FILES 
     ${PROJECT_SOURCE_DIR}/examples/demo_data_loading.ipynb
     ${PROJECT_SOURCE_DIR}/examples/requirements.txt
     DESTINATION examples/JupyterPlugin 
-    COMPONENT PYTHONEXAMPLES
+    COMPONENT PYTHON-EXAMPLES
 )
 
 install(DIRECTORY 
     ${PROJECT_SOURCE_DIR}/examples/projects
     ${PROJECT_SOURCE_DIR}/examples/scripts
     DESTINATION examples/JupyterPlugin
-    COMPONENT PYTHONEXAMPLES
+    COMPONENT PYTHON-EXAMPLES
 )
 
 add_custom_command(TARGET ${JUPYTERPLUGIN} POST_BUILD
@@ -185,7 +185,16 @@ add_custom_command(TARGET ${JUPYTERPLUGIN} POST_BUILD
     --install ${CMAKE_CURRENT_BINARY_DIR}
     --config $<CONFIGURATION>
     --component PLUGIN
-    --component PYTHONEXAMPLES
+    --prefix ${ManiVault_INSTALL_DIR}/$<CONFIGURATION>
+    COMMAND "${CMAKE_COMMAND}"
+    --install ${CMAKE_CURRENT_BINARY_DIR}
+    --config $<CONFIGURATION>
+    --component PYTHON-SERVER-CONFIG
+    --prefix ${ManiVault_INSTALL_DIR}/$<CONFIGURATION>
+    COMMAND "${CMAKE_COMMAND}"
+    --install ${CMAKE_CURRENT_BINARY_DIR}
+    --config $<CONFIGURATION>
+    --component PYTHON-EXAMPLES
     --prefix ${ManiVault_INSTALL_DIR}/$<CONFIGURATION>
 )
 
@@ -193,7 +202,7 @@ add_custom_command(TARGET mvstudio_data  POST_BUILD
     COMMAND "${CMAKE_COMMAND}"
     --install ${CMAKE_CURRENT_BINARY_DIR}
     --config $<CONFIGURATION>
-    --component PYTHONWHEELS-DATA
+    --component PYTHON-WHEEL-DATA
     --prefix ${ManiVault_INSTALL_DIR}/$<CONFIGURATION>
 )
 
@@ -201,7 +210,7 @@ add_custom_command(TARGET mvstudio_kernel  POST_BUILD
     COMMAND "${CMAKE_COMMAND}"
     --install ${CMAKE_CURRENT_BINARY_DIR}
     --config $<CONFIGURATION>
-    --component PYTHONWHEELS-KERNEL
+    --component PYTHON-WHEEL-KERNEL
     --prefix ${ManiVault_INSTALL_DIR}/$<CONFIGURATION>
 )
 
