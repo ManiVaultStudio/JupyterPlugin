@@ -985,22 +985,22 @@ py::module get_MVData_module()
         set_linked_data, 
         py::arg("sourceDataGuid") = std::string(), 
         py::arg("targetDataGuid") = std::string(), 
-        py::arg("selectionFromAToB") = std::vector<std::vector<int64_t>>{}
+        py::arg("selectionFromAToB") = std::vector<std::vector<int64_t>>()
     );
     MVData_module.def(
-        "add_new_data",
+        "add_new_points",
         add_new_point_data,
         py::arg("data") = py::array(),
         py::arg("dataSetName") = std::string(),
         py::arg("dataSetParentID") = std::string(),
-        py::arg("dimensionNames") = std::vector<std::string>{}
+        py::arg("dimensionNames") = std::vector<std::string>()
     );
     MVData_module.def(
         "add_new_image",
         add_new_image_data,
         py::arg("data") = py::array(),
         py::arg("dataSetName") = std::string(),
-        py::arg("dimensionNames") = std::vector<std::string>{}
+        py::arg("dimensionNames") = std::vector<std::string>()
     );
     // The cluster tuple contains the following lists
     // names
@@ -1008,12 +1008,12 @@ py::module get_MVData_module()
     // colors 
     // ids (ignored)
     MVData_module.def(
-        "add_new_cluster",
+        "add_new_clusters",
         add_new_cluster_data,
         py::arg("parentPointDatasetGuid") = std::string(),
-        py::arg("clusterIndices") = std::vector<py::array>{},
-        py::arg("clusterNames") = std::vector<std::string>{},
-        py::arg("clusterColors") = std::vector<py::array>{},
+        py::arg("clusterIndices") = std::vector<py::array>(),
+        py::arg("clusterNames") = std::vector<std::string>(),
+        py::arg("clusterColors") = std::vector<py::array>(),
         py::arg("datasetName") = std::string()
         );
     return MVData_module;

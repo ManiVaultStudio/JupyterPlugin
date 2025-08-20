@@ -92,10 +92,10 @@ class Hierarchy:
         """
         assert data.ndim == 2, "Data array must be two-dimensional (num_points, num_dims)"
 
-        if dimensionNames:
+        if len(dimensionNames) > 0:
           assert data.shape[1] == len(dimensionNames), "Dimensionnames must be of size num_dims"
 
-        datasetId = mvstudio_core.add_new_data(data, name, parentDataId, dimensionNames)
+        datasetId = mvstudio_core.add_new_points(data, name, parentDataId, dimensionNames)
         
         if len(datasetId) == 0:
             warnings.warn("Could not add item", RuntimeWarning)
@@ -117,7 +117,7 @@ class Hierarchy:
         """
         assert data.ndim == 2 or data.ndim == 3, "Data array must be of shape (x, y, dims)"
 
-        if dimensionNames:
+        if len(dimensionNames) > 0:
           if data.ndim == 2:
             assert 1 == len(dimensionNames), "Dimensionnames must be 1 (grayscale image)"
           else:
@@ -147,7 +147,7 @@ class Hierarchy:
         names = kwargs.get('names', [])
         colors = kwargs.get('colors', [])
     
-        datasetId = mvstudio_core.add_new_cluster(parent, indices, names, colors, name)
+        datasetId = mvstudio_core.add_new_clusters(parent, indices, names, colors, name)
 
         if len(datasetId) == 0:
             warnings.warn("Could not add item", RuntimeWarning)
