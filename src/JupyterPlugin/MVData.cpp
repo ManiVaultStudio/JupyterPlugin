@@ -447,7 +447,7 @@ static std::string add_new_point_data(const py::array& data, const std::string& 
 // This function is meant to deal only with the 
 // single image case however multiple RGB or RGBA bands may be present
 // as given by the number of components
-static std::string add_new_image_data(const py::array& data, const std::string& dataSetName)
+static std::string add_new_image_data(const py::array& data, const std::string& dataSetName, const std::vector<std::string>& dimensionNames)
 {
     std::string guid                = "";
     const py::dtype dtype           = data.dtype();
@@ -504,6 +504,10 @@ static std::string add_new_image_data(const py::array& data, const std::string& 
     {
         mv::Dataset<Points> points = mv::data().createDataset<Points>("Points", dataSetName.c_str(), nullptr);
         point_setter(py_data_storage_ptr, shape, points, true);
+
+        if (dimensionNames.size() == num_bands)
+            points->setDimensionNames(toQStringVec(dimensionNames));
+
         events().notifyDatasetDataChanged(points);
 
         auto imageDataset = mv::data().createDataset<Images>("Images", "numpy image", Dataset<DatasetImpl>(*points));
@@ -995,7 +999,8 @@ py::module get_MVData_module()
         "add_new_image",
         add_new_image_data,
         py::arg("data") = py::array(),
-        py::arg("dataSetName") = std::string()
+        py::arg("dataSetName") = std::string(),
+        py::arg("dimensionNames") = std::vector<std::string>{}
     );
     // The cluster tuple contains the following lists
     // names

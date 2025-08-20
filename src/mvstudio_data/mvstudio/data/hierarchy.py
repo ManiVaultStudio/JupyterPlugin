@@ -104,17 +104,27 @@ class Hierarchy:
             self._refresh()
             return self.getItemByDataID(datasetId)
         
-    def addImageItem(self, data: np.ndarray, name: str) -> Item|None:
+    def addImageItem(self, data: np.ndarray, name: str, dimensionNames : list[str] = list()) -> Item|None:
         """Add an image data item
 
         Args:
-            data (np.ndarray): A numpy array representing the image
+            data (np.ndarray): A numpy array representing the image of shape (x, y, dims)
             names: A name for the image item.
+            dimensionNames: (optional) List of dimension names. If empty, dimensions will be numbered
 
         Returns:
             Item|None: Data hierarchy item reference ManiVault
         """
-        datasetId = mvstudio_core.add_new_image(data, name)
+        assert data.ndim == 2 or data.ndim == 3, "Data array must be of shape (x, y, dims)"
+
+        if dimensionNames 
+          if data.ndim == 2:
+            assert 1 == len(dimensionNames), "Dimensionnames must be 1 (grayscale image)"
+          else
+            assert data.shape[2] == len(dimensionNames), "Dimensionnames must be of size num_dims"
+        
+        datasetId = mvstudio_core.add_new_image(data, name, dimensionNames)
+        
         if len(datasetId) == 0:
             warnings.warn("Could not add item", RuntimeWarning)
             return None
