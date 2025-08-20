@@ -78,18 +78,25 @@ class Hierarchy:
                 break
         return item
     
-    def addPointsItem(self, data: np.ndarray, name: str, parentDataId : str = "") ->Item|None:
+    def addPointsItem(self, data: np.ndarray, name: str, parentDataId : str = "", dimensionNames : list[str] = list()) -> Item|None:
         """Add a points data item
 
         Args: 
-            data: The numpy array contain the point data 
+            data: The numpy array contain the point data, of size N * M for N points with M dimensions
             name: A name for the point data set
-            parentDataId: Dataset ID of the parent data. If "", the data will be places at root without parent
+            parentDataId: (optional) Dataset ID of the parent data. If empty, the data will be placed at root without parent
+            dimensionNames: (optional) List of dimension names. If empty, dimensions will be numbered
 
         Returns:
             Item|None: Data hierarchy item reference ManiVault
         """
-        datasetId = mvstudio_core.add_new_data(data, name, parentDataId)
+        assert data.ndim == 2, "Data array must be two-dimensional (num_points, num_dims)"
+
+        if dimensionNames:
+          assert data.shape[1] == len(dimensionNames), "Dimensionnames must be of size num_dims"
+
+        datasetId = mvstudio_core.add_new_data(data, name, parentDataId, dimensionNames)
+        
         if len(datasetId) == 0:
             warnings.warn("Could not add item", RuntimeWarning)
             return None

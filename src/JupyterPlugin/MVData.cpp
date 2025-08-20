@@ -37,6 +37,20 @@
 
 namespace py = pybind11;
 
+static std::vector<QString> toQStringVec(const std::vector<std::string>& vec_str) {
+
+    const std::int64_t n = static_cast<std::int64_t>(vec_str.size());
+
+    std::vector<QString> vec_Qstr(n);
+
+#pragma omp parallel for
+    for (std::int64_t i = 0; i < n; ++i) {
+        vec_Qstr[i] = QString::fromStdString(vec_str[i]);
+    }
+
+    return vec_Qstr;
+}
+
 static py::object get_info()
 {
     return py::str("ManiVault is cool");
@@ -404,6 +418,10 @@ static std::string add_new_point_data(const py::array& data, const std::string& 
 
         mv::Dataset<Points> points = mv::data().createDataset<Points>("Points", dataSetName.c_str(), parentData);
         point_setter(py_data_storage_ptr, shape, points, false);
+
+        if(dimensionNames.size() == shape[1])
+            points->setDimensionNames(toQStringVec(dimensionNames));
+
         events().notifyDatasetDataChanged(points);
 
         guid = points.getDatasetId().toStdString();
@@ -972,6 +990,7 @@ py::module get_MVData_module()
         py::arg("data") = py::array(),
         py::arg("dataSetName") = std::string(),
         py::arg("dataSetParentID") = std::string(),
+        py::arg("dimensionNames") = std::vector<std::string>{}
     );
     MVData_module.def(
         "add_new_image",
