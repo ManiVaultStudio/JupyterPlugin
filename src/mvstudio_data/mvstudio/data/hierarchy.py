@@ -84,7 +84,7 @@ class Hierarchy:
         Args: 
             data: The numpy array contain the point data, of size N * M for N points with M dimensions
             name: A name for the point data set
-            parentDataId: (optional) Dataset ID of the parent data. If empty, the data will be placed at root without parent
+            parentDataId: (optional) Dataset ID of the parent in the data hierarchy (does not derive the new data form the parent). If empty, the data will be placed at root without parent
             dimensionNames: (optional) List of dimension names. If empty, dimensions will be numbered
 
         Returns:
