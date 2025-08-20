@@ -217,12 +217,12 @@ static void set_selection_for_item(const std::string& datasetGuid, const py::arr
 // Each 2D band is complete before the next begins
 // The data_out is is Band Interleaved by Pixel
 template<typename T, typename U>
-void orient_multiband_imagedata_as_bip(const U* data_in, const std::vector<size_t>& shape, std::vector<T>& data_out, bool flip)
+void orient_multiband_imagedata_as_bip(const U* data_in, const std::array<size_t, 3>& shape, std::vector<T>& data_out, bool flip)
 {
     if (flip) {
         // C order with flip 
-        size_t row_size = shape[1] * shape[2];
-        size_t num_rows = shape[0];
+        const size_t row_size = shape[1] * shape[2];
+        const size_t num_rows = shape[0];
 
         // Copy starting at the last row of the data_in
         // to the first row of the data_out
@@ -236,7 +236,7 @@ void orient_multiband_imagedata_as_bip(const U* data_in, const std::vector<size_
     }
     else {
         // Copy as is, numpy image is BIP 
-        size_t total = shape[0] * shape[1] * shape[2];
+        const size_t total = shape[0] * shape[1] * shape[2];
         // C order 
         for (size_t i = 0; i < total; ++i) {
             data_out[i] = static_cast<T>(data_in[i]);
@@ -246,10 +246,10 @@ void orient_multiband_imagedata_as_bip(const U* data_in, const std::vector<size_
 
 // when conversion is needed
 template<typename T, typename U>
-void conv_points_from_numpy_array(const void* data_in, const std::vector<size_t>& shape, mv::Dataset<Points>& points, bool flip = false)
+void conv_points_from_numpy_array(const void* data_in, const std::array<size_t, 3>& shape, mv::Dataset<Points>& points, bool flip = false)
 {
-    size_t band_size = shape[0] * shape[1];
-    size_t num_bands = shape.size() == 3 ? shape[2] : shape[1];
+    const size_t band_size = shape[0] * shape[1];
+    const size_t num_bands = shape[2];
 
     auto warnings = pybind11::module::import("warnings");
     auto builtins = pybind11::module::import("builtins");
@@ -261,28 +261,29 @@ void conv_points_from_numpy_array(const void* data_in, const std::vector<size_t>
     std::vector<T> data_out = {};
     data_out.resize(band_size * num_bands);
 
-    if (num_bands == shape[1] && !flip) 
+    if (num_bands == 1 && !flip) 
     {
         for (size_t i = 0; i < band_size; ++i)
             data_out[i] = static_cast<const T>(data_in_U[i]);
     }
-    else
-        orient_multiband_imagedata_as_bip<T,U>(data_in_U, shape, data_out, flip);
+    else {
+        orient_multiband_imagedata_as_bip<T, U>(data_in_U, shape, data_out, flip);
+    }
 
     points->setData(std::move(data_out), num_bands);
 }
 
 // when types are the same image
 template<class T>
-void set_img_points_from_numpy_array(const void* data_in, const std::vector<size_t>& shape, mv::Dataset<Points>& points, bool flip=false)
+void set_img_points_from_numpy_array(const void* data_in, const std::array<size_t, 3>& shape, mv::Dataset<Points>& points, bool flip=false)
 {
-    size_t band_size = shape[0] * shape[1];
-    size_t num_bands = shape.size() == 3 ? shape[2] : shape[1];
+    const size_t band_size = shape[0] * shape[1];
+    const size_t num_bands = shape[2];
 
     std::vector<T> data_out = {};
     data_out.resize(band_size * num_bands);
 
-    if (num_bands == shape[1] && !flip)
+    if (num_bands == 1 && !flip)
         std::memcpy(data_out.data(), static_cast<const T*>(data_in), band_size * sizeof(T));
     else
         orient_multiband_imagedata_as_bip<T,T>(static_cast<const T*>(data_in), shape, data_out, flip);
@@ -374,7 +375,7 @@ static std::string add_new_point_data(const py::array& data, const std::string& 
     }
 
     if (buf_info.shape.size() != 2) {
-        qDebug() << "add_new_point_data: numpy image of shape (num_points, num_dims). Instead got: " << buf_info.shape;
+        qDebug() << "add_new_point_data: require numpy data of shape (num_points, num_dims). Instead got: " << buf_info.shape;
         return guid;
     }
 
@@ -452,26 +453,27 @@ static std::string add_new_image_data(const py::array& data, const std::string& 
     const py::dtype dtype           = data.dtype();
     const py::buffer_info buf_info  = createBuffer(data);
     const void* py_data_storage_ptr = buf_info.ptr;
-    // TODO: this should be an array of three, and the conv_points_from_numpy_array method adapted accordingly (also renamed to specify image conversion)
-    std::vector<size_t> shape       = { buf_info.shape.begin(), buf_info.shape.end() };
 
     if (!py_data_storage_ptr) {
         qDebug() << "add_new_point_data: python data transfer failed";
         return guid;
     }
 
-    // Grey-scale image:
-    if (shape.size() == 2)
-        shape.push_back(1);
-
-    if (shape.size() != 3) {
-        qDebug() << "add_new_image_data: numpy image must be an image, i.e. of shape (x, y, dims). Instead got: " << shape;
+    if (buf_info.shape.size() != 2 && buf_info.shape.size() != 3) {
+        qDebug() << "add_new_image_data: numpy image must be an image, i.e. of shape (x, y, dims). Instead got: " << buf_info.shape;
         return guid;
     }
-    
-    const size_t num_bands = shape[2];
 
-    void (*point_setter)(const void* data_in, const std::vector<size_t>& shape, mv::Dataset<Points>& points, bool flip) = nullptr;
+    const size_t num_bands = buf_info.shape.size() ? 
+        /* if: Grey-scale image */ 1 :
+        /* else: multiple dims  */ buf_info.shape[2];
+
+    const size_t height = static_cast<size_t>(buf_info.shape[0]);
+    const size_t width = static_cast<size_t>(buf_info.shape[1]);
+
+    const std::array<size_t, 3> shape   = { height, width, num_bands };
+
+    void (*point_setter)(const void* data_in, const std::array<size_t, 3>& shape, mv::Dataset<Points>& points, bool flip) = nullptr;
 
     // PointData is limited in its type support - hopefully the commented types wil be added soon
     if (dtype.is(pybind11::dtype::of<std::uint8_t>()))
@@ -506,13 +508,10 @@ static std::string add_new_image_data(const py::array& data, const std::string& 
 
         auto imageDataset = mv::data().createDataset<Images>("Images", "numpy image", Dataset<DatasetImpl>(*points));
 
-        int width = static_cast<int>(shape[1]);
-        int height = static_cast<int>(shape[0]);
-
         imageDataset->setText(QString("Images (%2x%3)").arg(QString::number(width), QString::number(height)));
         imageDataset->setType(ImageData::Type::Stack);
         imageDataset->setNumberOfImages(1);
-        imageDataset->setImageSize(QSize(width, height));
+        imageDataset->setImageSize(QSize(static_cast<int>(width), static_cast<int>(height)));
         imageDataset->setNumberOfComponentsPerPixel(static_cast<uint32_t>(num_bands));
 
         events().notifyDatasetDataChanged(imageDataset);
