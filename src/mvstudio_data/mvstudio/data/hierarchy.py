@@ -117,10 +117,10 @@ class Hierarchy:
         """
         assert data.ndim == 2 or data.ndim == 3, "Data array must be of shape (x, y, dims)"
 
-        if dimensionNames 
+        if dimensionNames:
           if data.ndim == 2:
             assert 1 == len(dimensionNames), "Dimensionnames must be 1 (grayscale image)"
-          else
+          else:
             assert data.shape[2] == len(dimensionNames), "Dimensionnames must be of size num_dims"
         
         datasetId = mvstudio_core.add_new_image(data, name, dimensionNames)
