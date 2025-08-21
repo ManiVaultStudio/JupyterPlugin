@@ -464,9 +464,10 @@ static std::string add_new_image_data(const py::array& data, const std::string& 
         return guid;
     }
 
-    const size_t num_bands = buf_info.shape.size() ? 
-        /* if: Grey-scale image */ 1 :
-        /* else: multiple dims  */ buf_info.shape[2];
+    const size_t num_bands = 
+        /* if: Grey-scale image */  buf_info.shape.size() == 2 ?
+        /* then: one dim */         1 :
+        /* else: multiple dims  */  buf_info.shape[2];
 
     const size_t height = static_cast<size_t>(buf_info.shape[0]);
     const size_t width = static_cast<size_t>(buf_info.shape[1]);
