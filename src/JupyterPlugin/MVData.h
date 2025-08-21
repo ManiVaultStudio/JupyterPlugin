@@ -2,9 +2,7 @@
 
 #include "pybind11/pybind11.h"
 
-namespace py = pybind11;
-
-py::module get_MVData_module();
+pybind11::module get_MVData_module();
 
 namespace mvstudio_core {
     enum DataItemType {
