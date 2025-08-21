@@ -15,12 +15,12 @@ endif()
 # Jupyter Plugins
 # -----------------------------------------------------------------------------
 PROJECT("JupyterPlugins"
-    VERSION 0.5.0
+    VERSION 0.6.0
     DESCRIPTION "Jupyter plugin for ManiVault"
     LANGUAGES CXX)
 
 # the version number corresponds to the pyproject.toml files in mvstudio_data and mvstudio_kernel,
-# as well as JupyterLauncher.json and JupyterPlugin.json
+# as well as the PluginInfo.json in src/JupyterLauncher and src/JupyterPlugin
 
 # -----------------------------------------------------------------------------
 # CMake Options

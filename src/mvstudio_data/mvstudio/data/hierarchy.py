@@ -78,17 +78,25 @@ class Hierarchy:
                 break
         return item
     
-    def addPointsItem(self, data: np.ndarray, name: str) ->Item|None:
+    def addPointsItem(self, data: np.ndarray, name: str, parentDataId : str = "", dimensionNames : list[str] = list()) -> Item|None:
         """Add a points data item
 
         Args: 
-            data: The numpy array contain the point data 
+            data: The numpy array contain the point data, of size N * M for N points with M dimensions
             name: A name for the point data set
+            parentDataId: (optional) Dataset ID of the parent in the data hierarchy (does not derive the new data form the parent). If empty, the data will be placed at root without parent
+            dimensionNames: (optional) List of dimension names. If empty, dimensions will be numbered
 
         Returns:
             Item|None: Data hierarchy item reference ManiVault
         """
-        datasetId = mvstudio_core.add_new_data(data, name)
+        assert data.ndim == 2, "Data array must be two-dimensional (num_points, num_dims)"
+
+        if len(dimensionNames) > 0:
+          assert data.shape[1] == len(dimensionNames), "Dimensionnames must be of size num_dims"
+
+        datasetId = mvstudio_core.add_new_points(data, name, parentDataId, dimensionNames)
+        
         if len(datasetId) == 0:
             warnings.warn("Could not add item", RuntimeWarning)
             return None
@@ -96,17 +104,27 @@ class Hierarchy:
             self._refresh()
             return self.getItemByDataID(datasetId)
         
-    def addImageItem(self, data: np.ndarray, name: str) -> Item|None:
+    def addImageItem(self, data: np.ndarray, name: str, dimensionNames : list[str] = list()) -> Item|None:
         """Add an image data item
 
         Args:
-            data (np.ndarray): A numpy array representing the image
+            data (np.ndarray): A numpy array representing the image of shape (x, y, dims)
             names: A name for the image item.
+            dimensionNames: (optional) List of dimension names. If empty, dimensions will be numbered
 
         Returns:
             Item|None: Data hierarchy item reference ManiVault
         """
-        datasetId = mvstudio_core.add_new_image(data, name)
+        assert data.ndim == 2 or data.ndim == 3, "Data array must be of shape (x, y, dims)"
+
+        if len(dimensionNames) > 0:
+          if data.ndim == 2:
+            assert 1 == len(dimensionNames), "Dimensionnames must be 1 (grayscale image)"
+          else:
+            assert data.shape[2] == len(dimensionNames), "Dimensionnames must be of size num_dims"
+        
+        datasetId = mvstudio_core.add_new_image(data, name, dimensionNames)
+        
         if len(datasetId) == 0:
             warnings.warn("Could not add item", RuntimeWarning)
             return None
@@ -129,7 +147,7 @@ class Hierarchy:
         names = kwargs.get('names', [])
         colors = kwargs.get('colors', [])
     
-        datasetId = mvstudio_core.add_new_cluster(parent, indices, names, colors, name)
+        datasetId = mvstudio_core.add_new_clusters(parent, indices, names, colors, name)
 
         if len(datasetId) == 0:
             warnings.warn("Could not add item", RuntimeWarning)
