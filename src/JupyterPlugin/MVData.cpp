@@ -450,7 +450,7 @@ static std::string add_point_data(const py::array& data, const std::vector<std::
 static std::string add_new_point_data(const py::array& data, const std::string& dataSetName, const std::string& dataSetParentID, const std::vector<std::string>& dimensionNames)
 {
     auto generateNewPoints = [dataSetName, dataSetParentID]() -> mv::Dataset<Points> {
-        Dataset<DatasetImpl> parentData = 
+        const Dataset<DatasetImpl> parentData = 
             /* if */   dataSetParentID.empty() ?
             /* then */ Dataset<DatasetImpl>() :
             /* else */ mv::data().getDataset(QString::fromStdString(dataSetParentID));
@@ -475,7 +475,7 @@ static std::string add_derived_point_data(const py::array& data, const std::stri
     }
 
     auto generateDerivedPoints = [dataSetName, dataSetSourceID]() -> mv::Dataset<Points> {
-        Dataset<DatasetImpl> sourceData = mv::data().getDataset(QString::fromStdString(dataSetSourceID));
+        const Dataset<DatasetImpl> sourceData = mv::data().getDataset(QString::fromStdString(dataSetSourceID));
         return mv::Dataset<Points>(mv::data().createDerivedDataset(dataSetName.c_str(), sourceData, sourceData));
         };
 
