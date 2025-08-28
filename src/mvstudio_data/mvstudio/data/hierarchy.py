@@ -90,6 +90,7 @@ class Hierarchy:
         Returns:
             Item|None: Data hierarchy item reference 
         """
+        assert data.flags['C_CONTIGUOUS'], "Numpy array must by c-contiguous, use np.ascontiguousarray(data)"
         assert data.ndim == 2, "Data array must be two-dimensional (num_points, num_dims)"
 
         if len(dimensionNames) > 0:
@@ -116,6 +117,7 @@ class Hierarchy:
         Returns:
             Item|None: Data hierarchy item reference
         """
+        assert data.flags['C_CONTIGUOUS'], "Numpy array must by c-contiguous, use np.ascontiguousarray(data)"
         assert data.ndim == 2, "Data array must be two-dimensional (num_points, num_dims)"
 
         if len(dimensionNames) > 0:
@@ -146,6 +148,7 @@ class Hierarchy:
         Returns:
             Item|None: Data hierarchy item reference
         """
+        assert data.flags['C_CONTIGUOUS'], "Numpy array must by c-contiguous, use np.ascontiguousarray(data)"
         assert data.ndim == 2 or data.ndim == 3, "Data array must be of shape (x, y, dims)"
 
         if len(dimensionNames) > 0:

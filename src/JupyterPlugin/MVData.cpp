@@ -370,6 +370,11 @@ static std::string add_point_data(const py::array& data, const std::vector<std::
     const py::buffer_info buf_info = createBuffer(data);
     const void* py_data_storage_ptr = buf_info.ptr;
 
+    if (!(data.flags() & py::array::c_style)) {
+        qDebug() << "add_point_data: Numpy array must by c-contiguous, use np.ascontiguousarray(data)";
+        return guid;
+    }
+
     if (!py_data_storage_ptr) {
         qDebug() << "add_point_data: python data transfer failed";
         return guid;
@@ -489,6 +494,11 @@ static std::string add_new_image_data(const py::array& data, const std::string& 
     const py::dtype dtype           = data.dtype();
     const py::buffer_info buf_info  = createBuffer(data);
     const void* py_data_storage_ptr = buf_info.ptr;
+
+    if (!(data.flags() & py::array::c_style)) {
+        qDebug() << "add_point_data: Numpy array must by c-contiguous, use np.ascontiguousarray(data)";
+        return guid;
+    }
 
     if (!py_data_storage_ptr) {
         qDebug() << "add_new_point_data: python data transfer failed";
