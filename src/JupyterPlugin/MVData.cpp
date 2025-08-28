@@ -8,6 +8,7 @@
 #include <ImageData/Images.h>
 #include <LinkedData.h>
 #include <PointData/PointData.h>
+#include <Set.h>
 
 #include <pybind11/buffer_info.h>
 #include <pybind11/cast.h>
@@ -215,7 +216,7 @@ static void set_selection_for_item(const std::string& datasetGuid, const py::arr
 // so we don't do anything 
 // Assumes input data is arranged contiguously in memory
 // Each 2D band is complete before the next begins
-// The data_out is is Band Interleaved by Pixel
+// The data_out is Band Interleaved by Pixel
 template<typename T, typename U>
 void orient_multiband_imagedata_as_bip(const U* data_in, const std::array<size_t, 3>& shape, std::vector<T>& data_out, bool flip)
 {
@@ -246,7 +247,7 @@ void orient_multiband_imagedata_as_bip(const U* data_in, const std::array<size_t
 
 // when conversion is needed
 template<typename T, typename U>
-void conv_points_from_numpy_array(const void* data_in, const std::array<size_t, 3>& shape, mv::Dataset<Points>& points, bool flip = false)
+void conv_img_points_from_numpy_array(const void* data_in, const std::array<size_t, 3>& shape, mv::Dataset<Points>& points, bool flip = false)
 {
     const size_t band_size = shape[0] * shape[1];
     const size_t num_bands = shape[2];
@@ -357,31 +358,31 @@ static py::buffer_info createBuffer(const py::array& data)
     return buf_info;
 }
 
-/**
- * Add new point data in the root of the hierarchy.
- * If successful returns a guid for the new point data
- * If unsuccessful return a empty string
- */
-static std::string add_new_point_data(const py::array& data, const std::string& dataSetName, const std::string& dataSetParentID, const std::vector<std::string>& dimensionNames)
+/* Creates new or derived data
+*  The Lambda GeneratePointsFunc controls the manner of creating the new point data
+*  This function mainly converts the python data
+*/
+template <typename GeneratePointsFunc>
+static std::string add_point_data(const py::array& data, const std::vector<std::string>& dimensionNames, GeneratePointsFunc generatePointsData)
 {
-    std::string guid                    = "";
-    const py::dtype dtype               = data.dtype();
-    const py::buffer_info buf_info      = createBuffer(data);
-    const void* py_data_storage_ptr     = buf_info.ptr;
+    std::string guid = "";
+    const py::dtype dtype = data.dtype();
+    const py::buffer_info buf_info = createBuffer(data);
+    const void* py_data_storage_ptr = buf_info.ptr;
 
-    if(!py_data_storage_ptr) {
-        qDebug() << "add_new_point_data: python data transfer failed";
+    if (!py_data_storage_ptr) {
+        qDebug() << "add_point_data: python data transfer failed";
         return guid;
     }
 
     if (buf_info.shape.size() != 2) {
-        qDebug() << "add_new_point_data: require numpy data of shape (num_points, num_dims). Instead got: " << buf_info.shape;
+        qDebug() << "add_point_data: require numpy data of shape (num_points, num_dims). Instead got: " << buf_info.shape;
         return guid;
     }
 
-    const std::array<size_t, 2> shape   = { static_cast<size_t>(buf_info.shape.front()), static_cast<size_t>(buf_info.shape.back()) };
+    const std::array<size_t, 2> shape = { static_cast<size_t>(buf_info.shape.front()), static_cast<size_t>(buf_info.shape.back()) };
 
-    void (*point_setter)(const void* data_in, const std::array<size_t, 2>&shape, mv::Dataset<Points>& points, bool flip) = nullptr;
+    void (*point_setter)(const void* data_in, const std::array<size_t, 2>&shape, mv::Dataset<Points>&points, bool flip) = nullptr;
 
     // PointData is limited in its type support - hopefully the commented types wil be added soon
     if (dtype.is(pybind11::dtype::of<std::uint8_t>()))
@@ -405,29 +406,24 @@ static std::string add_new_point_data(const py::array& data, const std::string& 
         point_setter = set_points_from_numpy_array<float, double>;
     else
     {
-        qDebug() << "add_new_image_data: type not supported (e.g. uint64_t or int64_t): " << QString(dtype.kind());
+        qDebug() << "add_point_data: type not supported (e.g. uint64_t or int64_t): " << QString(dtype.kind());
         return guid;
     }
 
     if (point_setter != nullptr)
     {
-        Dataset<DatasetImpl> parentData = Dataset<DatasetImpl>();
+        mv::Dataset<Points> points = generatePointsData();
 
-        if (!dataSetParentID.empty()) {
-            parentData = mv::data().getDataset(QString::fromStdString(dataSetParentID));
-        }
-
-        mv::Dataset<Points> points = mv::data().createDataset<Points>("Points", dataSetName.c_str(), parentData);
         point_setter(py_data_storage_ptr, shape, points, false);
 
-        if(dimensionNames.size() == shape[1])
+        if (dimensionNames.size() == shape[1])
             points->setDimensionNames(toQStringVec(dimensionNames));
 
         events().notifyDatasetDataChanged(points);
 
         guid = points.getDatasetId().toStdString();
 
-        qDebug() << "add_new_point_data: " << QString(guid.c_str());
+        qDebug() << "add_point_data: " << QString(guid.c_str());
     }
     else
     {
@@ -439,6 +435,46 @@ static std::string add_new_point_data(const py::array& data, const std::string& 
     }
 
     return guid;
+}
+
+/**
+ * Add new point data in the root of the hierarchy or below dataSetParentID.
+ * If successful returns a guid for the new point data
+ * If unsuccessful return a empty string
+ */
+static std::string add_new_point_data(const py::array& data, const std::string& dataSetName, const std::string& dataSetParentID, const std::vector<std::string>& dimensionNames)
+{
+    auto generateNewPoints = [dataSetName, dataSetParentID]() -> mv::Dataset<Points> {
+        Dataset<DatasetImpl> parentData = 
+            /* if */   dataSetParentID.empty() ?
+            /* then */ Dataset<DatasetImpl>() :
+            /* else */ mv::data().getDataset(QString::fromStdString(dataSetParentID));
+
+        return mv::data().createDataset<Points>("Points", dataSetName.c_str(), parentData);
+        };
+
+
+    return add_point_data(data, dimensionNames, generateNewPoints);
+}
+
+/**
+ * Add new derived point data.
+ * If successful returns a guid for the new point data
+ * If unsuccessful return a empty string
+ */
+static std::string add_derived_point_data(const py::array& data, const std::string& dataSetName, const std::string& dataSetSourceID, const std::vector<std::string>& dimensionNames)
+{
+    if (!mv::data().getDataset(QString::fromStdString(dataSetSourceID)).isValid()) {
+        qDebug() << "add_new_derived_point_data: source data is not valid";
+        return "";
+    }
+
+    auto generateDerivedPoints = [dataSetName, dataSetSourceID]() -> mv::Dataset<Points> {
+        Dataset<DatasetImpl> sourceData = mv::data().getDataset(QString::fromStdString(dataSetSourceID));
+        return mv::Dataset<Points>(mv::data().createDerivedDataset(dataSetName.c_str(), sourceData, sourceData));
+        };
+
+    return add_point_data(data, dimensionNames, generateDerivedPoints);
 }
 
 // The MV data model is Band Interlaced by Pixel.
@@ -478,23 +514,23 @@ static std::string add_new_image_data(const py::array& data, const std::string& 
 
     // PointData is limited in its type support - hopefully the commented types wil be added soon
     if (dtype.is(pybind11::dtype::of<std::uint8_t>()))
-        point_setter = conv_points_from_numpy_array<float, std::uint8_t>;
+        point_setter = conv_img_points_from_numpy_array<float, std::uint8_t>;
     else if (dtype.is(pybind11::dtype::of<std::int8_t>()))
-        point_setter = conv_points_from_numpy_array<float, std::int8_t>;
+        point_setter = conv_img_points_from_numpy_array<float, std::int8_t>;
     else if (dtype.is(pybind11::dtype::of<std::uint16_t>()))
-        point_setter = conv_points_from_numpy_array<float, std::uint16_t>;
+        point_setter = conv_img_points_from_numpy_array<float, std::uint16_t>;
     else if (dtype.is(pybind11::dtype::of<std::int16_t>()))
-        point_setter = conv_points_from_numpy_array<float, std::int16_t>;
+        point_setter = conv_img_points_from_numpy_array<float, std::int16_t>;
     else if (dtype.is(pybind11::dtype::of<std::uint32_t>()))
-        point_setter = conv_points_from_numpy_array<float, std::uint32_t>;
+        point_setter = conv_img_points_from_numpy_array<float, std::uint32_t>;
     else if (dtype.is(pybind11::dtype::of<std::int32_t>()))
-        point_setter = conv_points_from_numpy_array<float, std::int32_t>;
+        point_setter = conv_img_points_from_numpy_array<float, std::int32_t>;
     //Unsupported <std::uint64_t> :
     //Unsupported <std::int64_t> :
     else if (dtype.is(pybind11::dtype::of<float>()))
         point_setter = set_img_points_from_numpy_array<float>;
     else if (dtype.is(pybind11::dtype::of<double>()))
-        point_setter = conv_points_from_numpy_array<float, double>;
+        point_setter = conv_img_points_from_numpy_array<float, double>;
     else
     {
         qDebug() << "add_new_image_data: type not supported (e.g. uint64_t or int64_t): " << QString(dtype.kind());
@@ -999,6 +1035,14 @@ py::module get_MVData_module()
             py::arg("data") = py::array(),
             py::arg("dataSetName") = std::string(),
             py::arg("dataSetParentID") = std::string(),
+            py::arg("dimensionNames") = std::vector<std::string>()
+        )
+        .def(
+            "add_derived_points",
+            add_derived_point_data,
+            py::arg("data") = py::array(),
+            py::arg("dataSetName") = std::string(),
+            py::arg("dataSetSourceID") = std::string(),
             py::arg("dimensionNames") = std::vector<std::string>()
         )
         .def(

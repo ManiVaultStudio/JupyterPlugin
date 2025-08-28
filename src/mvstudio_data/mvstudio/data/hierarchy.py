@@ -79,16 +79,16 @@ class Hierarchy:
         return item
     
     def addPointsItem(self, data: np.ndarray, name: str, parentDataId : str = "", dimensionNames : list[str] = list()) -> Item|None:
-        """Add a points data item
+        """Add a new points data item
 
         Args: 
-            data: The numpy array contain the point data, of size N * M for N points with M dimensions
+            data: The numpy array containing the point data, of size N * M for N points with M dimensions
             name: A name for the point data set
             parentDataId: (optional) Dataset ID of the parent in the data hierarchy (does not derive the new data form the parent). If empty, the data will be placed at root without parent
             dimensionNames: (optional) List of dimension names. If empty, dimensions will be numbered
 
         Returns:
-            Item|None: Data hierarchy item reference ManiVault
+            Item|None: Data hierarchy item reference 
         """
         assert data.ndim == 2, "Data array must be two-dimensional (num_points, num_dims)"
 
@@ -96,6 +96,37 @@ class Hierarchy:
           assert data.shape[1] == len(dimensionNames), "Dimensionnames must be of size num_dims"
 
         datasetId = mvstudio_core.add_new_points(data, name, parentDataId, dimensionNames)
+        
+        if len(datasetId) == 0:
+            warnings.warn("Could not add item", RuntimeWarning)
+            return None
+        else:
+            self._refresh()
+            return self.getItemByDataID(datasetId)
+        
+    def addDerivedPointsItem(self, data: np.ndarray, name: str, sourceDataId : str, dimensionNames : list[str] = list()) -> Item|None:
+        """Add a derived points data item
+
+        Args: 
+            data: The numpy array containing the point data, of size N * M for N points with M dimensions
+            name: A name for the point data set
+            sourceDataId: Dataset ID of the source in the data hierarchy - the data to be derived from
+            dimensionNames: (optional) List of dimension names. If empty, dimensions will be numbered
+
+        Returns:
+            Item|None: Data hierarchy item reference
+        """
+        assert data.ndim == 2, "Data array must be two-dimensional (num_points, num_dims)"
+
+        if len(dimensionNames) > 0:
+          assert data.shape[1] == len(dimensionNames), "Dimensionnames must be of size num_dims"
+
+        sourceData = self.getItemByDataID(sourceDataId)
+
+        assert sourceData is not None, "Source data must exist but does not"
+        assert sourceData.numpoints == data.shape[0], "Currently we expect source and derived data to have the same number of points"
+
+        datasetId = mvstudio_core.add_derived_points(data, name, sourceDataId, dimensionNames)
         
         if len(datasetId) == 0:
             warnings.warn("Could not add item", RuntimeWarning)
@@ -113,7 +144,7 @@ class Hierarchy:
             dimensionNames: (optional) List of dimension names. If empty, dimensions will be numbered
 
         Returns:
-            Item|None: Data hierarchy item reference ManiVault
+            Item|None: Data hierarchy item reference
         """
         assert data.ndim == 2 or data.ndim == 3, "Data array must be of shape (x, y, dims)"
 
@@ -142,7 +173,7 @@ class Hierarchy:
             name: A name for the cluster item
             colors (optional): A list of arrays containing colors of each clusters
         Returns:
-            Item|None: Data hierarchy item reference ManiVault
+            Item|None: Data hierarchy item reference
         """
         names = kwargs.get('names', [])
         colors = kwargs.get('colors', [])
