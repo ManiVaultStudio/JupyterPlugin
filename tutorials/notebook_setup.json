@@ -10,7 +10,7 @@
       "url": "This entry will be replaced with absolute path to the asset directory when starting the ManiVault application",
       "minimum-version-major": 1,
       "minimum-version-minor": 4,
-      "plugins": [ "Data hierarchy", "Data properties", "Jupyter Launcher" ]
+      "plugins": [ "Data hierarchy", "Data properties" ]
     }
   ]
 }
