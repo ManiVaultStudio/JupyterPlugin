@@ -75,6 +75,26 @@ QString convert_md_to_html(const QString& path_md_in) {
     return html.value();
 }
 
+std::optional<QJsonObject> readJSON(const QString& path_json) {
+  QFile file(path_json);
+  if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+    qWarning() << "Failed to open file for reading:" << file.errorString();
+    return std::nullopt;
+  }
+
+  QByteArray data = file.readAll();
+  file.close();
+
+  QJsonParseError parseError;
+  QJsonDocument doc = QJsonDocument::fromJson(data, &parseError);
+  if (parseError.error != QJsonParseError::NoError || !doc.isObject()) {
+    qWarning() << "Failed to parse JSON:" << parseError.errorString();
+    return std::nullopt;
+  }
+
+  return doc.object();
+}
+
 bool replace_json_entry(const QString& path_json, const QString& array_name, const QString& entry_name, const QString& new_text) {
     QFile file(path_json);
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
@@ -252,11 +272,11 @@ bool insert_md_into_json(const QString& path_json) {
     return true;
 }
 
-std::vector<QString> list_tutorial_files() {
+std::vector<QString> list_tutorial_files(const QString& path_json) {
     const QDir applicationDir(QCoreApplication::applicationDirPath());
 
     // Navigate to "tutorials" subdirectory
-    QDir tutorialsDir(applicationDir.filePath("tutorials/JupyterLauncher"));
+    QDir tutorialsDir(applicationDir.filePath(path_json));
 
     if (!tutorialsDir.exists()) {
         qWarning() << "Tutorials folder does not exist:" << tutorialsDir.absolutePath();

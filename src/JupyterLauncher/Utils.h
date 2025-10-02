@@ -1,5 +1,6 @@
 #pragma once
 
+#include <optional>
 #include <vector>
 
 #include <QString>
@@ -17,6 +18,8 @@ static inline bool containsMemberDouble(const QJsonObject& json, const QString& 
     return json.contains(entry) && json[entry].isDouble();
 }
 
+std::optional<QJsonObject> readJSON(const QString& path_json);
+
 std::vector<QString> readStringArray(const QJsonObject& json, const QString& entry);
 
 bool convert_md_to_html(const QString& path_md_in, const QString& path_md_out);
@@ -27,4 +30,4 @@ bool replace_json_entry(const QString& path_json, const QString& array_name, con
 
 bool insert_md_into_json(const QString& path_json);
 
-std::vector<QString> list_tutorial_files();
+std::vector<QString> list_tutorial_files(const QString& subDir);

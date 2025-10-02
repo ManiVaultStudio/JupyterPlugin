@@ -10,6 +10,7 @@
 
 #include <actions/StatusBarAction.h>
 #include <actions/WidgetAction.h>
+#include <util/LearningCenterTutorial.h>
 
 #include <QByteArray>
 #include <QDebug>
@@ -1012,19 +1013,15 @@ JupyterLauncherFactory::JupyterLauncherFactory() :
     setIcon(QIcon(":/images/logo.svg"));
     setMaximumNumberOfInstances(1);
 
-    const auto tutorial_files = list_tutorial_files();
+    for (const auto& tutorial_file : list_tutorial_files("tutorials/JupyterLauncher")) {
+      if (insert_md_into_json(tutorial_file)) {
 
-    for (const auto& tutorial_file : tutorial_files) {
-        if (insert_md_into_json(tutorial_file)) {
-            // convert local file path to Qt URL to trick ManiVault into "downloading" the tutorials
-            const QUrl fileUrl = QUrl::fromLocalFile(tutorial_file);
-            const QString urlString = fileUrl.toString();
-
-            // register tutorial with the core
-            getTutorialsDsnsAction().addString(urlString);
+        if (auto tutorial_json = readJSON(tutorial_file)) {
+          mv::help().addTutorial(new util::LearningCenterTutorial(tutorial_json.value()["tutorials"].toArray().first().toObject().toVariantMap()));
         }
-    }
 
+      }
+    }
 }
 
 ViewPlugin* JupyterLauncherFactory::produce()
