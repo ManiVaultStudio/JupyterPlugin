@@ -515,31 +515,37 @@ bool JupyterLauncher::optionallyInstallMVWheel()
         nullptr, 
         "Python modules missing", 
         "mvstudio.kernel " + pluginVersion + " and mvstudio.data " + pluginVersion + " are required for passing data between Python and ManiVault.\nDo you wish to install them now?",
-        QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes);
-    if (reply == QMessageBox::Yes) {
-        auto MVWheelPath = QCoreApplication::applicationDirPath() + "/PluginDependencies/JupyterLauncher/py/";
-        MVWheelPath = QDir::toNativeSeparators(MVWheelPath);
-        auto kernelWheel = MVWheelPath + "mvstudio_kernel-" + pluginVersion + "-py3-none-any.whl";
-        auto dataWheel = MVWheelPath + "mvstudio_data-" + pluginVersion + "-py3-none-any.whl";
-        
-        qDebug() << "kernelWheel paths: " << kernelWheel;
+        QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes
+    );
 
-        if (!runPythonCommand({ "-m", "pip", "install", kernelWheel, "--only-binary=:all:"})) {
-            qWarning() << "Installing the mvstudio_kernel package failed. See logging for more information";
-            return false;
+    if (reply == QMessageBox::Yes) {
+        // Bootstrap the pip installer - does nothing if pip is available
+        // https://docs.python.org/3/library/ensurepip.html
+        if (!runPythonCommand({ "-m", "ensurepip" })) {
+          qWarning() << "Installing pip failed. See logging for more informatio";
+          return false;
         }
 
-        qDebug() << "dataWheel paths: " << dataWheel;
+        // Install the manivault wheels
+        const QString MVWheelPath = QDir::toNativeSeparators(QCoreApplication::applicationDirPath() + "/PluginDependencies/JupyterLauncher/py/");
+        const QString kernelWheel = MVWheelPath + "mvstudio_kernel-" + pluginVersion + "-py3-none-any.whl";
+        const QString dataWheel = MVWheelPath + "mvstudio_data-" + pluginVersion + "-py3-none-any.whl";
 
-        if (!runPythonCommand({ "-m", "pip", "install", dataWheel, "--only-binary=:all:" })) {
-            qWarning() << "Installing the mvstudio_data package failed. See logging for more information";
+        for (const QString& wheelpath : { kernelWheel , dataWheel }) {
+          qDebug() << "wheelpath paths: " << wheelpath;
+
+          if (!runPythonCommand({ "-m", "pip", "install", wheelpath, "--only-binary=:all:" })) {
+            qWarning() << "Installing the given package failed. See logging for more information";
             return false;
+          }
+
         }
 
         if (!installKernel()) {
             qWarning() << "Installing the ManiVaultStudio Jupyter kernel failed. See logging for more information";
             return false;
         }
+
     } else {
         return false;
     }
