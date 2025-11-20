@@ -799,6 +799,14 @@ bool JupyterLauncher::initPython(bool activateXeus)
     return true;
 }
 
+void JupyterLauncher::setLaunchTriggersEnabled(bool enabled)
+{
+  auto launchTriggerActions = static_cast<const JupyterLauncherFactory*>(getFactory())->getLaunchTriggersEnabled();
+
+  for (TriggerAction* triggerAction : launchTriggerActions)
+    triggerAction->setEnabled(enabled);
+}
+
 bool JupyterLauncher::initLauncher(const QString& version, int mode)
 {
     _selectedInterpreterVersion = version;
@@ -818,6 +826,8 @@ void JupyterLauncher::launchJupyterKernelAndNotebook(const QString& version)
         return;
 
     createPythonPluginAndStartNotebook();   // open notebook immediately if user has set do-not-show-dialog option
+
+    setLaunchTriggersEnabled(false);
 }
 
 void JupyterLauncher::createPythonPluginAndStartNotebook()
@@ -836,6 +846,8 @@ void JupyterLauncher::initPythonScripts(const QString& version)
         return;
 
     addPythonScripts();
+
+    setLaunchTriggersEnabled(false);
 }
 
 void JupyterLauncher::addPythonScripts()
@@ -1108,30 +1120,26 @@ void JupyterLauncherFactory::initialize()
         auto launchJupyterPython = new TriggerAction(this, "Start Jupyter Kernel and Lab (" + pythonVersionOfPlugin + ")");
         auto initPythonScripts   = new TriggerAction(this, "Init Python Scripts (" + pythonVersionOfPlugin + ") [BETA]");
 
-        auto setTriggersEnabled = [launchJupyterPython, initPythonScripts](bool enabled) {
-            launchJupyterPython->setEnabled(enabled);
-            initPythonScripts->setEnabled(enabled);
-            };
+        _launchTriggerActions.push_back(launchJupyterPython);
+        _launchTriggerActions.push_back(initPythonScripts);
 
         // Jupyter Notebooks
-        connect(launchJupyterPython, &TriggerAction::triggered, this, [this, pythonVersionOfPlugin, getJupyterLauncherPlugin, setTriggersEnabled]() {
+        connect(launchJupyterPython, &TriggerAction::triggered, this, [this, pythonVersionOfPlugin, getJupyterLauncherPlugin]() {
 
             JupyterLauncher* plugin = getJupyterLauncherPlugin();
             if (plugin) {
                 plugin->launchJupyterKernelAndNotebook(pythonVersionOfPlugin);
-                setTriggersEnabled(false);
             }
         });
 
         _statusBarAction->addMenuAction(launchJupyterPython);
 
         // Python Scripts
-        connect(initPythonScripts, &TriggerAction::triggered, this, [this, pythonVersionOfPlugin, getJupyterLauncherPlugin, setTriggersEnabled]() {
+        connect(initPythonScripts, &TriggerAction::triggered, this, [this, pythonVersionOfPlugin, getJupyterLauncherPlugin]() {
 
             JupyterLauncher* plugin = getJupyterLauncherPlugin();
             if (plugin) {
                 plugin->initPythonScripts(pythonVersionOfPlugin);
-                setTriggersEnabled(false);
             }
             });
 

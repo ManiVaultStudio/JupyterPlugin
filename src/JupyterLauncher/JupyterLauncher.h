@@ -8,6 +8,7 @@
 
 #include <actions/HorizontalGroupAction.h>
 #include <actions/StringAction.h>
+#include <actions/TriggerAction.h>
 #include <actions/PluginStatusBarAction.h>
 
 #include <QOperatingSystemVersion>
@@ -129,6 +130,8 @@ private:
     void createPythonPluginAndStartNotebook();
     void addPythonScripts();
 
+    void setLaunchTriggersEnabled(bool enabled);
+
 private:
     QString                         _connectionFilePath = {};
     QString                         _selectedInterpreterVersion = {};
@@ -162,10 +165,7 @@ class JupyterLauncherFactory : public ViewPluginFactory
 
 public:
 
-    /** Default constructor */
     JupyterLauncherFactory();
-
-    /** Destructor */
     ~JupyterLauncherFactory() = default;
 
     /** Perform post-construction initialization */
@@ -189,8 +189,14 @@ public:
     /** Returns the data types that are supported by the example view plugin */
     mv::DataTypes supportedDataTypes() const override;
 
+public:
+  std::vector<TriggerAction*> getLaunchTriggersEnabled() const { return _launchTriggerActions; };
+
 private:
     PluginStatusBarAction*  _statusBarAction;               /** For global action in a status bar */
     HorizontalGroupAction   _statusBarPopupGroupAction;     /** Popup group action for status bar action */
     StringAction            _statusBarPopupAction;          /** Popup action for the status bar */
+
+    using TriggerActions = std::vector<TriggerAction*>;
+    TriggerActions          _launchTriggerActions = {};     /** Trigger actions in the popup menu */
 };
