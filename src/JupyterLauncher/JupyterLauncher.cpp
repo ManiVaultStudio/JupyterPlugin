@@ -519,6 +519,13 @@ bool JupyterLauncher::optionallyInstallMVWheel()
     );
 
     if (reply == QMessageBox::Yes) {
+        // Bootstrap the pip installer - does nothing if pip is available
+        // https://docs.python.org/3/library/ensurepip.html
+        if (!runPythonCommand({ "-m", "ensurepip" })) {
+          qWarning() << "Installing pip failed. See logging for more informatio";
+          return false;
+        }
+
         // Install the manivault wheels
         const QString MVWheelPath = QDir::toNativeSeparators(QCoreApplication::applicationDirPath() + "/PluginDependencies/JupyterLauncher/py/");
         const QString kernelWheel = MVWheelPath + "mvstudio_kernel-" + pluginVersion + "-py3-none-any.whl";
