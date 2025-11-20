@@ -515,7 +515,9 @@ bool JupyterLauncher::optionallyInstallMVWheel()
         nullptr, 
         "Python modules missing", 
         "mvstudio.kernel " + pluginVersion + " and mvstudio.data " + pluginVersion + " are required for passing data between Python and ManiVault.\nDo you wish to install them now?",
-        QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes);
+        QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes
+    );
+
     if (reply == QMessageBox::Yes) {
         auto MVWheelPath = QCoreApplication::applicationDirPath() + "/PluginDependencies/JupyterLauncher/py/";
         MVWheelPath = QDir::toNativeSeparators(MVWheelPath);
@@ -540,6 +542,7 @@ bool JupyterLauncher::optionallyInstallMVWheel()
             qWarning() << "Installing the ManiVaultStudio Jupyter kernel failed. See logging for more information";
             return false;
         }
+
     } else {
         return false;
     }
