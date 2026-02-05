@@ -960,7 +960,7 @@ void JupyterLauncher::addPythonScripts()
         // check if script contains input-datatypes, convert to mv::DataTypes
         if (containsMemberArray(json, "input-datatypes")) {
             const std::vector<QString> dataTypeStrings = readStringArray(json, "input-datatypes");
-            mv:DataTypes dataTypes;
+            mv::DataTypes dataTypes = {};
 
             for (const auto& dataTypeString : dataTypeStrings) {
                 dataTypes.push_back(mv::DataType(dataTypeString));
