@@ -196,7 +196,7 @@ std::pair<bool, QString> JupyterLauncher::getPythonHomePath(const QString& pyInt
 
     //In a venv python sits in a Script or bin dir dependent on os
     QString venvParent = "";
-    if (QOperatingSystemVersion::currentType() == QOperatingSystemVersion::Windows)
+    if constexpr (QOperatingSystemVersion::currentType() == QOperatingSystemVersion::Windows)
         venvParent = "Scripts";
     else
         venvParent = "bin";
@@ -267,10 +267,10 @@ void JupyterLauncher::setPythonEnv()
     else  // contains python interpreter executable
         qputenv("PYTHONHOME", pythonHomePath.toUtf8());
 
-    if(QOperatingSystemVersion::currentType() == QOperatingSystemVersion::Windows)
+    if constexpr (QOperatingSystemVersion::currentType() == QOperatingSystemVersion::Windows) {
         pythonPath += "/Lib/site-packages";
-    else
-    {
+    }
+    else {
         if (pythonPath.endsWith("bin"))
             pythonPath = pythonPath.chopped(3); // Removes the last 3 characters ("bin")
 
@@ -303,7 +303,7 @@ std::pair<bool, QString> isCondaEnvironmentActive()
     
     QString pythonInterpreterPath = QString::fromLocal8Bit(qgetenv("CONDA_PREFIX"));
 
-    if(QOperatingSystemVersion::currentType() == QOperatingSystemVersion::Windows)
+    if constexpr (QOperatingSystemVersion::currentType() == QOperatingSystemVersion::Windows)
         pythonInterpreterPath += "/Scripts/python.exe";
     else // Linux/macOS
         pythonInterpreterPath += "/bin/python3";
@@ -1078,7 +1078,7 @@ void JupyterLauncherFactory::initialize()
     qDebug() << "pythonPlugins:" << pythonPlugins;
 
     // On Linux/Mac in a conda environment we cannot switch between environments
-    if(QOperatingSystemVersion::currentType() != QOperatingSystemVersion::Windows)
+    if constexpr (QOperatingSystemVersion::currentType() != QOperatingSystemVersion::Windows)
     {
         if (const auto [isConda, pyVersion] = isCondaEnvironmentActive(); isConda) {
 
