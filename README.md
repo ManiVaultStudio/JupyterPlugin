@@ -25,7 +25,7 @@ conda create -n ManiVaultPythonPluginBuild -y python=3.11 poetry=2.0
     - Define `ManiVault_DIR` pointing to the ManiVault cmake file folder, e.g. `YOUR_LOCAL_PATH/install/cmake/mv`
     - Define `Python_EXECUTABLE` pointing to the python exe, e.g. 
         - venv: `YOUR_LOCAL_PATH/AppData/Local/Programs/Python/ManiVaultPythonPluginBuild/Scripts/python.exe`
-        - Conda: `YOUR_LOCAL_PATH/AppData/Local/miniconda3/envs/ManiVaultPythonPluginBuild/python.exe` (Windows), `YOUR_LOCAL_PATH/AppData/Local/miniconda3/envs/ManiVaultPythonPluginBuild/bin/python` (Linux)
+        - Conda: `YOUR_LOCAL_PATH/AppData/Local/miniconda3/envs/ManiVaultPythonPluginBuild/python.exe` (Windows), `YOUR_LOCAL_PATH/miniconda3/envs/ManiVaultPythonPluginBuild/bin/python` (Linux)
         - On Linux you might need to activate the environment for CMake to find the correct Python.
 
     (Alternatively, define `Python_ROOT_DIR`, the root directory of a Python installation.)
