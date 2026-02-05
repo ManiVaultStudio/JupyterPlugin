@@ -222,8 +222,8 @@ std::pair<bool, QString> JupyterLauncher::getPythonHomePath(const QString& pyInt
 
 bool JupyterLauncher::checkPythonVersion()
 {
-    QString currentInterpreterVersion = getPythonVersion(getPythonInterpreterPath());
-    QString currentShortVersion = extractShortVersionNumber(currentInterpreterVersion);
+    const QString currentInterpreterVersion = getPythonVersion(getPythonInterpreterPath());
+    const QString currentShortVersion = extractShortVersionNumber(currentInterpreterVersion);
 
     const bool match = (_selectedInterpreterVersion == currentShortVersion);
 
@@ -312,7 +312,7 @@ std::pair<bool, QString> isCondaEnvironmentActive()
     else // Linux/macOS
         pythonInterpreterPath += "/bin/python3";
 
-    QString givenInterpreterVersion = getPythonVersion(pythonInterpreterPath);
+    const QString givenInterpreterVersion = getPythonVersion(pythonInterpreterPath);
 
     if(givenInterpreterVersion.isEmpty())
         return {false, ""};
@@ -1073,7 +1073,7 @@ void JupyterLauncherFactory::initialize()
     // Position to the right of the status bar action
     _statusBarAction->setIndex(-1);
 
-    auto [isConda, pyVersion] = isCondaEnvironmentActive();
+    const auto [isConda, pyVersion] = isCondaEnvironmentActive();
 
     qDebug() << "JupyterLauncherFactory::initialize";
 
@@ -1089,7 +1089,7 @@ void JupyterLauncherFactory::initialize()
     {
         QStringList filteredPythonPlugins;
         for (const QString &path : pythonPlugins) {
-            QFileInfo fileInfo(path);
+            const QFileInfo fileInfo(path);
             QString fileName = fileInfo.fileName(); // Extract file name
 
             qDebug() << "fileName:" << fileName;
