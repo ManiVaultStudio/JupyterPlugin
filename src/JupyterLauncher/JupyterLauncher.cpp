@@ -1045,7 +1045,9 @@ ViewPlugin* JupyterLauncherFactory::produce()
 
 void JupyterLauncherFactory::initialize()
 {
-    ViewPluginFactory::initialize();
+    qDebug() << "JupyterLauncherFactory::initialize";
+
+	ViewPluginFactory::initialize();
 
     // Create an instance of our GlobalSettingsAction (derived from PluginGlobalSettingsGroupAction) and assign it to the factory
     setGlobalSettingsGroupAction(new GlobalSettingsAction(this, this));
@@ -1069,35 +1071,34 @@ void JupyterLauncherFactory::initialize()
     // Position to the right of the status bar action
     _statusBarAction->setIndex(-1);
 
-    const auto [isConda, pyVersion] = isCondaEnvironmentActive();
-    const QString pyVersionShort = extractShortVersionNumber(pyVersion).remove(".");
+    const QString jupyterPluginFolder   = QCoreApplication::applicationDirPath() + "/PluginDependencies/JupyterLauncher/bin/";
+    QStringList pythonPlugins           = findLibraryFiles(jupyterPluginFolder);
 
-    qDebug() << "JupyterLauncherFactory::initialize";
-
-    QString  jupyterPluginFolder = QCoreApplication::applicationDirPath() + "/PluginDependencies/JupyterLauncher/bin/";
-    qDebug() << "jupyterPluginFolder:" << jupyterPluginFolder;
-
-    QStringList pythonPlugins = findLibraryFiles(jupyterPluginFolder);
-
+	qDebug() << "jupyterPluginFolder:" << jupyterPluginFolder;
     qDebug() << "pythonPlugins:" << pythonPlugins;
 
     // On Linux/Mac in a conda environment we cannot switch between environments
-    if(QOperatingSystemVersion::currentType() != QOperatingSystemVersion::Windows && isConda)
+    if(QOperatingSystemVersion::currentType() != QOperatingSystemVersion::Windows)
     {
-        QStringList filteredPythonPlugins;
-        for (const QString &path : pythonPlugins) {
-            const QFileInfo fileInfo(path);
-            const QString fileName = fileInfo.fileName().split("_p")[0]; // Extract file name without plugin and core version
+        if (const auto [isConda, pyVersion] = isCondaEnvironmentActive(); isConda) {
 
-            qDebug() << "fileName:" << fileName;
-            qDebug() << "pyVersion:" << pyVersionShort;
+            const QString pyVersionShort = extractShortVersionNumber(pyVersion).remove(".");
 
-            if (fileName.contains(pyVersionShort, Qt::CaseInsensitive))
-                filteredPythonPlugins.append(path);
+            QStringList filteredPythonPlugins;
+            for (const QString& path : pythonPlugins) {
+                const QFileInfo fileInfo(path);
+                const QString fileName = fileInfo.fileName().split("_p")[0]; // Extract file name without plugin and core version
 
+                qDebug() << "fileName:" << fileName;
+                qDebug() << "pyVersion:" << pyVersionShort;
+
+                if (fileName.contains(pyVersionShort, Qt::CaseInsensitive))
+                    filteredPythonPlugins.append(path);
+
+            }
+
+            std::swap(pythonPlugins, filteredPythonPlugins);
         }
-
-        pythonPlugins = filteredPythonPlugins;
     }
 
     qDebug() << "pythonPlugins:" << pythonPlugins;
