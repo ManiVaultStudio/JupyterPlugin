@@ -1159,10 +1159,10 @@ mv::DataTypes JupyterLauncherFactory::supportedDataTypes() const
 
 QUrl JupyterLauncherFactory::getReadmeMarkdownUrl() const 
 {
-    return QUrl("https://raw.githubusercontent.com/ManiVaultStudio/JupyterPlugin/main/README.md");
+    return { "https://raw.githubusercontent.com/ManiVaultStudio/JupyterPlugin/main/README.md" };
 }
 
 QUrl JupyterLauncherFactory::getRepositoryUrl() const
 {
-    return QUrl("https://github.com/ManiVaultStudio/JupyterPlugin");
+    return{ "https://github.com/ManiVaultStudio/JupyterPlugin" };
 }
