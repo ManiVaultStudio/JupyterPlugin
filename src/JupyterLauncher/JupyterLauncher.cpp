@@ -1070,6 +1070,7 @@ void JupyterLauncherFactory::initialize()
     _statusBarAction->setIndex(-1);
 
     const auto [isConda, pyVersion] = isCondaEnvironmentActive();
+    const QString pyVersionShort = extractShortVersionNumber(pyVersion).remove(".");
 
     qDebug() << "JupyterLauncherFactory::initialize";
 
@@ -1086,12 +1087,12 @@ void JupyterLauncherFactory::initialize()
         QStringList filteredPythonPlugins;
         for (const QString &path : pythonPlugins) {
             const QFileInfo fileInfo(path);
-            QString fileName = fileInfo.fileName(); // Extract file name
+            const QString fileName = fileInfo.fileName().split("_p")[0]; // Extract file name without plugin and core version
 
             qDebug() << "fileName:" << fileName;
-            qDebug() << "pyVersion:" << pyVersion.remove(".");
+            qDebug() << "pyVersion:" << pyVersionShort;
 
-            if (fileName.contains(pyVersion.remove("."), Qt::CaseInsensitive))
+            if (fileName.contains(pyVersionShort, Qt::CaseInsensitive))
                 filteredPythonPlugins.append(path);
 
         }
