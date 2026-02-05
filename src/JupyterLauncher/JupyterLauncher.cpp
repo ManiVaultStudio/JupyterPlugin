@@ -134,9 +134,7 @@ QString getPythonVersion(const QString& pythonInterpreterPath)
         output = process.readAllStandardError().trimmed();  // Some Python versions print to stderr
     }
 
-    QString givenInterpreterVersion = extractVersionNumber(output);
-
-    return givenInterpreterVersion;
+    return extractVersionNumber(output);
 }
 
 // =============================================================================
