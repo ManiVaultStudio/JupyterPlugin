@@ -300,10 +300,8 @@ std::pair<bool, QString> isCondaEnvironmentActive()
 {
     if (!qEnvironmentVariableIsSet("CONDA_PREFIX"))
         return {false, ""};
-
-    const QString condaPrefix = QString::fromLocal8Bit(qgetenv("CONDA_PREFIX"));
-
-    QString pythonInterpreterPath = "";
+    
+    QString pythonInterpreterPath = QString::fromLocal8Bit(qgetenv("CONDA_PREFIX"));
 
     if(QOperatingSystemVersion::currentType() == QOperatingSystemVersion::Windows)
         pythonInterpreterPath += "/Scripts/python.exe";
