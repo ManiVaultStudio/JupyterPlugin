@@ -1129,8 +1129,7 @@ void JupyterLauncherFactory::initialize()
         // Jupyter Notebooks
         connect(launchJupyterPython, &TriggerAction::triggered, this, [this, pythonVersionOfPlugin, getJupyterLauncherPlugin]() {
 
-            JupyterLauncher* plugin = getJupyterLauncherPlugin();
-            if (plugin) {
+            if (JupyterLauncher* plugin = getJupyterLauncherPlugin()) {
                 plugin->launchJupyterKernelAndNotebook(pythonVersionOfPlugin);
             }
         });
@@ -1140,8 +1139,7 @@ void JupyterLauncherFactory::initialize()
         // Python Scripts
         connect(initPythonScripts, &TriggerAction::triggered, this, [this, pythonVersionOfPlugin, getJupyterLauncherPlugin]() {
 
-            JupyterLauncher* plugin = getJupyterLauncherPlugin();
-            if (plugin) {
+            if (JupyterLauncher* plugin = getJupyterLauncherPlugin()) {
                 plugin->initPythonScripts(pythonVersionOfPlugin);
             }
             });
