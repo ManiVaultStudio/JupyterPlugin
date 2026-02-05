@@ -1102,8 +1102,8 @@ void JupyterLauncherFactory::initialize()
 
     qDebug() << "pythonPlugins:" << pythonPlugins;
 
-    auto getJupyterLauncherPlugin = [this]() ->JupyterLauncher* {
-        auto openJupyterPlugins = mv::plugins().getPluginsByFactory(this);
+    auto getJupyterLauncherPlugin = [this]() -> JupyterLauncher* {
+        const std::vector<plugin::Plugin*> openJupyterPlugins = mv::plugins().getPluginsByFactory(this);
 
         JupyterLauncher* plugin = nullptr;
         if (openJupyterPlugins.empty())
