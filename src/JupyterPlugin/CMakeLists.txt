@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.22)
+cmake_minimum_required(VERSION 3.31)
 
 set(JUPYTERPLUGIN "JupyterPlugin${Python_VERSION_MAJOR}${Python_VERSION_MINOR}")
 set(JupyterPluginTarget "${JUPYTERPLUGIN}" PARENT_SCOPE) # for add_dependencies in parent scope

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.22)
+cmake_minimum_required(VERSION 3.31)
 
 set(JUPYTERLAUNCHER "JupyterLauncher")
 message(STATUS "Plugin: ${JUPYTERLAUNCHER}")
