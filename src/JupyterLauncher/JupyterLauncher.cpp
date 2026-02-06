@@ -134,9 +134,7 @@ QString getPythonVersion(const QString& pythonInterpreterPath)
         output = process.readAllStandardError().trimmed();  // Some Python versions print to stderr
     }
 
-    QString givenInterpreterVersion = extractVersionNumber(output);
-
-    return givenInterpreterVersion;
+    return extractVersionNumber(output);
 }
 
 // =============================================================================
@@ -198,7 +196,7 @@ std::pair<bool, QString> JupyterLauncher::getPythonHomePath(const QString& pyInt
 
     //In a venv python sits in a Script or bin dir dependent on os
     QString venvParent = "";
-    if (QOperatingSystemVersion::currentType() == QOperatingSystemVersion::Windows)
+    if constexpr (QOperatingSystemVersion::currentType() == QOperatingSystemVersion::Windows)
         venvParent = "Scripts";
     else
         venvParent = "bin";
@@ -222,8 +220,8 @@ std::pair<bool, QString> JupyterLauncher::getPythonHomePath(const QString& pyInt
 
 bool JupyterLauncher::checkPythonVersion()
 {
-    QString currentInterpreterVersion = getPythonVersion(getPythonInterpreterPath());
-    QString currentShortVersion = extractShortVersionNumber(currentInterpreterVersion);
+    const QString currentInterpreterVersion = getPythonVersion(getPythonInterpreterPath());
+    const QString currentShortVersion = extractShortVersionNumber(currentInterpreterVersion);
 
     const bool match = (_selectedInterpreterVersion == currentShortVersion);
 
@@ -269,10 +267,10 @@ void JupyterLauncher::setPythonEnv()
     else  // contains python interpreter executable
         qputenv("PYTHONHOME", pythonHomePath.toUtf8());
 
-    if(QOperatingSystemVersion::currentType() == QOperatingSystemVersion::Windows)
+    if constexpr (QOperatingSystemVersion::currentType() == QOperatingSystemVersion::Windows) {
         pythonPath += "/Lib/site-packages";
-    else
-    {
+    }
+    else {
         if (pythonPath.endsWith("bin"))
             pythonPath = pythonPath.chopped(3); // Removes the last 3 characters ("bin")
 
@@ -302,17 +300,15 @@ std::pair<bool, QString> isCondaEnvironmentActive()
 {
     if (!qEnvironmentVariableIsSet("CONDA_PREFIX"))
         return {false, ""};
+    
+    QString pythonInterpreterPath = QString::fromLocal8Bit(qgetenv("CONDA_PREFIX"));
 
-    const QString condaPrefix = QString::fromLocal8Bit(qgetenv("CONDA_PREFIX"));
-
-    QString pythonInterpreterPath = "";
-
-    if(QOperatingSystemVersion::currentType() == QOperatingSystemVersion::Windows)
+    if constexpr (QOperatingSystemVersion::currentType() == QOperatingSystemVersion::Windows)
         pythonInterpreterPath += "/Scripts/python.exe";
     else // Linux/macOS
         pythonInterpreterPath += "/bin/python3";
 
-    QString givenInterpreterVersion = getPythonVersion(pythonInterpreterPath);
+    const QString givenInterpreterVersion = getPythonVersion(pythonInterpreterPath);
 
     if(givenInterpreterVersion.isEmpty())
         return {false, ""};
@@ -964,7 +960,7 @@ void JupyterLauncher::addPythonScripts()
         // check if script contains input-datatypes, convert to mv::DataTypes
         if (containsMemberArray(json, "input-datatypes")) {
             const std::vector<QString> dataTypeStrings = readStringArray(json, "input-datatypes");
-            mv:DataTypes dataTypes;
+            mv::DataTypes dataTypes = {};
 
             for (const auto& dataTypeString : dataTypeStrings) {
                 dataTypes.push_back(mv::DataType(dataTypeString));
@@ -1049,7 +1045,9 @@ ViewPlugin* JupyterLauncherFactory::produce()
 
 void JupyterLauncherFactory::initialize()
 {
-    ViewPluginFactory::initialize();
+    qDebug() << "JupyterLauncherFactory::initialize";
+
+	ViewPluginFactory::initialize();
 
     // Create an instance of our GlobalSettingsAction (derived from PluginGlobalSettingsGroupAction) and assign it to the factory
     setGlobalSettingsGroupAction(new GlobalSettingsAction(this, this));
@@ -1073,40 +1071,40 @@ void JupyterLauncherFactory::initialize()
     // Position to the right of the status bar action
     _statusBarAction->setIndex(-1);
 
-    auto [isConda, pyVersion] = isCondaEnvironmentActive();
+    const QString jupyterPluginFolder   = QCoreApplication::applicationDirPath() + "/PluginDependencies/JupyterLauncher/bin/";
+    QStringList pythonPlugins           = findLibraryFiles(jupyterPluginFolder);
 
-    qDebug() << "JupyterLauncherFactory::initialize";
-
-    QString  jupyterPluginFolder = QCoreApplication::applicationDirPath() + "/PluginDependencies/JupyterLauncher/bin/";
-    qDebug() << "jupyterPluginFolder:" << jupyterPluginFolder;
-
-    QStringList pythonPlugins = findLibraryFiles(jupyterPluginFolder);
-
+	qDebug() << "jupyterPluginFolder:" << jupyterPluginFolder;
     qDebug() << "pythonPlugins:" << pythonPlugins;
 
     // On Linux/Mac in a conda environment we cannot switch between environments
-    if(QOperatingSystemVersion::currentType() != QOperatingSystemVersion::Windows && isConda)
+    if constexpr (QOperatingSystemVersion::currentType() != QOperatingSystemVersion::Windows)
     {
-        QStringList filteredPythonPlugins;
-        for (const QString &path : pythonPlugins) {
-            QFileInfo fileInfo(path);
-            QString fileName = fileInfo.fileName(); // Extract file name
+        if (const auto [isConda, pyVersion] = isCondaEnvironmentActive(); isConda) {
 
-            qDebug() << "fileName:" << fileName;
-            qDebug() << "pyVersion:" << pyVersion.remove(".");
+            const QString pyVersionShort = extractShortVersionNumber(pyVersion).remove(".");
 
-            if (fileName.contains(pyVersion.remove("."), Qt::CaseInsensitive))
-                filteredPythonPlugins.append(path);
+            QStringList filteredPythonPlugins;
+            for (const QString& path : pythonPlugins) {
+                const QFileInfo fileInfo(path);
+                const QString fileName = fileInfo.fileName().split("_p")[0]; // Extract file name without plugin and core version
 
+                qDebug() << "fileName:" << fileName;
+                qDebug() << "pyVersion:" << pyVersionShort;
+
+                if (fileName.contains(pyVersionShort, Qt::CaseInsensitive))
+                    filteredPythonPlugins.append(path);
+
+            }
+
+            std::swap(pythonPlugins, filteredPythonPlugins);
         }
-
-        pythonPlugins = filteredPythonPlugins;
     }
 
     qDebug() << "pythonPlugins:" << pythonPlugins;
 
-    auto getJupyterLauncherPlugin = [this]() ->JupyterLauncher* {
-        auto openJupyterPlugins = mv::plugins().getPluginsByFactory(this);
+    auto getJupyterLauncherPlugin = [this]() -> JupyterLauncher* {
+        const std::vector<plugin::Plugin*> openJupyterPlugins = mv::plugins().getPluginsByFactory(this);
 
         JupyterLauncher* plugin = nullptr;
         if (openJupyterPlugins.empty())
@@ -1132,8 +1130,7 @@ void JupyterLauncherFactory::initialize()
         // Jupyter Notebooks
         connect(launchJupyterPython, &TriggerAction::triggered, this, [this, pythonVersionOfPlugin, getJupyterLauncherPlugin]() {
 
-            JupyterLauncher* plugin = getJupyterLauncherPlugin();
-            if (plugin) {
+            if (JupyterLauncher* plugin = getJupyterLauncherPlugin()) {
                 plugin->launchJupyterKernelAndNotebook(pythonVersionOfPlugin);
             }
         });
@@ -1143,8 +1140,7 @@ void JupyterLauncherFactory::initialize()
         // Python Scripts
         connect(initPythonScripts, &TriggerAction::triggered, this, [this, pythonVersionOfPlugin, getJupyterLauncherPlugin]() {
 
-            JupyterLauncher* plugin = getJupyterLauncherPlugin();
-            if (plugin) {
+            if (JupyterLauncher* plugin = getJupyterLauncherPlugin()) {
                 plugin->initPythonScripts(pythonVersionOfPlugin);
             }
             });
@@ -1164,10 +1160,10 @@ mv::DataTypes JupyterLauncherFactory::supportedDataTypes() const
 
 QUrl JupyterLauncherFactory::getReadmeMarkdownUrl() const 
 {
-    return QUrl("https://raw.githubusercontent.com/ManiVaultStudio/JupyterPlugin/main/README.md");
+    return { "https://raw.githubusercontent.com/ManiVaultStudio/JupyterPlugin/main/README.md" };
 }
 
 QUrl JupyterLauncherFactory::getRepositoryUrl() const
 {
-    return QUrl("https://github.com/ManiVaultStudio/JupyterPlugin");
+    return{ "https://github.com/ManiVaultStudio/JupyterPlugin" };
 }
