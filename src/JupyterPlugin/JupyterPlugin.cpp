@@ -4,6 +4,8 @@
 #include <QDir>
 #include <QStandardPaths>
 
+#include <Application.h>
+
 #include "MVData.h"
 #include "XeusKernel.h"
 
@@ -39,7 +41,7 @@ void JupyterPlugin::initMvCommunicationModule() {
 JupyterPlugin::JupyterPlugin(const mv::plugin::PluginFactory* factory) :
     mv::plugin::ViewPlugin(factory),
     _xeusKernel(std::make_unique<XeusKernel>()),
-    _connectionFilePath(QDir(QStandardPaths::standardLocations(QStandardPaths::HomeLocation)[0]).filePath("connection.json"))
+    _connectionFilePath(this, "Connection file", QDir(QStandardPaths::standardLocations(QStandardPaths::HomeLocation)[0]).filePath("connection.json")) 
 {
 }
 
@@ -57,7 +59,7 @@ void JupyterPlugin::init()
 
 void JupyterPlugin::startJupyterNotebook() const
 {
-    _xeusKernel->startKernel(_connectionFilePath, QString::fromStdString(getVersion().getVersionString()));
+    _xeusKernel->startKernel(_connectionFilePath.getFilePath(), QString::fromStdString(getVersion().getVersionString()));
 }
 
 void JupyterPlugin::runScriptWithArgs(const QString& scriptPath, const QStringList& args)

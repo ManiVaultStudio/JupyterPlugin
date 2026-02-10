@@ -2,6 +2,8 @@
 
 #include <ViewPlugin.h>
 
+#include <actions/FilePickerAction.h>
+
 #include <memory>
 #include <unordered_set>
 
@@ -45,7 +47,7 @@ public:
 
 private:
     std::unique_ptr<XeusKernel>     _xeusKernel = {};
-    QString                         _connectionFilePath = {};
+    mv::gui::FilePickerAction       _connectionFilePath;
     std::unordered_set<std::string> _baseModules = {};
     PyScopedInterpreterPtr          _initGuard = {};
 
