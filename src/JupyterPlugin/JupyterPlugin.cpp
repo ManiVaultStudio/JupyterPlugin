@@ -70,7 +70,7 @@ void JupyterPlugin::runScriptWithArgs(const QString& scriptPath, const QStringLi
     }
 
     if (!Py_IsInitialized()) {
-        qWarning() << "Script not executed";
+        qWarning() << "JupyterPlugin::runScriptWithArgs: Script not executed - interpreter is not initialized";
         return;
     }
 
