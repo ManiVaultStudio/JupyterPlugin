@@ -794,6 +794,15 @@ bool JupyterLauncher::initPython(bool activateXeus)
     // simultaneously, since we do not know how to handle the GIL in this setting
     if (activateXeus) {
         jupyterPluginInstance->init();
+
+        const bool success = QMetaObject::invokeMethod(
+            jupyterPluginInstance,
+            "startJupyterNotebook"
+        );
+
+        if (!success) {
+            qWarning() << "Failed to invoke JupyterPlugin::interpreterPlugin";
+        }
     }
 
     _initializedPythonInterpreters.insert({ _selectedInterpreterVersion, jupyterPluginInstance });
