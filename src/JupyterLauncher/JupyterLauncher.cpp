@@ -783,10 +783,14 @@ bool JupyterLauncher::initPython(bool activateXeus)
     mv::plugin::Plugin* jupyterPluginInstance = jupyterPluginFactory->produce();
 
     // Communicate the connection file path via the child action in the JupyterPlugin
-    auto connectionFileAction = jupyterPluginInstance->findChildByPath("Connection file");
-    if (connectionFileAction != nullptr) {
-        FilePickerAction* connectionFilePickerAction = static_cast<FilePickerAction*>(connectionFileAction);
-        connectionFilePickerAction->setFilePath(_connectionFilePath);
+    const bool setConnectionFilePath = QMetaObject::invokeMethod(
+        jupyterPluginInstance,
+        "setConnectionFilePath",
+        Q_ARG(QString, _connectionFilePath)
+    );
+
+    if (!setConnectionFilePath) {
+        qWarning() << "Failed to invoke JupyterPlugin::setConnectionFilePath";
     }
 
     // Do init python in script mode
@@ -795,12 +799,12 @@ bool JupyterLauncher::initPython(bool activateXeus)
     if (activateXeus) {
         jupyterPluginInstance->init();
 
-        const bool success = QMetaObject::invokeMethod(
+        const bool startedJupyterNotebook = QMetaObject::invokeMethod(
             jupyterPluginInstance,
             "startJupyterNotebook"
         );
 
-        if (!success) {
+        if (!startedJupyterNotebook) {
             qWarning() << "Failed to invoke JupyterPlugin::interpreterPlugin";
         }
     }
