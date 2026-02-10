@@ -816,7 +816,7 @@ bool JupyterLauncher::initPython(bool activateXeus)
 
 void JupyterLauncher::setLaunchTriggersEnabled(bool enabled)
 {
-  auto launchTriggerActions = static_cast<const JupyterLauncherFactory*>(getFactory())->getLaunchTriggersEnabled();
+  auto launchTriggerActions = dynamic_cast<const JupyterLauncherFactory*>(getFactory())->getLaunchTriggersEnabled();
 
   for (TriggerAction* triggerAction : launchTriggerActions)
     triggerAction->setEnabled(enabled);
