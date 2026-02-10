@@ -46,7 +46,7 @@ public:
     Q_INVOKABLE void runScriptWithArgs(const QString& scriptPath, const QStringList& args);
 
 private:
-    std::unique_ptr<XeusKernel>     _xeusKernel = {};
+    std::unique_ptr<XeusKernel>     _xeusKernel;
     mv::gui::FilePickerAction       _connectionFilePath;
     std::unordered_set<std::string> _baseModules = {};
     PyScopedInterpreterPtr          _initGuard = {};
