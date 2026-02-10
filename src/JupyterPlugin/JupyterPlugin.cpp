@@ -53,7 +53,7 @@ JupyterPlugin::~JupyterPlugin()
 void JupyterPlugin::init()
 {  
     // start the interpreter and keep it alive
-    _initGuard = std::make_unique<Py::scoped_interpreter>();
+    _mainPyInterpreter = std::make_unique<Py::scoped_interpreter>();
 }
 
 void JupyterPlugin::startJupyterNotebook() const
@@ -64,8 +64,8 @@ void JupyterPlugin::startJupyterNotebook() const
 void JupyterPlugin::runScriptWithArgs(const QString& scriptPath, const QStringList& args)
 {
     // start the interpreter and keep it alive
-    if (!_initGuard) {
-        _initGuard = std::make_unique<pybind11::scoped_interpreter>();
+    if (!_mainPyInterpreter) {
+        _mainPyInterpreter = std::make_unique<pybind11::scoped_interpreter>();
     }
 
     if (!Py_IsInitialized()) {
