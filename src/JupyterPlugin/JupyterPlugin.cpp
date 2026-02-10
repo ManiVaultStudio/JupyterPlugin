@@ -25,16 +25,16 @@
 
 Q_PLUGIN_METADATA(IID "studio.manivault.JupyterPlugin")
 
-namespace Py = pybind11;
+namespace py = pybind11;
 
-std::unique_ptr<Py::module> JupyterPlugin::mvCommunicationModule = {};
+std::unique_ptr<py::module> JupyterPlugin::mvCommunicationModule = {};
 
 void JupyterPlugin::initMvCommunicationModule() {
     if (mvCommunicationModule) {
         return;
     }
 
-    mvCommunicationModule = std::make_unique<Py::module>(get_MVData_module());
+    mvCommunicationModule = std::make_unique<py::module>(get_MVData_module());
     mvCommunicationModule->doc() = "Provides access to low level ManiVaultStudio core functions";
 }
 
@@ -53,7 +53,7 @@ JupyterPlugin::~JupyterPlugin()
 void JupyterPlugin::init()
 {  
     // start the interpreter and keep it alive
-    _mainPyInterpreter = std::make_unique<Py::scoped_interpreter>();
+    _mainPyInterpreter = std::make_unique<py::scoped_interpreter>();
 }
 
 void JupyterPlugin::startJupyterNotebook() const
@@ -80,13 +80,13 @@ void JupyterPlugin::runScriptWithArgs(const QString& scriptPath, const QStringLi
     const std::string script_code = buffer.str();
 
     // Acquire GIL
-    Py::gil_scoped_acquire acquire;
+    py::gil_scoped_acquire acquire;
 
     try {
 
         // Insert manivault communication module into sys.modules
-        Py::module sys = Py::module::import("sys");
-        Py::dict modules = sys.attr("modules");
+        py::module sys = py::module::import("sys");
+        py::dict modules = sys.attr("modules");
 
         if (!modules.contains("mvstudio_core")) {
             JupyterPlugin::initMvCommunicationModule();
@@ -95,39 +95,39 @@ void JupyterPlugin::runScriptWithArgs(const QString& scriptPath, const QStringLi
 
         if (_baseModules.empty()) {
             for (auto& [key, item] : modules) {
-                std::string name = Py::str(key);
+                std::string name = py::str(key);
                 _baseModules.insert(name);
             }
         }
 
         // Set sys.argv
-        Py::list py_args = Py::list();
-        py_args.append(Py::cast(QFileInfo(scriptPath).fileName().toStdString()));      // add file name
+        py::list py_args = py::list();
+        py_args.append(py::cast(QFileInfo(scriptPath).fileName().toStdString()));      // add file name
         for (const auto& arg : args) {
-            py_args.append(Py::cast(arg.toStdString()));                                // add arguments
+            py_args.append(py::cast(arg.toStdString()));                                // add arguments
         }
         sys.attr("argv") = py_args;
 
         // Execute the script in __main__'s context
-        Py::module_ main_module = Py::module_::import("__main__");
-        Py::object main_namespace = main_module.attr("__dict__");
+        py::module_ main_module = py::module_::import("__main__");
+        py::object main_namespace = main_module.attr("__dict__");
 
-        Py::exec(script_code, main_namespace);
+        py::exec(script_code, main_namespace);
 
         // Run garbage collection
-        Py::module gc = Py::module::import("gc");
+        py::module gc = py::module::import("gc");
         gc.attr("collect")();
 
         // Clean up modules for fresh start
         for (auto& [key, item] : modules) {
-            std::string name = Py::str(key);
+            std::string name = py::str(key);
             if (!_baseModules.contains(name)) {
-                modules.attr("pop")(name, Py::none());
+                modules.attr("pop")(name, py::none());
             }
         }
 
     }
-    catch (const Py::error_already_set& e) {
+    catch (const py::error_already_set& e) {
         const auto err = QStringLiteral("Python error (probably form script): ") + e.what();
         qWarning() << err;
     }
