@@ -2,11 +2,10 @@
 
 #include <ViewPlugin.h>
 
-#include <actions/FilePickerAction.h>
-
 #include <memory>
 #include <unordered_set>
 
+#include <QString>
 #include <QStringList>
 
 #undef slots
@@ -14,10 +13,9 @@
 #include <pybind11/pybind11.h>
 #define slots Q_SLOTS
 
-using namespace mv::plugin;
-using namespace mv::gui;
-
 class XeusKernel;
+using PyScopedInterpreterPtr = std::unique_ptr<pybind11::scoped_interpreter>;
+using PyModulePtr = std::unique_ptr<pybind11::module>;
 
 /**
  * Jupyter plugin class
@@ -27,7 +25,7 @@ class XeusKernel;
  *
  * @authors B. van Lew
  */
-class JupyterPlugin : public ViewPlugin
+class JupyterPlugin : public mv::plugin::ViewPlugin
 {
     Q_OBJECT
 
@@ -37,23 +35,23 @@ public:
      * Constructor
      * @param factory Pointer to the plugin factory
      */
-    JupyterPlugin(const PluginFactory* factory);
+    JupyterPlugin(const mv::plugin::PluginFactory* factory);
     ~JupyterPlugin();
 
     void init() override;
 
+    Q_INVOKABLE void startJupyterNotebook() const;
     Q_INVOKABLE void runScriptWithArgs(const QString& scriptPath, const QStringList& args);
 
-    static std::unique_ptr<pybind11::module> mv_communication_module;
-    static void init_mv_communication_module();
-
 private:
-    std::unique_ptr<XeusKernel>     _pKernel;
-    FilePickerAction                _connectionFilePath;        /** Settings action */
+    std::unique_ptr<XeusKernel>     _xeusKernel = {};
+    QString                         _connectionFilePath = {};
+    std::unordered_set<std::string> _baseModules = {};
+    PyScopedInterpreterPtr          _initGuard = {};
 
-    std::unordered_set<std::string> _base_modules = {};
-
-    std::unique_ptr<pybind11::scoped_interpreter>   _init_guard = {};
+public:
+    static PyModulePtr mvCommunicationModule;
+    static void initMvCommunicationModule();
 };
 
 
@@ -61,7 +59,7 @@ private:
 // Factory
 // =============================================================================
 
-class JupyterPluginFactory : public ViewPluginFactory
+class JupyterPluginFactory : public mv::plugin::ViewPluginFactory
 {
     Q_INTERFACES(mv::plugin::ViewPluginFactory mv::plugin::PluginFactory)
     Q_OBJECT
@@ -69,15 +67,8 @@ class JupyterPluginFactory : public ViewPluginFactory
                       FILE  "PluginInfo.json")
 
 public:
-
-    /** Default constructor */
-    JupyterPluginFactory() = default;
-
-    /** Destructor */
-    ~JupyterPluginFactory() = default;
-    
     /** Creates an instance of the example view plugin */
-    ViewPlugin* produce() override;
+    mv::plugin::ViewPlugin* produce() override;
 
     /** Returns the data types that are supported by the example view plugin */
     mv::DataTypes supportedDataTypes() const override;
