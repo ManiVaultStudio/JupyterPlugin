@@ -65,7 +65,8 @@ void JupyterPlugin::runScriptWithArgs(const QString& scriptPath, const QStringLi
 {
     // start the interpreter and keep it alive
     if (!_mainPyInterpreter) {
-        _mainPyInterpreter = std::make_unique<pybind11::scoped_interpreter>();
+        qWarning() << "JupyterPlugin::runScriptWithArgs: Script not executed - main interpreter does not exist";
+        return;
     }
 
     if (!Py_IsInitialized()) {
