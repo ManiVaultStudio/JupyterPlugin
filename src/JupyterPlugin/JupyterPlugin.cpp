@@ -91,7 +91,7 @@ void JupyterPlugin::runScriptWithArgs(const QString& scriptPath, const QStringLi
 
         if (!modules.contains("mvstudio_core")) {
             JupyterPlugin::initMvCommunicationModule();
-            modules["mvstudio_core"] = *(JupyterPlugin::mvCommunicationModule.get());
+            modules["mvstudio_core"] = *JupyterPlugin::mvCommunicationModule;
         }
 
         if (_baseModules.empty()) {
