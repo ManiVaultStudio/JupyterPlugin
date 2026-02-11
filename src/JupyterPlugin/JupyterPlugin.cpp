@@ -117,7 +117,7 @@ void JupyterPlugin::runScriptWithArgs(const QString& scriptPath, const QStringLi
 
         // Run garbage collection
         py::module gc = py::module::import("gc");
-        gc.attr("collect")();
+        const auto collected = gc.attr("collect")();
 
         // Clean up modules for fresh start
         for (auto& [key, item] : modules) {
