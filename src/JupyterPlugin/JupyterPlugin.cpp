@@ -110,10 +110,10 @@ void JupyterPlugin::runScriptWithArgs(const QString& scriptPath, const QStringLi
         sys.attr("argv") = py_args;
 
         // Execute the script in __main__'s context
-        py::module_ main_module = py::module_::import("__main__");
-        py::object main_namespace = main_module.attr("__dict__");
+        const py::module_ mainModule   = py::module_::import("__main__");
+        const py::object mainNamespace = mainModule.attr("__dict__");
 
-        py::exec(script_code, main_namespace);
+        py::exec(script_code, mainNamespace);
 
         // Run garbage collection
         py::module gc = py::module::import("gc");
