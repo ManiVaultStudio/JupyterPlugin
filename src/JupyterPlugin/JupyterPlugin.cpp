@@ -19,8 +19,8 @@
 #include <pybind11/cast.h>
 #include <pybind11/embed.h>
 #include <pybind11/eval.h>
-#include <pybind11/gil.h>
 #include <pybind11/pybind11.h>
+#include <pybind11/subinterpreter.h>
 #define slots Q_SLOTS
 
 Q_PLUGIN_METADATA(IID "studio.manivault.JupyterPlugin")
@@ -69,6 +69,9 @@ void JupyterPlugin::runScriptWithArgs(const QString& scriptPath, const QStringLi
         return;
     }
 
+    py::subinterpreter sub = py::subinterpreter::create();
+    py::subinterpreter_scoped_activate guard(sub);
+
     if (!Py_IsInitialized()) {
         qWarning() << "JupyterPlugin::runScriptWithArgs: Script not executed - interpreter is not initialized";
         return;
@@ -79,9 +82,6 @@ void JupyterPlugin::runScriptWithArgs(const QString& scriptPath, const QStringLi
     std::stringstream buffer;
     buffer << file.rdbuf();
     const std::string script_code = buffer.str();
-
-    // Acquire GIL
-    py::gil_scoped_acquire acquire;
 
     try {
 
