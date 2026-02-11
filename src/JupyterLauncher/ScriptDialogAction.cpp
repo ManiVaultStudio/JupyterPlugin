@@ -23,14 +23,17 @@
 #include <QStringList>
 #include <QWidget>
 
-inline static QString insertDotAfter3(const QString& v) {
-    QString temp = v;
-    temp.insert(1, ".");
-    return temp;
+namespace
+{
+    QString insertDotAtPos(const QString& v, const qsizetype pos) {
+        QString temp = v;
+        temp.insert(pos, ".");
+        return temp;
+    }
 }
 
 PythonScript::PythonScript(const QString& title, const Type& type, const QString& location, const QString& interpreterVersion, const QJsonObject& json, JupyterLauncher* launcher, QObject* parent) :
-    Script(title, type, Language::Python, mv::util::Version(insertDotAfter3(interpreterVersion)), location, parent),
+    Script(title, type, Language::Python, mv::util::Version(insertDotAtPos(interpreterVersion, 1)), location, parent),
     _dialog(nullptr, json, location, interpreterVersion, launcher)
 {
 
@@ -39,11 +42,9 @@ PythonScript::PythonScript(const QString& title, const Type& type, const QString
 ScriptDialog::ScriptDialog(QWidget* parent, const QJsonObject& json, const QString& scriptPath, const QString& interpreterVersion, JupyterLauncher* launcher) :
     QDialog(parent),
     _okButton(this, "Run script"),
-    _argumentActions(),
     _interpreterVersion(interpreterVersion),
     _scriptPath(scriptPath),
     _json(json),
-    _argumentMap(),
     _launcherPlugin(launcher)
 {
     setWindowTitle(json["name"].toString());
@@ -135,7 +136,7 @@ void ScriptDialog::populateDialog()
             }
             else if (type == "str") {
                 auto widgetAction = _argumentActions.emplace_back(new mv::gui::StringAction(this, name));
-                auto stringAction = static_cast<mv::gui::StringAction*>(widgetAction);
+                auto stringAction = dynamic_cast<mv::gui::StringAction*>(widgetAction);
                 layout->addWidget(widgetAction->createLabelWidget(this), ++row, 0, 1, 1);
                 layout->addWidget(widgetAction->createWidget(this), row, 1, 1, -1);
 
@@ -146,7 +147,7 @@ void ScriptDialog::populateDialog()
             }
             else if (type == "float") {
                 auto widgetAction = _argumentActions.emplace_back(new mv::gui::DecimalAction(this, name));
-                auto decimalAction = static_cast<mv::gui::DecimalAction*>(widgetAction);
+                auto decimalAction = dynamic_cast<mv::gui::DecimalAction*>(widgetAction);
 
                 layout->addWidget(widgetAction->createLabelWidget(this), ++row, 0, 1, 1);
                 layout->addWidget(decimalAction->createWidget(this), row, 1, 1, -1);

@@ -28,12 +28,12 @@ private:
 
 private:
     mv::gui::TriggerAction                  _okButton;
-    std::vector<mv::gui::WidgetAction*>     _argumentActions;
+    std::vector<mv::gui::WidgetAction*>     _argumentActions = {};
 
-    QString                                 _interpreterVersion;
-    QString                                 _scriptPath;
-    QJsonObject                             _json;
-    std::unordered_map<QString, QString>    _argumentMap;
+    QString                                 _interpreterVersion = {};
+    QString                                 _scriptPath = {};
+    QJsonObject                             _json = {};
+    std::unordered_map<QString, QString>    _argumentMap = {};
 
     JupyterLauncher*                        _launcherPlugin = nullptr;
 };
