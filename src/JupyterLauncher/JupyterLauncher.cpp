@@ -796,10 +796,10 @@ JupyterLauncherFactory::JupyterLauncherFactory() :
     setIcon(QIcon(":/images/logo.svg"));
     setMaximumNumberOfInstances(1);
 
-    for (const auto& tutorialFile : list_tutorial_files("tutorials/JupyterLauncher")) {
-      if (insert_md_into_json(tutorialFile)) {
+    for (const auto& tutorialFile : listTutorialFiles("tutorials/JupyterLauncher")) {
+      if (insertMarkdownIntoJson(tutorialFile)) {
 
-        if (auto tutorialJson = readJSON(tutorialFile)) {
+        if (auto tutorialJson = readJson(tutorialFile)) {
           mv::help().addTutorial(new util::LearningCenterTutorial(tutorialJson.value()["tutorials"].toArray().first().toObject().toVariantMap()));
         }
 

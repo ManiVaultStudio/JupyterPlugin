@@ -21,55 +21,59 @@
 #include <md4qt/parser.h>
 #include <md4qt/html.h>
 
-static bool save_html_to_file(const QString& filePath, const QString& htmlContent) {
-    QFile file(filePath);
-    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-        qWarning() << "Failed to open file for writing:" << file.errorString();
-        return false;
+namespace
+{
+
+    bool saveHtmlToFile(const QString& filePath, const QString& htmlContent) {
+        QFile file(filePath);
+        if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+            qWarning() << "Failed to open file for writing:" << file.errorString();
+            return false;
+        }
+
+        QTextStream out(&file);
+        out.setEncoding(QStringConverter::Utf8);
+        out << htmlContent;
+        file.close();
+
+        return true;
     }
 
-    QTextStream out(&file);
-    out.setEncoding(QStringConverter::Utf8);
-    out << htmlContent;
-    file.close();
+    std::optional<QString> convertMarkdownToHtmlImpl(const QString& path_md_in) {
+        if (!QFile::exists(path_md_in)) {
+            qWarning() << "Input Markdown file does not exist:" << path_md_in;
+            return {};
+        }
 
-    return true;
+        MD::Parser<MD::QStringTrait> parser;
+        const auto doc = parser.parse(path_md_in);
+
+        if (doc->isEmpty()) {
+            qWarning() << "Parsed Markdown document is empty or invalid.";
+            return {};
+        }
+
+        return MD::toHtml(doc,
+            /*wrapInBodyTag*/ false,
+            /*hrefForRefBackImage*/{},
+            /*wrapInArticle*/ false);
+    }
 }
 
-static std::optional<QString> _convert_md_to_html_impl(const QString& path_md_in) {
-    if (!QFile::exists(path_md_in)) {
-        qWarning() << "Input Markdown file does not exist:" << path_md_in;
-        return {};
-    }
+bool convertMarkdownToHtml(const QString& pathInMarkdown, const QString& pathOutHtml) {
 
-    MD::Parser<MD::QStringTrait> parser;
-    auto doc = parser.parse(path_md_in);
-
-    if (doc->isEmpty()) {
-        qWarning() << "Parsed Markdown document is empty or invalid.";
-        return {};
-    }
-
-    return MD::toHtml(doc,
-        /*wrapInBodyTag*/ false,
-        /*hrefForRefBackImage*/{},
-        /*wrapInArticle*/ false);
-}
-
-bool convert_md_to_html(const QString& path_md_in, const QString& path_html_out) {
-
-    auto html = _convert_md_to_html_impl(path_md_in);
+    const auto html = convertMarkdownToHtmlImpl(pathInMarkdown);
 
     if (!html.has_value()) {
         qWarning() << "Could not convert html to Markdown";
         return false;
     }
 
-    return save_html_to_file(path_html_out, html.value());
+    return saveHtmlToFile(pathOutHtml, html.value());
 }
 
-QString convert_md_to_html(const QString& path_md_in) {
-    auto html = _convert_md_to_html_impl(path_md_in);
+QString convertMarkdownToHtml(const QString& pathInMarkdown) {
+    auto html = convertMarkdownToHtmlImpl(pathInMarkdown);
 
     if (!html.has_value()) {
         qWarning() << "Could not convert html to Markdown";
@@ -79,11 +83,10 @@ QString convert_md_to_html(const QString& path_md_in) {
     return html.value();
 }
 
-std::vector<QString> list_tutorial_files(const QString& path_json) {
-    const QDir applicationDir(QCoreApplication::applicationDirPath());
-
+std::vector<QString> listTutorialFiles(const QString& subDir) {
     // Navigate to "tutorials" subdirectory
-    QDir tutorialsDir(applicationDir.filePath(path_json));
+    const auto applicationDir = QDir(QCoreApplication::applicationDirPath());
+	const auto tutorialsDir = QDir(applicationDir.filePath(subDir));
 
     if (!tutorialsDir.exists()) {
         qWarning() << "Tutorials folder does not exist:" << tutorialsDir.absolutePath();

@@ -1,6 +1,7 @@
 #include "GlobalSettingsAction.h"
 
 #include "JupyterLauncher.h"
+#include "PythonUtils.h"
 
 #include <QHBoxLayout>
 #include <QOperatingSystemVersion>

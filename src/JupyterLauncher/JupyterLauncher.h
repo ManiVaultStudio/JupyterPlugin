@@ -24,21 +24,6 @@
 using namespace mv::plugin;
 using namespace mv::gui;
 
-inline QStringList pythonInterpreterFilters()
-{
-    QStringList pythonFilter = {};
-    if (QOperatingSystemVersion::currentType() == QOperatingSystemVersion::Windows)
-        pythonFilter = { "Python interpreter (python*.exe)" };
-    else
-        pythonFilter = { "Python interpreter (python*)" };
-
-    return pythonFilter;
-}
-
-std::pair<bool, QString> isCondaEnvironmentActive();
-
-QString getPythonVersion(const QString& pythonInterpreterPath);
-
 /**
  * Transitive JupyterPlugin Loader
  *

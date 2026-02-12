@@ -1,6 +1,7 @@
 #include "UserDialogActions.h"
 
 #include "JupyterLauncher.h"
+#include "PythonUtils.h"
 
 #include <QOperatingSystemVersion>
 #include <QWidget>

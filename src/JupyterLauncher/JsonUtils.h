@@ -18,10 +18,10 @@ inline bool containsMemberDouble(const QJsonObject& json, const QString& entry) 
     return json.contains(entry) && json[entry].isDouble();
 }
 
-std::optional<QJsonObject> readJSON(const QString& path_json);
+std::optional<QJsonObject> readJson(const QString& pathJson);
 
 std::vector<QString> readStringArray(const QJsonObject& json, const QString& entry);
 
-bool replace_json_entry(const QString& path_json, const QString& array_name, const QString& entry_name, const QString& new_text);
+bool replaceJsonEntry(const QString& pathJson, const QString& arrayName, const QString& entryName, const QString& newText);
 
-bool insert_md_into_json(const QString& path_json);
+bool insertMarkdownIntoJson(const QString& pathJson);

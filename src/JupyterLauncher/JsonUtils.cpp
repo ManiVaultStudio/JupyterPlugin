@@ -14,8 +14,8 @@
 #include <QFile>
 #include <QFileInfo>
 
-std::optional<QJsonObject> readJSON(const QString& path_json) {
-    QFile file(path_json);
+std::optional<QJsonObject> readJson(const QString& pathJson) {
+    QFile file(pathJson);
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
         qWarning() << "Failed to open file for reading:" << file.errorString();
         return std::nullopt;
@@ -34,18 +34,18 @@ std::optional<QJsonObject> readJSON(const QString& path_json) {
     return doc.object();
 }
 
-bool replace_json_entry(const QString& path_json, const QString& array_name, const QString& entry_name, const QString& new_text) {
-    QFile file(path_json);
+bool replaceJsonEntry(const QString& pathJson, const QString& arrayName, const QString& entryName, const QString& newText) {
+    QFile file(pathJson);
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
         qWarning() << "Failed to open file for reading:" << file.errorString();
         return false;
     }
 
-    QByteArray data = file.readAll();
+    const QByteArray data = file.readAll();
     file.close();
 
     QJsonParseError parseError;
-    QJsonDocument doc = QJsonDocument::fromJson(data, &parseError);
+    const QJsonDocument doc = QJsonDocument::fromJson(data, &parseError);
     if (parseError.error != QJsonParseError::NoError || !doc.isObject()) {
         qWarning() << "Failed to parse JSON:" << parseError.errorString();
         return false;
@@ -53,24 +53,24 @@ bool replace_json_entry(const QString& path_json, const QString& array_name, con
 
     QJsonObject rootObj = doc.object();
 
-    if (!containsMemberArray(rootObj, array_name)) {
-        qWarning() << "Failed to handle json: Does not include array named " << array_name;
+    if (!containsMemberArray(rootObj, arrayName)) {
+        qWarning() << "Failed to handle json: Does not include array named " << arrayName;
         return false;
     }
 
-    QJsonArray jArray = rootObj.value(array_name).toArray();
+    QJsonArray jArray = rootObj.value(arrayName).toArray();
 
     if (!jArray.isEmpty() && jArray[0].isObject()) {
         QJsonObject itemObj = jArray[0].toObject();
 
-        if (!containsMemberString(itemObj, entry_name)) {
-            qWarning() << "Failed to handle json: Does not include entry named " << entry_name;
+        if (!containsMemberString(itemObj, entryName)) {
+            qWarning() << "Failed to handle json: Does not include entry named " << entryName;
             return false;
         }
 
-        itemObj[entry_name] = new_text;     // Replace PLACEHOLDER
+        itemObj[entryName] = newText;     // Replace PLACEHOLDER
         jArray[0] = itemObj;                // Update array
-        rootObj[array_name] = jArray;       // Update root
+        rootObj[arrayName] = jArray;       // Update root
     }
     else {
         qWarning() << "JSON format is unexpected.";
@@ -83,7 +83,7 @@ bool replace_json_entry(const QString& path_json, const QString& array_name, con
         return false;
     }
 
-    QJsonDocument outDoc(rootObj);
+    const QJsonDocument outDoc(rootObj);
     file.write(outDoc.toJson(QJsonDocument::Indented));
     file.close();
 
@@ -106,95 +106,98 @@ std::vector<QString> readStringArray(const QJsonObject& json, const QString& ent
     return res;
 }
 
-static QString generateIdFromText(const QString& text) {
-    // 1. Convert to lowercase
-    QString id = text.toLower();
+namespace
+{
+    QString generateIdFromText(const QString& text) {
+        // 1. Convert to lowercase
+        QString id = text.toLower();
 
-    // 2. Remove any HTML tags that might be in the header text
-    id.remove(QRegularExpression("<[^>]*>"));
+        // 2. Remove any HTML tags that might be in the header text
+        id.remove(QRegularExpression("<[^>]*>"));
 
-    // 3. Replace whitespace sequences with a single hyphen
-    id = id.replace(QRegularExpression(R"(\s+)"), "-");
+        // 3. Replace whitespace sequences with a single hyphen
+        id = id.replace(QRegularExpression(R"(\s+)"), "-");
 
-    // 4. Remove all characters that are not lowercase letters, numbers, or hyphens
-    id = id.remove(QRegularExpression(R"([^a-z0-9\-])"));
+        // 4. Remove all characters that are not lowercase letters, numbers, or hyphens
+        id = id.remove(QRegularExpression(R"([^a-z0-9\-])"));
 
-    // 5. Collapse multiple hyphens into one (e.g., "a---b" -> "a-b")
-    id = id.replace(QRegularExpression(R"(-{2,})"), "-");
+        // 5. Collapse multiple hyphens into one (e.g., "a---b" -> "a-b")
+        id = id.replace(QRegularExpression(R"(-{2,})"), "-");
 
-    // 6. Remove leading or trailing hyphens
-    id = id.remove(QRegularExpression(R"(^-|-$)"));
+        // 6. Remove leading or trailing hyphens
+        id = id.remove(QRegularExpression(R"(^-|-$)"));
 
-    return id;
-}
-
-static QString replaceHeaderIdsWithText(const QString& htmlInput) {
-    QString result;
-    int lastPos = 0;
-
-    // This regex captures the essential parts of a header tag:
-    // 1: The header level (1-6)
-    // 2: The existing attributes (like class="...")
-    // 3: The header's text content
-    QRegularExpression headerRegex(R"(<h([1-6])([^>]*)>(.*?)<\/h\1>)");
-    // Use the DotMatchesEverythingOption to correctly handle multi-line headers
-    headerRegex.setPatternOptions(QRegularExpression::DotMatchesEverythingOption);
-
-    QRegularExpressionMatchIterator it = headerRegex.globalMatch(htmlInput);
-
-    while (it.hasNext()) {
-        QRegularExpressionMatch match = it.next();
-
-        // Append the content between the previous header and this one
-        result.append(htmlInput.mid(lastPos, match.capturedStart() - lastPos));
-
-        QString level = match.captured(1);
-        QString attributes = match.captured(2);
-        QString content = match.captured(3);
-
-        // Generate the new ID from the header's text content
-        QString newId = generateIdFromText(content);
-
-        // Remove any old 'id' attribute from the attributes string
-        attributes.remove(QRegularExpression(R"(\s+id="[^"]*")"));
-
-        // Build the new header tag
-        result.append(QString("<h%1").arg(level)); // <h2
-        result.append(attributes);                // class="foo"
-        if (!newId.isEmpty()) {
-            result.append(QString(" id=\"%1\"").arg(newId)); // id="my-header"
-        }
-        result.append(">");                       // >
-        result.append(content);                   // My Header
-        result.append(QString("</h%1>").arg(level)); // </h2>
-
-        // Update our position in the string
-        lastPos = match.capturedEnd();
+        return id;
     }
 
-    // Append any remaining text after the last header
-    result.append(htmlInput.mid(lastPos));
+    QString replaceHeaderIdsWithText(const QString& htmlInput) {
+        QString result;
+        int lastPos = 0;
 
-    return result;
+        // This regex captures the essential parts of a header tag:
+        // 1: The header level (1-6)
+        // 2: The existing attributes (like class="...")
+        // 3: The header's text content
+        QRegularExpression headerRegex(R"(<h([1-6])([^>]*)>(.*?)<\/h\1>)");
+        // Use the DotMatchesEverythingOption to correctly handle multi-line headers
+        headerRegex.setPatternOptions(QRegularExpression::DotMatchesEverythingOption);
+
+        QRegularExpressionMatchIterator it = headerRegex.globalMatch(htmlInput);
+
+        while (it.hasNext()) {
+            QRegularExpressionMatch match = it.next();
+
+            // Append the content between the previous header and this one
+            result.append(htmlInput.mid(lastPos, match.capturedStart() - lastPos));
+
+            QString level = match.captured(1);
+            QString attributes = match.captured(2);
+            QString content = match.captured(3);
+
+            // Generate the new ID from the header's text content
+            QString newId = generateIdFromText(content);
+
+            // Remove any old 'id' attribute from the attributes string
+            attributes.remove(QRegularExpression(R"(\s+id="[^"]*")"));
+
+            // Build the new header tag
+            result.append(QString("<h%1").arg(level)); // <h2
+            result.append(attributes);                // class="foo"
+            if (!newId.isEmpty()) {
+                result.append(QString(" id=\"%1\"").arg(newId)); // id="my-header"
+            }
+            result.append(">");                       // >
+            result.append(content);                   // My Header
+            result.append(QString("</h%1>").arg(level)); // </h2>
+
+            // Update our position in the string
+            lastPos = static_cast<int>(match.capturedEnd());
+        }
+
+        // Append any remaining text after the last header
+        result.append(htmlInput.mid(lastPos));
+
+        return result;
+    }
 }
 
-bool insert_md_into_json(const QString& path_json) {
+bool insertMarkdownIntoJson(const QString& pathJson) {
 
-    if (!path_json.endsWith(".json", Qt::CaseInsensitive)) {
+    if (!pathJson.endsWith(".json", Qt::CaseInsensitive)) {
         return false;
     }
 
-    QFileInfo path_json_info(path_json);
-    QString path_md = path_json_info.path() + "/" + path_json_info.completeBaseName() + ".md";
-    QString path_assets = path_json_info.path() + "/assets";
+    const auto pathJsonInfo = QFileInfo (pathJson);
+    const QString pathMarkdown = pathJsonInfo.path() + "/" + pathJsonInfo.completeBaseName() + ".md";
+    const QString pathAssets = pathJsonInfo.path() + "/assets";
 
-    QString html = convert_md_to_html(path_md);
+    QString html = convertMarkdownToHtml(pathMarkdown);
 
     // replace filename in ids
     html = replaceHeaderIdsWithText(html);
 
     // ensure all local assets are prefixed correctly
-    QRegularExpression re(R"(<img\s+src\s*=\s*["'](?!file://)([^"']+)["'])", QRegularExpression::CaseInsensitiveOption);
+    const QRegularExpression re(R"(<img\s+src\s*=\s*["'](?!file://)([^"']+)["'])", QRegularExpression::CaseInsensitiveOption);
     html.replace(re, R"(<img src=")" + QStringLiteral("file://") + R"(\1")");
 
     // replace and remove some characters to insert the entire html as a single line entry in json
@@ -202,10 +205,10 @@ bool insert_md_into_json(const QString& path_json) {
     html.remove('\n');
     html.remove('\r');
 
-    if (!replace_json_entry(path_json, "tutorials", "url", QUrl::fromLocalFile(path_assets).toString()))
+    if (!replaceJsonEntry(pathJson, "tutorials", "url", QUrl::fromLocalFile(pathAssets).toString()))
         return false;
 
-    if (!replace_json_entry(path_json, "tutorials", "fullpost", html))
+    if (!replaceJsonEntry(pathJson, "tutorials", "fullpost", html))
         return false;
 
     return true;

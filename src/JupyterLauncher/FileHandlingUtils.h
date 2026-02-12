@@ -6,11 +6,11 @@
 #include <QJsonObject>
 #include <QString>
 
-bool convert_md_to_html(const QString& path_md_in, const QString& path_md_out);
+bool convertMarkdownToHtml(const QString& pathInMarkdown, const QString& pathOutHtml);
 
-QString convert_md_to_html(const QString& path_md_in);
+QString convertMarkdownToHtml(const QString& pathInMarkdown);
 
-std::vector<QString> list_tutorial_files(const QString& subDir);
+std::vector<QString> listTutorialFiles(const QString& subDir);
 
 bool loadDynamicLibrary(const QFileInfo& pythonLibrary);
 

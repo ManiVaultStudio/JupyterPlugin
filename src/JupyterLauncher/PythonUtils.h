@@ -1,6 +1,8 @@
 #pragma once
 
 #include <QString>
+#include <QStringList>
+#include <QOperatingSystemVersion>
 
 QString extractRegex(const QString& input, const QString& pattern, int group = 1);
 
@@ -17,6 +19,17 @@ inline QString extractPatchVersionNumber(const QString& input) {
 }
 
 QString getPythonVersion(const QString& pythonInterpreterPath);
+
+inline QStringList pythonInterpreterFilters()
+{
+    QStringList pythonFilter = {};
+    if (QOperatingSystemVersion::currentType() == QOperatingSystemVersion::Windows)
+        pythonFilter = { "Python interpreter (python*.exe)" };
+    else
+        pythonFilter = { "Python interpreter (python*)" };
+
+    return pythonFilter;
+}
 
 // Helps to distinguish between python in a regular or conda directory and python in a venv
 std::pair<bool, QString> getPythonHomePath(const QString& pyInterpreterPath);
