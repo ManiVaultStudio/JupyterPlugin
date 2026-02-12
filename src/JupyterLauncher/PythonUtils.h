@@ -17,3 +17,12 @@ inline QString extractPatchVersionNumber(const QString& input) {
 }
 
 QString getPythonVersion(const QString& pythonInterpreterPath);
+
+// Helps to distinguish between python in a regular or conda directory and python in a venv
+std::pair<bool, QString> getPythonHomePath(const QString& pyInterpreterPath);
+
+void setPythonEnv(const QString& interpreterPath, const QString& interpreterVersion, const QString& connectionFilePath);
+
+std::pair<bool, QString> isCondaEnvironmentActive();
+
+QString createKernelDir();

@@ -67,11 +67,6 @@ public:
     /** This function is called by the core after the view plugin has been created */
     void init() override;
 
-    // TBD
-    bool validatePythonEnvironment() {
-        return true;
-    }
-
     // The pyversion should correspond to a python major.minor version
     // e.g. "3.11", "3.12"
     // There  must be a JupyterPlugin (a kernel provider) that matches the python version for this to work.
@@ -99,24 +94,22 @@ public: // Global settings
 public: // Call python
     // TBD merge the two runPythonScript signatures
     /** Run a python script from the resources return the exit code and stderr and stdout */
-    static int runPythonScript(const QString& scriptName, QString& sout, QString& serr, const QStringList& params = {});
+    static int runPythonScript(const QString& scriptName, QString& out, QString& err, const QStringList& params = {});
     static bool runPythonCommand(const QStringList& params, bool verbose = true);
 
-    bool runScriptInKernel(const QString& scriptPath, QString interpreterVersion, const QStringList& params = {});
+    bool runScriptInKernel(const QString& scriptPath, const QString& interpreterVersion, const QStringList& params = {});
 
 private:
-    void jupyterServerError(QProcess::ProcessError error);
-    void jupyterServerFinished(int exitCode, QProcess::ExitStatus exitStatus);
-    void jupyterServerStateChanged(QProcess::ProcessState newState);
-    void jupyterServerStarted();
-    void shutdownJupyterServer();
+    void jupyterServerError(const QProcess::ProcessError& error) const;
+    void jupyterServerFinished(const int exitCode, const QProcess::ExitStatus& exitStatus) const;
+    void jupyterServerStateChanged(const QProcess::ProcessState& newState) const;
+    void jupyterServerStarted() const;
+    void shutdownJupyterServer() const;
 
 private:
-    void setPythonEnv();
-    bool installKernel();
-    bool optionallyInstallMVWheel();
-    bool initLauncher(const QString& version, int mode);
-    bool initPython(bool activateXeus = true);
+    bool ensureMvWheelIsInstalled() const;
+    bool initLauncher(const QString& version, const int mode);
+    bool initPython(const bool activateXeus = true);
 
     bool checkPythonVersion();
 
@@ -124,13 +117,10 @@ private:
 
     void logProcessOutput();
 
-    // Distinguish between python in a regular or conda directory and python in a venv
-    std::pair<bool, QString> getPythonHomePath(const QString& pyInterpreterPath);
-    
     void createPythonPluginAndStartNotebook();
     void addPythonScripts();
 
-    void setLaunchTriggersEnabled(bool enabled);
+    void setLaunchTriggersEnabled(bool const enabled) const;
 
 private:
     QString                         _connectionFilePath = {};
@@ -190,7 +180,7 @@ public:
     mv::DataTypes supportedDataTypes() const override;
 
 public:
-  std::vector<TriggerAction*> getLaunchTriggersEnabled() const { return _launchTriggerActions; };
+	std::vector<TriggerAction*> getLaunchTriggersEnabled() const { return _launchTriggerActions; };
 
 private:
     PluginStatusBarAction*  _statusBarAction;               /** For global action in a status bar */

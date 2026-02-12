@@ -1,7 +1,11 @@
 #include "PythonUtils.h"
 
+#include <QDir>
+#include <QFileInfo>
 #include <QProcess>
+#include <QOperatingSystemVersion>
 #include <QRegularExpression>
+#include <QTemporaryDir>
 
 QString extractRegex(const QString& input, const QString& pattern, int group) {
     const QRegularExpression regex(pattern);
@@ -32,4 +36,130 @@ QString getPythonVersion(const QString& pythonInterpreterPath)
     }
 
     return extractVersionNumber(output);
+}
+
+std::pair<bool, QString> getPythonHomePath(const QString& pyInterpreterPath)
+{
+    // check if the last 
+    const auto pyInterpreterInfo = QFileInfo(QDir::toNativeSeparators(pyInterpreterPath));
+    QDir pyInterpreterParent     = pyInterpreterInfo.dir();
+    QString pyHomePath           = pyInterpreterParent.absolutePath();
+    bool isVenv                  = false;
+
+    //In a venv python sits in a Script or bin dir dependent on os
+    QString venvParent = "";
+    if constexpr (QOperatingSystemVersion::currentType() == QOperatingSystemVersion::Windows)
+        venvParent = "Scripts";
+    else
+        venvParent = "bin";
+
+    // A Script/bin and a pyvenv.cfg in the dir above indicate a venv so take the parent
+    if (pyInterpreterParent.dirName() == venvParent)
+    {
+        pyInterpreterParent.cdUp();
+        if (pyInterpreterParent.exists("pyvenv.cfg"))
+        {
+            pyHomePath = pyInterpreterParent.absolutePath();
+            isVenv = true;
+        }
+    }
+
+    if (pyHomePath.endsWith("bin"))
+        pyHomePath = pyHomePath.chopped(3); // Removes the last 3 characters ("bin")
+
+    return { isVenv, QDir::toNativeSeparators(pyHomePath) };
+}
+
+// Emulate the environment changes from a venv activate script
+// https://docs.python.org/3/library/venv.html
+// https://docs.python.org/3/using/cmdline.html#envvar-PYTHONHOME
+// https://docs.python.org/3/using/cmdline.html#envvar-PYTHONPATH
+void setPythonEnv(const QString& interpreterPath, const QString& interpreterVersion, const QString& connectionFilePath)
+{
+    auto [isVenv, pythonPath] = getPythonHomePath(interpreterPath);
+
+    if (isVenv) // contains "pyvenv.cfg"
+        qputenv("VIRTUAL_ENV", pythonPath.toUtf8());
+    else  // contains python interpreter executable
+        qputenv("PYTHONHOME", pythonPath.toUtf8());
+
+    if constexpr (QOperatingSystemVersion::currentType() == QOperatingSystemVersion::Windows) {
+        pythonPath += "/Lib/site-packages";
+    }
+    else {
+        if (pythonPath.endsWith("bin"))
+            pythonPath = pythonPath.chopped(3); // Removes the last 3 characters ("bin")
+
+        if (pythonPath.endsWith("/"))
+            pythonPath = pythonPath.chopped(1);
+
+        QString pythonVersion = "python" + QString(interpreterVersion);
+
+        // PREFIX is something like -> /home/USER/miniconda3/envs/ENV_NAME
+        // pythonPath -> "PREFIX/lib:PREFIX/lib/python3.11:PREFIX/lib/python3.11/site-packages"
+        pythonPath = pythonPath + "/lib" + ":" +
+            pythonPath + "/lib/" + pythonVersion + ":" +
+            pythonPath + "/lib/" + pythonVersion + "/site-packages";
+    }
+
+    // Path to folder with installed packages
+    // PYTHONPATH is essential for xeus interpreter to load as the xeus_python_shell
+    qputenv("PYTHONPATH", QDir::toNativeSeparators(pythonPath).toUtf8());
+
+    // In order to run python -m jupyter lab and access the MANIVAULT_JUPYTERPLUGIN_CONNECTION_FILE 
+    // the env variable must be set in the current process.
+    // Setting it in the child QProcess does not work for reasons that are unclear.
+    qputenv("MANIVAULT_JUPYTERPLUGIN_CONNECTION_FILE", connectionFilePath.toUtf8());
+}
+
+std::pair<bool, QString> isCondaEnvironmentActive()
+{
+    if (!qEnvironmentVariableIsSet("CONDA_PREFIX"))
+        return { false, "" };
+
+    QString pythonInterpreterPath = QString::fromLocal8Bit(qgetenv("CONDA_PREFIX"));
+
+    if constexpr (QOperatingSystemVersion::currentType() == QOperatingSystemVersion::Windows)
+        pythonInterpreterPath += "/Scripts/python.exe";
+    else // Linux/macOS
+        pythonInterpreterPath += "/bin/python3";
+
+    const QString givenInterpreterVersion = getPythonVersion(pythonInterpreterPath);
+
+    if (givenInterpreterVersion.isEmpty())
+        return { false, "" };
+
+    return { true, givenInterpreterVersion.trimmed() };
+}
+
+QString createKernelDir()
+{
+    // 1. Create a marshalling directory with the correct kernel name "ManiVaultStudio"
+    const auto tempDir  = QTemporaryDir();
+    auto kernelDir      = QDir(tempDir.path());
+    [[maybe_unused]] const bool kernelDirSuccess = kernelDir.mkdir("ManiVaultStudio");
+    kernelDir.cd("ManiVaultStudio");
+
+    // 2. Unpack the kernel files from the resources into the marshalling directory 
+    const QDir directory(":/kernel-files/");
+    const QStringList kernelList = directory.entryList(QStringList({ "*.*" }));
+    for (const QString& a : kernelList) {
+        QByteArray scriptContent;
+        auto kernFile = QFile(QString(":/kernel-files/") + a);
+        if (kernFile.open(QFile::ReadOnly)) {
+            scriptContent = kernFile.readAll();
+            kernFile.close();
+        }
+
+        QString newFilePath = kernelDir.absoluteFilePath(a);
+        QFile newFile(newFilePath);
+        qDebug() << "Kernel file: " << newFilePath;
+        if (newFile.open(QIODevice::WriteOnly)) {
+            newFile.write(scriptContent);
+            newFile.close();
+        }
+    }
+
+    // 3. Install the ManiVaultStudio kernel for the current user 
+    return kernelDir.absolutePath();
 }
