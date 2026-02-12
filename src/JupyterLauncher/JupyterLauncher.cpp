@@ -2,7 +2,10 @@
 
 #include "GlobalSettingsAction.h"
 #include "ScriptDialogAction.h"
-#include "Utils.h"
+
+#include "FileHandlingUtils.h"
+#include "JsonUtils.h"
+#include "PythonUtils.h"
 
 #include <Application.h>
 #include <CoreInterface.h>
@@ -15,7 +18,6 @@
 #include <QByteArray>
 #include <QDebug>
 #include <QDir>
-#include <QDirIterator>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -26,10 +28,6 @@
 #include <QOperatingSystemVersion>
 #include <QPluginLoader>
 #include <QProcess>
-#include <QProcessEnvironment>
-#include <QRegularExpression>
-#include <QRegularExpressionMatch>
-#include <QStatusBar>
 #include <QStringList>
 #include <QTemporaryDir>
 #include <QTemporaryFile>
@@ -41,101 +39,9 @@
 #include <iostream>
 #include <stdexcept>
 
-#ifdef WIN32
-#define NOMINMAX
-#include <windows.h>
-#endif
-
 using namespace mv;
 
 Q_PLUGIN_METADATA(IID "studio.manivault.JupyterLauncher")
-
-static inline bool loadDynamicLibrary(const QFileInfo& pythonLibrary)
-{
-#ifdef WIN32
-    // Adds a directory to the search path used to locate DLLs for the application.
-    return SetDllDirectoryA(QString(pythonLibrary.dir().absolutePath() + "/").toUtf8().data());
-#else
-    // This approach seems cleaner but does not work on Windows
-    QString sharedLibFilePath   = pythonLibrary.absoluteFilePath();
-
-    qDebug() << "Using python shared library at: " << sharedLibFilePath;
-    if (!QLibrary::isLibrary(sharedLibFilePath))
-        qWarning() << "Not a library: " << sharedLibFilePath;
-
-    QLibrary lib(sharedLibFilePath);
-    return lib.load();
-#endif
-}
-
-static QStringList findLibraryFiles(const QString &folderPath) {
-    QStringList libraryFiles;
-    QDirIterator it(folderPath, QDir::Files);
-
-    while (it.hasNext()) {
-        QString filePath = it.next();
-        qDebug() << "current: " << filePath;
-        if (QFileInfo(filePath).fileName().contains("JupyterPlugin3") && QLibrary::isLibrary(filePath)) {
-            libraryFiles.append(filePath);
-        }
-    }
-
-    return libraryFiles;
-}
-
-static QString extractSingleNumber(const QString &input) {
-    QRegularExpression regex(R"(\d+)");
-    QRegularExpressionMatch match = regex.match(input);
-
-    if (match.hasMatch()) {
-        return match.captured(0); // Return the matched number
-    }
-
-    return QString();
-}
-
-static QString extractRegex(const QString& input, const QString& pattern, int group = 1) {
-    QRegularExpression regex(pattern);
-    QRegularExpressionMatch match = regex.match(input);
-
-    if (match.hasMatch()) {
-        return match.captured(group); // Return the matched number
-    }
-
-    return QString();
-}
-
-static QString extractVersionNumber(const QString& input) {
-    return extractRegex(input, R"(Python\s+(\d+\.\d+.\d+))");
-}
-
-static QString extractShortVersionNumber(const QString& input) {
-    return extractRegex(input, R"(^(\d+\.\d+))");
-}
-
-static QString extractPatchVersionNumber(const QString& input) {
-    return extractRegex(input, R"(^\d+\.\d+\.(\d+)$)");
-}
-
-QString getPythonVersion(const QString& pythonInterpreterPath)
-{
-    QProcess process;
-    process.setProgram(pythonInterpreterPath);
-    process.setArguments({"--version"});
-    process.start();
-    
-    if (!process.waitForFinished(3000)) {  // Timeout after 3 seconds
-        qWarning() << "Failed to get Python version";
-        return "";
-    }
-
-    QString output = process.readAllStandardOutput().trimmed();
-    if (output.isEmpty()) {
-        output = process.readAllStandardError().trimmed();  // Some Python versions print to stderr
-    }
-
-    return extractVersionNumber(output);
-}
 
 // =============================================================================
 // JupyterLauncher
@@ -149,8 +55,8 @@ JupyterLauncher::JupyterLauncher(const PluginFactory* factory) :
 {
     setObjectName("Jupyter kernel plugin launcher");
 
-    QDir temporaryApplicationDirectory = Application::current()->getTemporaryDir().path();
-    QDir temporaryPluginDirectory = QDir(temporaryApplicationDirectory.absolutePath() + QDir::separator() + "JupyterLauncher");
+    const QDir temporaryApplicationDirectory = Application::current()->getTemporaryDir().path();
+    const auto temporaryPluginDirectory = QDir(temporaryApplicationDirectory.absolutePath() + QDir::separator() + "JupyterLauncher");
     if (!temporaryPluginDirectory.exists())
         temporaryPluginDirectory.mkpath(".");
 
@@ -1111,7 +1017,7 @@ void JupyterLauncherFactory::initialize()
 
     for(const auto& pythonPlugin: pythonPlugins)
     {
-        QString pythonVersionOfPlugin = extractSingleNumber(QFileInfo(pythonPlugin).fileName()).insert(1, ".");
+        const QString pythonVersionOfPlugin = extractRegex(QFileInfo(pythonPlugin).fileName(), R"(\d+)", 0).insert(1, ".");
 
         qDebug() << "pythonVersionOfPlugin:" << pythonVersionOfPlugin;
 

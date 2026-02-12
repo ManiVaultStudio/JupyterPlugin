@@ -1,7 +1,7 @@
 #include "ScriptDialogAction.h"
 
 #include "JupyterLauncher.h"
-#include "Utils.h"
+#include "JsonUtils.h"
 
 #include <Dataset.h>
 #include <Set.h>
