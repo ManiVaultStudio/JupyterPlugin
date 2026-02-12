@@ -336,7 +336,7 @@ int JupyterLauncher::runPythonScript(const QString& scriptName, QString& sout, Q
     }
 
     // 3. Run the script synchronously
-    QString pyInterpreter = QDir::toNativeSeparators(getPythonInterpreterPath());
+    const QString pyInterpreter = QDir::toNativeSeparators(getPythonInterpreterPath());
 
     qDebug() << "pyInterpreter: " << pyInterpreter;
     qDebug() << "Script: " << scriptName;
@@ -351,15 +351,13 @@ int JupyterLauncher::runPythonScript(const QString& scriptName, QString& sout, Q
         };
 
     QObject::connect(&pythonProcess, &QProcess::readyReadStandardOutput, [printOut, &pythonProcess, &sout]() {
-        QString output = QString::fromUtf8(pythonProcess.readAllStandardOutput()).replace("\r\n", "\n");
-        sout = output;
-        printOut(output);
+        sout = QString::fromUtf8(pythonProcess.readAllStandardOutput()).replace("\r\n", "\n");
+        printOut(sout);
         });
 
     QObject::connect(&pythonProcess, &QProcess::readyReadStandardError, [printOut, &pythonProcess, &serr]() {
-        QString errorOutput = QString::fromUtf8(pythonProcess.readAllStandardError()).replace("\r\n", "\n");
-        serr = errorOutput;
-        printOut(errorOutput);
+        serr = QString::fromUtf8(pythonProcess.readAllStandardError()).replace("\r\n", "\n");
+        printOut(serr);
         });
 
     pythonProcess.start(pyInterpreter, QStringList({ tempFile.fileName() }) + params);
@@ -450,15 +448,14 @@ bool JupyterLauncher::runScriptInKernel(const QString& scriptPath, QString inter
         return false;
     }
 
-    auto interpreterPlugin = _initializedPythonInterpreters[interpreterVersion];
+    mv::plugin::Plugin* interpreterPlugin = _initializedPythonInterpreters[interpreterVersion];
 
     if (!interpreterPlugin) {
         qWarning() << "JupyterLauncher::runScriptInKernel: version not initialized: " << interpreterVersion;
         return false;
     }
 
-    // Call method using meta-object system
-    bool success = QMetaObject::invokeMethod(
+    const bool success = QMetaObject::invokeMethod(
         interpreterPlugin,
         "runScriptWithArgs",
         Q_ARG(QString, scriptPath),
@@ -481,8 +478,8 @@ bool JupyterLauncher::installKernel()
     kernelDir.cd("ManiVaultStudio");
 
     // 2. Unpack the kernel files from the resources into the marshalling directory 
-    QDir directory(":/kernel-files/");
-    QStringList kernelList = directory.entryList(QStringList({ "*.*" }));
+    const QDir directory(":/kernel-files/");
+    const QStringList kernelList = directory.entryList(QStringList({ "*.*" }));
     for (const QString& a : kernelList) {
         QByteArray scriptContent;
         auto kernFile = QFile(QString(":/kernel-files/") + a);
@@ -507,7 +504,7 @@ bool JupyterLauncher::installKernel()
 bool JupyterLauncher::optionallyInstallMVWheel()
 {
     const QString pluginVersion = QString::fromStdString(getVersion().getVersionString());
-    QMessageBox::StandardButton reply = QMessageBox::question(
+    const QMessageBox::StandardButton reply = QMessageBox::question(
         nullptr, 
         "Python modules missing", 
         "mvstudio.kernel " + pluginVersion + " and mvstudio.data " + pluginVersion + " are required for passing data between Python and ManiVault.\nDo you wish to install them now?",
@@ -518,7 +515,7 @@ bool JupyterLauncher::optionallyInstallMVWheel()
         // Bootstrap the pip installer - does nothing if pip is available
         // https://docs.python.org/3/library/ensurepip.html
         if (!runPythonCommand({ "-m", "ensurepip" })) {
-          qWarning() << "Installing pip failed. See logging for more informatio";
+          qWarning() << "Installing pip failed. See logging for more information";
           return false;
         }
 
@@ -528,7 +525,7 @@ bool JupyterLauncher::optionallyInstallMVWheel()
         const QString dataWheel = MVWheelPath + "mvstudio_data-" + pluginVersion + "-py3-none-any.whl";
 
         for (const QString& wheelpath : { kernelWheel , dataWheel }) {
-          qDebug() << "wheelpath paths: " << wheelpath;
+          qDebug() << "wheel paths: " << wheelpath;
 
           if (!runPythonCommand({ "-m", "pip", "install", wheelpath, "--only-binary=:all:" })) {
             qWarning() << "Installing the given package failed. See logging for more information";
@@ -555,8 +552,7 @@ void JupyterLauncher::shutdownJupyterServer()
     case QProcess::Running:
     {
         // Use the shutdown api with our fixed Authorization token to close the server
-        auto url = QUrl("http://127.0.0.1:8888/api/shutdown");
-        auto request = QNetworkRequest(url);
+        auto request = QNetworkRequest(QUrl("http://127.0.0.1:8888/api/shutdown"));
         request.setRawHeader("Authorization", "token manivaultstudio_jupyterkerneluser");
         request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
  
@@ -589,7 +585,7 @@ void JupyterLauncher::jupyterServerError(QProcess::ProcessError error)
         qWarning() << "Crashed";
         break;
     case QProcess::Timedout:
-        qWarning() << "Timedout";
+        qWarning() << "Timed out";
         break;
     case QProcess::WriteError:
         qWarning() << "Write error";
@@ -675,7 +671,7 @@ void JupyterLauncher::logProcessOutput()
     if (!_serverProcess.canReadLine())
         return; 
 
-    auto output = _serverProcess.readAll();
+    const auto output = _serverProcess.readAll();
     _serverBackgroundTask->setProgressDescription(output);
 
 }
@@ -721,7 +717,7 @@ bool JupyterLauncher::initPython(bool activateXeus)
         // we might just miss the communication modules
         if (exitCode == 1)
         {
-            bool couldInstallModules = optionallyInstallMVWheel();
+            const bool couldInstallModules = optionallyInstallMVWheel();
 
             if (!couldInstallModules)
             {
@@ -742,7 +738,7 @@ bool JupyterLauncher::initPython(bool activateXeus)
         return false;
     }
 
-    QFileInfo pythonLibrary = QFileInfo(sout);
+    const auto pythonLibrary = QFileInfo(sout);
 
     qDebug() << "Using python communication plugin library " << pythonLibrary.fileName() << " at: " << pythonLibrary.dir().absolutePath();
     if (!loadDynamicLibrary(pythonLibrary)) {
@@ -753,16 +749,16 @@ bool JupyterLauncher::initPython(bool activateXeus)
 
     // plugin lib version suffix
     const auto coreVersion  = mv::Application::current()->getVersion();
-    QString coreVersionStr  = QString("%1.%2.%3").arg(QString::number(coreVersion.getMajor()), QString::number(coreVersion.getMinor()), QString::number(coreVersion.getPatch()));
+    const QString coreVersionStr  = QString("%1.%2.%3").arg(QString::number(coreVersion.getMajor()), QString::number(coreVersion.getMinor()), QString::number(coreVersion.getPatch()));
 
-    QString versionSuffix = QString("_p%1_c%2").arg(
+    const QString versionSuffix = QString("_p%1_c%2").arg(
         /*1: plugin version */ QString::fromStdString(getVersion().getVersionString()),
         /*1: core version   */ coreVersionStr
     );
     jupyterPluginPath.append(versionSuffix);
 
-    QLibrary jupyterPluginLib = QLibrary(jupyterPluginPath);
-    QPluginLoader jupyterPluginLoader = QPluginLoader(jupyterPluginLib.fileName());
+    const auto jupyterPluginLib     = QLibrary(jupyterPluginPath);
+    auto jupyterPluginLoader        = QPluginLoader(jupyterPluginLib.fileName());
 
     qDebug() << "Using python plugin at: " << jupyterPluginLib.fileName();
 
@@ -847,9 +843,7 @@ void JupyterLauncher::launchJupyterKernelAndNotebook(const QString& version)
 
 void JupyterLauncher::createPythonPluginAndStartNotebook()
 {
-    bool success = initPython(/* activateXeus */ true);
-
-    if (!success)
+    if (!initPython(/* activateXeus */ true))
         return;
 
     startJupyterServerProcess();
@@ -867,44 +861,34 @@ void JupyterLauncher::initPythonScripts(const QString& version)
 
 void JupyterLauncher::addPythonScripts()
 {
-    bool success = initPython(/* activateXeus */ false);
-
-    if (!success)
+    if (!initPython(/* activateXeus */ false))
         return;
 
     // Look for all available scripts
-    const QString jupyterPluginPath = QCoreApplication::applicationDirPath() + "/examples/JupyterPlugin/scripts";
-    QDir dir(jupyterPluginPath);
+    const auto jupyterPluginDir = QDir(QCoreApplication::applicationDirPath() + "/examples/JupyterPlugin/scripts");
 
-    qDebug() << "JupyterLauncher: Loading scripts from " << jupyterPluginPath;
+    qDebug() << "JupyterLauncher: Loading scripts from " << jupyterPluginDir;
 
-    QStringList filters;
-    filters << "*.json";
-
-    QFileInfoList fileList = dir.entryInfoList(filters, QDir::Files | QDir::NoSymLinks);
-
-    std::vector<QString> scriptDescriptors;
-
-    for (const QFileInfo& fileInfo : fileList) {
-        QString scriptFilePath = fileInfo.absoluteFilePath();
-        scriptDescriptors.push_back(scriptFilePath);
+    std::vector<QString> scriptFilePaths;
+    for (const QFileInfo& fileInfo : jupyterPluginDir.entryInfoList(QStringList{ "*.json" }, QDir::Files | QDir::NoSymLinks)) {
+        scriptFilePaths.push_back(fileInfo.absoluteFilePath());
     }
 
     // Add UI entries for the scripts
     auto checkRequirements = [](const QString& requirementsFilePath) -> bool {
-        QFileInfo requirementsFileInfo(requirementsFilePath);
 
-        if (!requirementsFileInfo.exists() || !requirementsFileInfo.isFile()) {
+        if (const QFileInfo requirementsFileInfo(requirementsFilePath);
+            !requirementsFileInfo.exists() || !requirementsFileInfo.isFile()) {
             qDebug() << "Requirements file is listed but not found: " << requirementsFileInfo;
             return false;
         }
 
-        QStringList params = { "-m", "pip", "install", "-r", requirementsFilePath, "--dry-run" };
+        const QStringList params = { "-m", "pip", "install", "-r", requirementsFilePath, "--dry-run" };
 
 #ifdef NDEBUG
-        bool verbose = false;
+        constexpr bool verbose = false;
 #else
-        bool verbose = true;
+        constexpr bool verbose = true;
 #endif
 
         return runPythonCommand(params, verbose);
@@ -913,15 +897,18 @@ void JupyterLauncher::addPythonScripts()
     uint32_t numLoadedScripts = 0;
     _scriptTriggerActions.clear();
 
-    for (const auto& scriptDescriptor : scriptDescriptors) {
-        QFile file(scriptDescriptor);
-        if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-            qWarning() << "Couldn't open file:" << scriptDescriptor;
+    for (const auto& scriptFilePath : scriptFilePaths) {
+        auto scriptFile = QFile(scriptFilePath);
+        const auto scriptFileInfo = QFileInfo(scriptFile);
+        const auto scriptFileDir = QDir(scriptFileInfo.absolutePath());
+
+        if (!scriptFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
+            qWarning() << "Couldn't open file:" << scriptFilePath;
             continue;
         }
 
-        QByteArray jsonData = file.readAll();
-        file.close();
+        const QByteArray jsonData = scriptFile.readAll();
+        scriptFile.close();
 
         QJsonParseError parseError;
         QJsonDocument document = QJsonDocument::fromJson(jsonData, &parseError);
@@ -937,32 +924,26 @@ void JupyterLauncher::addPythonScripts()
 
         const QJsonObject json = document.object();
 
-        const std::vector<QString> requiredEntries = { "script", "name", "type"};
-
-        if (!std::all_of(requiredEntries.begin(), requiredEntries.end(), [&json](const QString& entry) { return containsMemberString(json, entry); })) {
-            qWarning() << "Does not contain all required entries: " << scriptDescriptor;
+        if (const std::vector<QString> requiredEntries = { "script", "name", "type" };
+            !std::all_of(requiredEntries.begin(), requiredEntries.end(), [&json](const QString& entry) { return containsMemberString(json, entry); })) {
+            qWarning() << "Does not contain all required entries: " << scriptFilePath;
             qWarning().noquote() << document.toJson(QJsonDocument::Indented);
             continue;
         }
 
-        // Get the absolute directory path
-        QFileInfo fileInfo(file);
-        QDir dir(fileInfo.absolutePath());
-
         // check requirements
         if (containsMemberString(json, "requirements")) {
-            QString requirementsFilePath    = dir.filePath(json["requirements"].toString());
-            qDebug() << "Checking and installing requirements for: " << requirementsFilePath;
-            bool requirementsAreInstalled   = checkRequirements(requirementsFilePath);
+            QString requirementsFilePath = scriptFileDir.filePath(json["requirements"].toString());
 
-            if (!requirementsAreInstalled) {
-                qDebug() << "Requirements are not installed for Python script: " << fileInfo.absoluteFilePath();
+            qDebug() << "Checking and installing requirements for: " << requirementsFilePath;
+            if (!checkRequirements(requirementsFilePath)) {
+                qDebug() << "Requirements are not installed for Python script: " << scriptFilePath;
                 continue;
             }
 
         }
 
-        const QString scriptPath = dir.filePath(json["script"].toString());
+        const QString scriptPath = scriptFileDir.filePath(json["script"].toString());
         const QString scriptName = json["name"].toString();
         const QString scriptType = json["type"].toString();
 
@@ -1040,11 +1021,11 @@ JupyterLauncherFactory::JupyterLauncherFactory() :
     setIcon(QIcon(":/images/logo.svg"));
     setMaximumNumberOfInstances(1);
 
-    for (const auto& tutorial_file : list_tutorial_files("tutorials/JupyterLauncher")) {
-      if (insert_md_into_json(tutorial_file)) {
+    for (const auto& tutorialFile : list_tutorial_files("tutorials/JupyterLauncher")) {
+      if (insert_md_into_json(tutorialFile)) {
 
-        if (auto tutorial_json = readJSON(tutorial_file)) {
-          mv::help().addTutorial(new util::LearningCenterTutorial(tutorial_json.value()["tutorials"].toArray().first().toObject().toVariantMap()));
+        if (auto tutorialJson = readJSON(tutorialFile)) {
+          mv::help().addTutorial(new util::LearningCenterTutorial(tutorialJson.value()["tutorials"].toArray().first().toObject().toVariantMap()));
         }
 
       }
