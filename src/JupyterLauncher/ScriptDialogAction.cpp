@@ -34,20 +34,19 @@ namespace
 
 PythonScript::PythonScript(const QString& title, const Type& type, const QString& location, const QString& interpreterVersion, const QJsonObject& json, JupyterLauncher* launcher, QObject* parent) :
     Script(title, type, Language::Python, mv::util::Version(insertDotAtPos(interpreterVersion, 1)), location, parent),
-    _dialog(nullptr, json, location, interpreterVersion, launcher)
+    _dialog(nullptr, json, location, launcher)
 {
 
 }
 
-ScriptDialog::ScriptDialog(QWidget* parent, const QJsonObject& json, const QString& scriptPath, const QString& interpreterVersion, JupyterLauncher* launcher) :
+ScriptDialog::ScriptDialog(QWidget* parent, const QJsonObject& json, const QString& scriptPath, JupyterLauncher* launcher) :
     QDialog(parent),
     _okButton(this, "Run script"),
-    _interpreterVersion(interpreterVersion),
     _scriptPath(scriptPath),
     _json(json),
     _launcherPlugin(launcher)
 {
-    setWindowTitle(json["name"].toString());
+    setWindowTitle(_json["name"].toString());
     setWindowIcon(mv::util::StyledIcon("gears"));
 
     connect(&_okButton, &mv::gui::TriggerAction::triggered, this, &QDialog::accept);
@@ -61,10 +60,10 @@ void ScriptDialog::populateDialog()
     int row = 0;
 
     if (containsMemberString(_json, "description")) {
-        QString description = _json["description"].toString();
+        const QString description = _json["description"].toString();
 
         auto widgetAction = _argumentActions.emplace_back(new mv::gui::StringAction(this, "Description"));
-        auto stringAction = static_cast<mv::gui::StringAction*>(widgetAction);
+        auto stringAction = dynamic_cast<mv::gui::StringAction*>(widgetAction);
         stringAction->setDefaultWidgetFlags(mv::gui::StringAction::WidgetFlag::Label);
         stringAction->setString(description);
         layout->addWidget(widgetAction->createLabelWidget(this), ++row, 0, 1, 1);
@@ -247,7 +246,6 @@ void ScriptDialog::populateDialog()
     setLayout(layout);
 }
 
-
 void ScriptDialog::runScript() {
     if (!_launcherPlugin) {
         return;
@@ -260,5 +258,5 @@ void ScriptDialog::runScript() {
         scriptParams.append(value);
     }
 
-    _launcherPlugin->runScriptInKernel(_scriptPath, _interpreterVersion, scriptParams);
+    _launcherPlugin->runScriptInKernel(_scriptPath, scriptParams);
 }

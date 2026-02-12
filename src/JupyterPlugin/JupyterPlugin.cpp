@@ -63,19 +63,19 @@ void JupyterPlugin::startJupyterNotebook() const
 
 void JupyterPlugin::runScriptWithArgs(const QString& scriptPath, const QStringList& args)
 {
-    // start the interpreter and keep it alive
     if (!_mainPyInterpreter) {
-        qWarning() << "JupyterPlugin::runScriptWithArgs: Script not executed - main interpreter does not exist";
-        return;
+        init();
     }
-
-    py::subinterpreter sub = py::subinterpreter::create();
-    py::subinterpreter_scoped_activate guard(sub);
 
     if (!Py_IsInitialized()) {
         qWarning() << "JupyterPlugin::runScriptWithArgs: Script not executed - interpreter is not initialized";
         return;
     }
+
+    // TODO: remove and exchange with below
+    py::gil_scoped_acquire acquire;
+    //py::subinterpreter sub = py::subinterpreter::create();
+    //py::subinterpreter_scoped_activate guard(sub);
 
     // Load the script from file
     std::ifstream file(scriptPath.toStdString());

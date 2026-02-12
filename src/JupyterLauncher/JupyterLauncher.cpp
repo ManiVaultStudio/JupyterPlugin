@@ -212,12 +212,12 @@ bool JupyterLauncher::runPythonCommand(const QStringList& params, bool verbose)
                 qDebug() << outline;
         };
 
-    QObject::connect(&pythonProcess, &QProcess::readyReadStandardOutput, [printOut, &pythonProcess]() {
+    connect(&pythonProcess, &QProcess::readyReadStandardOutput, [printOut, &pythonProcess]() {
         QString output = QString::fromUtf8(pythonProcess.readAllStandardOutput()).replace("\r\n", "\n");
         printOut(output);
         });
 
-    QObject::connect(&pythonProcess, &QProcess::readyReadStandardError, [printOut, &pythonProcess]() {
+    connect(&pythonProcess, &QProcess::readyReadStandardError, [printOut, &pythonProcess]() {
         QString errorOutput = QString::fromUtf8(pythonProcess.readAllStandardError()).replace("\r\n", "\n");
         printOut(errorOutput);
         });
@@ -250,17 +250,17 @@ bool JupyterLauncher::runPythonCommand(const QStringList& params, bool verbose)
     return succ;
 }
 
-bool JupyterLauncher::runScriptInKernel(const QString& scriptPath, const QString& interpreterVersion, const QStringList& params)
+bool JupyterLauncher::runScriptInKernel(const QString& scriptPath, const QStringList& params)
 {
-    if (!_initializedPythonInterpreters.contains(interpreterVersion)) {
-        qWarning() << "JupyterLauncher::runScriptInKernel: version not initialized: " << interpreterVersion;
+    if (!_initializedPythonInterpreters.contains(_selectedInterpreterVersion)) {
+        qWarning() << "JupyterLauncher::runScriptInKernel: version not initialized: " << _selectedInterpreterVersion;
         return false;
     }
 
-    mv::plugin::Plugin* interpreterPlugin = _initializedPythonInterpreters[interpreterVersion];
+    mv::plugin::Plugin* interpreterPlugin = _initializedPythonInterpreters[_selectedInterpreterVersion];
 
     if (!interpreterPlugin) {
-        qWarning() << "JupyterLauncher::runScriptInKernel: version not initialized: " << interpreterVersion;
+        qWarning() << "JupyterLauncher::runScriptInKernel: version not initialized: " << _selectedInterpreterVersion;
         return false;
     }
 
