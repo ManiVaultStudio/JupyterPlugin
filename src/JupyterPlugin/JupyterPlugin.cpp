@@ -58,6 +58,10 @@ void JupyterPlugin::init()
 
 void JupyterPlugin::startJupyterNotebook() const
 {
+    if (!Py_IsInitialized()) {
+        qWarning() << "JupyterPlugin::startJupyterNotebook: could not start notebook - interpreter is not initialized";
+        return;
+    }
     _xeusKernel->startKernel(_connectionFilePath, QString::fromStdString(getVersion().getVersionString()));
 }
 
