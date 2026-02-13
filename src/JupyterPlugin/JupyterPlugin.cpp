@@ -4,11 +4,6 @@
 #include <QDir>
 #include <QStandardPaths>
 
-#include <Application.h>
-
-#include "MVData.h"
-#include "XeusKernel.h"
-
 #include <exception>
 #include <fstream>
 #include <sstream>
@@ -22,6 +17,11 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/subinterpreter.h>
 #define slots Q_SLOTS
+
+#include <Application.h>
+
+#include "MVData.h"
+#include "XeusKernel.h"
 
 Q_PLUGIN_METADATA(IID "studio.manivault.JupyterPlugin")
 
@@ -81,7 +81,7 @@ void JupyterPlugin::runScriptWithArgs(const QString& scriptPath, const QStringLi
     std::ifstream file(scriptPath.toStdString());
     std::stringstream buffer;
     buffer << file.rdbuf();
-    const std::string script_code = buffer.str();
+    const std::string scriptCode = buffer.str();
 
     try {
 
@@ -96,24 +96,23 @@ void JupyterPlugin::runScriptWithArgs(const QString& scriptPath, const QStringLi
 
         if (_baseModules.empty()) {
             for (auto& [key, item] : modules) {
-                std::string name = py::str(key);
-                _baseModules.insert(name);
+                _baseModules.insert(py::str(key));
             }
         }
 
         // Set sys.argv
-        py::list py_args = py::list();
-        py_args.append(py::cast(QFileInfo(scriptPath).fileName().toStdString()));      // add file name
+        auto pyArgs = py::list();
+        pyArgs.append(py::cast(QFileInfo(scriptPath).fileName().toStdString()));      // add file name
         for (const auto& arg : args) {
-            py_args.append(py::cast(arg.toStdString()));                                // add arguments
+            pyArgs.append(py::cast(arg.toStdString()));                                // add arguments
         }
-        sys.attr("argv") = py_args;
+        sys.attr("argv") = pyArgs;
 
         // Execute the script in __main__'s context
         const py::module_ mainModule   = py::module_::import("__main__");
         const py::object mainNamespace = mainModule.attr("__dict__");
 
-        py::exec(script_code, mainNamespace);
+        py::exec(scriptCode, mainNamespace);
 
         // Run garbage collection
         py::module gc = py::module::import("gc");
