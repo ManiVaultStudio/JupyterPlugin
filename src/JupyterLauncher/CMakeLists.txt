@@ -19,8 +19,12 @@ set(JUPYTERLAUNCHER_SOURCES
     UserDialogActions.cpp
     ScriptDialogAction.h
     ScriptDialogAction.cpp
-    Utils.h
-    Utils.cpp
+    JsonUtils.h
+    JsonUtils.cpp
+    FileHandlingUtils.h
+    FileHandlingUtils.cpp
+    PythonUtils.h
+    PythonUtils.cpp
 )
 
 set(JUPYTERLAUNCHER_AUX

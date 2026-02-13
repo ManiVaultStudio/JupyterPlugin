@@ -1,2 +1,2 @@
-numpy~=1.26
-pillow~=11.3.0
+numpy~=2.3.5
+pillow~=12.1.0

@@ -45,8 +45,8 @@ void XeusInterpreter::configure_impl()
         py::dict modules = sys.attr("modules");
 
         if (!modules.contains("mvstudio_core")) {
-            JupyterPlugin::init_mv_communication_module();
-            py::module MVData_module = *(JupyterPlugin::mv_communication_module.get());
+            JupyterPlugin::initMvCommunicationModule();
+            py::module MVData_module = *(JupyterPlugin::mvCommunicationModule.get());
 
             sys.attr("modules")["mvstudio_core"] = MVData_module;
         }
