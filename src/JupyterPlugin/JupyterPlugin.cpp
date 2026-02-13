@@ -71,10 +71,9 @@ void JupyterPlugin::runScriptWithArgs(const QString& scriptPath, const QStringLi
         return;
     }
 
-    // TODO: remove and exchange with below
-    py::gil_scoped_acquire acquire;
-    //py::subinterpreter sub = py::subinterpreter::create();
-    //py::subinterpreter_scoped_activate guard(sub);
+    // Sub-interpreter will go out of scope after script is executed
+    py::subinterpreter sub = py::subinterpreter::create();
+    py::subinterpreter_scoped_activate guard(sub);
 
     // Load the script from file
     std::ifstream file(scriptPath.toStdString());
@@ -143,7 +142,6 @@ void JupyterPlugin::runScriptWithArgs(const QString& scriptPath, const QStringLi
         qWarning() << err;
     }
 
-    // GIL is released when 'guard' goes out of scope
 }
 
 // =============================================================================
