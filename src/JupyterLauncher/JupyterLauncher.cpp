@@ -564,19 +564,16 @@ bool JupyterLauncher::initPython(const bool activateXeus)
         qWarning() << "Failed to invoke JupyterPlugin::setConnectionFilePath";
     }
 
-    // Do init python in script mode
-    // We currently cannot run Jupyter Kernel and enable script execution
-    // simultaneously, since we do not know how to handle the GIL in this setting
-    if (activateXeus) {
-        jupyterPluginInstance->init();
+    jupyterPluginInstance->init();
 
+    if (activateXeus) {
         const bool startedJupyterNotebook = QMetaObject::invokeMethod(
             jupyterPluginInstance,
             "startJupyterNotebook"
         );
 
         if (!startedJupyterNotebook) {
-            qWarning() << "Failed to invoke JupyterPlugin::interpreterPlugin";
+            qWarning() << "Failed to invoke JupyterPlugin::startJupyterNotebook";
         }
     }
 

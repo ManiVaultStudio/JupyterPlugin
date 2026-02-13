@@ -66,10 +66,6 @@ void JupyterPlugin::startJupyterNotebook() const
 
 void JupyterPlugin::runScriptWithArgs(const QString& scriptPath, const QStringList& args)
 {
-    if (!_mainPyInterpreter) {
-        init();
-    }
-
     if (!Py_IsInitialized()) {
         qWarning() << "JupyterPlugin::runScriptWithArgs: Script not executed - interpreter is not initialized";
         return;
