@@ -612,8 +612,6 @@ void JupyterLauncher::launchJupyterKernelAndNotebook(const QString& version)
         return;
 
     createPythonPluginAndStartNotebook();   // open notebook immediately if user has set do-not-show-dialog option
-
-    setLaunchTriggersEnabled(false);
 }
 
 void JupyterLauncher::createPythonPluginAndStartNotebook()
@@ -622,6 +620,8 @@ void JupyterLauncher::createPythonPluginAndStartNotebook()
         return;
 
     startJupyterServerProcess();
+
+    setLaunchTriggersEnabled(false);
 }
 
 void JupyterLauncher::initPythonScripts(const QString& version)
@@ -630,8 +630,6 @@ void JupyterLauncher::initPythonScripts(const QString& version)
         return;
 
     addPythonScripts();
-
-    setLaunchTriggersEnabled(false);
 }
 
 void JupyterLauncher::addPythonScripts()
@@ -742,6 +740,8 @@ void JupyterLauncher::addPythonScripts()
     }
     
     qDebug().noquote() << QString("JupyterLauncher: Loaded %1 scripts").arg(numLoadedScripts);
+
+    setLaunchTriggersEnabled(false);
 }
 
 mv::gui::ScriptTriggerActions JupyterLauncher::getScriptTriggerActions(const mv::Datasets& datasets) const {
