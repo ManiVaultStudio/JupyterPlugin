@@ -49,7 +49,6 @@ JupyterPlugin::~JupyterPlugin()
     _xeusKernel->stopKernel();
 }
 
-// https://pybind11.readthedocs.io/en/stable/reference.html#_CPPv422initialize_interpreterbiPPCKcb
 void JupyterPlugin::init()
 {  
     // start the interpreter and keep it alive
