@@ -18,7 +18,6 @@
 
 #include <memory>
 #include <unordered_map>
-#include <utility>
 #include <vector>
 
 using namespace mv::plugin;
@@ -69,18 +68,13 @@ public:
     mv::gui::ScriptTriggerActions getScriptTriggerActions(const mv::Datasets& datasets) const override;
 
 public: // Global settings
-    // Python interpreter path
     static QString getPythonInterpreterPath();
 
     static void setPythonInterpreterPath(const QString& p);
 
     static bool getShowInterpreterPathDialog();
 
-public: // Call python
-    /** Run a python script from the resources return the exit code and stderr and stdout */
-    static int runPythonScript(const QString& scriptName, QString& out, QString& err, const QStringList& params = {});
-    static bool runPythonCommand(const QStringList& params, bool verbose = true);
-
+public: 
     bool runScriptInKernel(const QString& scriptPath, const QStringList& params = {});
 
 private:

@@ -31,6 +31,13 @@ inline QStringList pythonInterpreterFilters()
     return pythonFilter;
 }
 
+struct PythonExecutionReturn
+{
+    int result = 0;
+    QString out = {};
+    QString err = {};
+};
+
 // Helps to distinguish between python in a regular or conda directory and python in a venv
 std::pair<bool, QString> getPythonHomePath(const QString& pyInterpreterPath);
 
@@ -39,3 +46,8 @@ void setPythonEnv(const QString& interpreterPath, const QString& interpreterVers
 std::pair<bool, QString> isCondaEnvironmentActive();
 
 QString createKernelDir();
+
+PythonExecutionReturn runPythonCommand(const QStringList& params, const QString& pythonInterpreterPath, const bool verbose = false, const int waitForFinishedMSecs = 180'000);
+
+PythonExecutionReturn runPythonScript(const QString& scriptName, const QString& pythonInterpreterPath, const QStringList& params = {}, const bool verbose = false);
+

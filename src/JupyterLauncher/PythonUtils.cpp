@@ -6,6 +6,7 @@
 #include <QOperatingSystemVersion>
 #include <QRegularExpression>
 #include <QTemporaryDir>
+#include <QTemporaryFile>
 
 QString extractRegex(const QString& input, const QString& pattern, int group) {
     const QRegularExpression regex(pattern);
@@ -162,4 +163,87 @@ QString createKernelDir()
 
     // 3. Install the ManiVaultStudio kernel for the current user 
     return kernelDir.absolutePath();
+}
+
+
+PythonExecutionReturn runPythonCommand(const QStringList& params, const QString& pythonInterpreterPath, const bool verbose, const int waitForFinishedMSecs)
+{
+    if (verbose) {
+        qDebug() << "Interpreter: " << pythonInterpreterPath;
+        qDebug() << "Command: " << params.join(" ");
+    }
+
+    QProcess pythonProcess;
+    PythonExecutionReturn pythonReturn = {};
+
+    auto printOut = [verbose](const QString& output) {
+        if (!verbose)
+            return;
+
+        for (const QString& outline : output.split("\n"))
+            if (!outline.isEmpty())
+                qDebug() << outline;
+        };
+
+    QObject::connect(&pythonProcess, &QProcess::readyReadStandardOutput, [printOut, &pythonProcess, &pythonReturn]() {
+        pythonReturn.out = QString::fromUtf8(pythonProcess.readAllStandardOutput()).replace("\r\n", "\n");
+        printOut(pythonReturn.out);
+        });
+
+    QObject::connect(&pythonProcess, &QProcess::readyReadStandardError, [printOut, &pythonProcess, &pythonReturn]() {
+        pythonReturn.err = QString::fromUtf8(pythonProcess.readAllStandardError()).replace("\r\n", "\n");
+        printOut(pythonReturn.err);
+        });
+
+    pythonProcess.start(pythonInterpreterPath, params);
+
+    if (!pythonProcess.waitForStarted()) {
+        pythonReturn.result = 2;
+        pythonReturn.err = QString("Could not run python interpreter %1 ").arg(pythonInterpreterPath);
+    }
+
+    if (!pythonProcess.waitForFinished(waitForFinishedMSecs)) { // three minutes, as dependency installation might take its time...
+        pythonReturn.result = 2;
+        pythonReturn.err = QString("Running python interpreter %1 timed out").arg(pythonInterpreterPath);
+    }
+
+    if (pythonReturn.result != 2)
+        pythonReturn.result = pythonProcess.exitCode();
+
+    if (pythonReturn.result != QProcess::NormalExit)
+        qWarning() << "Failed running script.";
+
+    pythonProcess.deleteLater();
+
+    return pythonReturn;
+}
+
+PythonExecutionReturn runPythonScript(const QString& scriptName, const QString& pythonInterpreterPath, const QStringList& params, const bool verbose)
+{
+    if (!verbose)
+    {
+        qDebug() << "runPythonScript:: Interpreter: " << pythonInterpreterPath;
+        qDebug() << "runPythonScript:: Script: " << scriptName;
+    }
+
+    // 1. Prepare a python process with the python path
+    auto scriptFile = QFile(scriptName);
+
+    // 2. Place the script in a temporary file
+    QByteArray scriptContent;
+    if (scriptFile.open(QFile::ReadOnly)) {
+        scriptContent = scriptFile.readAll();
+        scriptFile.close();
+    }
+
+    QTemporaryFile tempFile;
+    if (tempFile.open()) {
+        tempFile.write(scriptContent);
+        tempFile.close();
+    }
+
+    // 3. Run the script synchronously
+    const auto pythonParams = QStringList({ tempFile.fileName() }) + params;
+
+    return runPythonCommand(pythonParams, pythonInterpreterPath, false);
 }

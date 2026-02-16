@@ -123,132 +123,7 @@ bool JupyterLauncher::getShowInterpreterPathDialog()
     return !mv::settings().getPluginGlobalSettingsGroupAction<GlobalSettingsAction>("Jupyter Launcher")->getDoNotShowAgainButton().isChecked();
 }
 
-// TBD merge the two runScript signatures
-int JupyterLauncher::runPythonScript(const QString& scriptName, QString& out, QString& err, const QStringList& params)
-{
-    // 1. Prepare a python process with the python path
-    auto scriptFile =  QFile(scriptName);
 
-    // 2. Place the script in a temporary file
-    QByteArray scriptContent;
-    if (scriptFile.open(QFile::ReadOnly)) {
-        scriptContent = scriptFile.readAll();
-        scriptFile.close();
-    }
-
-    QTemporaryFile tempFile;
-    if (tempFile.open()) {
-        tempFile.write(scriptContent);
-        tempFile.close();
-    }
-
-    // 3. Run the script synchronously
-    const QString pyInterpreter = QDir::toNativeSeparators(getPythonInterpreterPath());
-
-    qDebug() << "pyInterpreter: " << pyInterpreter;
-    qDebug() << "Script: " << scriptName;
-    qDebug() << "Running: " << tempFile.fileName();
-
-    QProcess pythonProcess;
-
-    auto printOut = [](const QString& output) {
-        for (const QString& outline : output.split("\n"))
-            if (!outline.isEmpty())
-                qDebug() << outline;
-        };
-
-    connect(&pythonProcess, &QProcess::readyReadStandardOutput, [printOut, &pythonProcess, &out]() {
-    	out = QString::fromUtf8(pythonProcess.readAllStandardOutput()).replace("\r\n", "\n");
-        printOut(out);
-        });
-
-    connect(&pythonProcess, &QProcess::readyReadStandardError, [printOut, &pythonProcess, &err]() {
-        err = QString::fromUtf8(pythonProcess.readAllStandardError()).replace("\r\n", "\n");
-        printOut(err);
-        });
-
-    pythonProcess.start(pyInterpreter, QStringList({ tempFile.fileName() }) + params);
-
-    int result = 0;
-
-    if (!pythonProcess.waitForStarted()) {
-        result = 2;
-        err = QString("Could not run python interpreter %1 ").arg(pyInterpreter);
-    }
-    
-	if (!pythonProcess.waitForFinished()) {
-        result = 2;
-        err = QString("Running python interpreter %1 timed out").arg(pyInterpreter);
-    }
-    
-    if (result != 2)
-        result = pythonProcess.exitCode();
-
-    if (result > 0)
-        qWarning() << "Failed running script.";
-
-    pythonProcess.deleteLater();
-
-    return result;
-}
-
-bool JupyterLauncher::runPythonCommand(const QStringList& params, bool verbose)
-{
-    QString pyInterpreter = QDir::toNativeSeparators(getPythonInterpreterPath());
-
-    if (verbose) {
-        qDebug() << "pyInterpreter: " << pyInterpreter;
-        qDebug() << "Command " << params.join(" ");
-    }
-
-    QProcess pythonProcess;
-
-    auto printOut = [verbose](const QString& output) {
-        if (!verbose)
-            return;
-
-        for (const QString& outline : output.split("\n"))
-            if (!outline.isEmpty())
-                qDebug() << outline;
-        };
-
-    connect(&pythonProcess, &QProcess::readyReadStandardOutput, [printOut, &pythonProcess]() {
-        QString output = QString::fromUtf8(pythonProcess.readAllStandardOutput()).replace("\r\n", "\n");
-        printOut(output);
-        });
-
-    connect(&pythonProcess, &QProcess::readyReadStandardError, [printOut, &pythonProcess]() {
-        QString errorOutput = QString::fromUtf8(pythonProcess.readAllStandardError()).replace("\r\n", "\n");
-        printOut(errorOutput);
-        });
-
-    bool succ = true;
-    pythonProcess.start(pyInterpreter, params);
-
-    if (!pythonProcess.waitForStarted()) {
-        qWarning() << "failed start";
-        succ = false;
-    }
-    if (!pythonProcess.waitForFinished(/* int msecs */ 180'000 )) { // three minutes, as dependency installation might take its time...
-        qWarning() << "failed timeout";
-        succ = false;
-    }
-    if (pythonProcess.exitStatus() != QProcess::NormalExit) {
-        qWarning() << "failed run";
-        succ = false;
-    }
-    if (pythonProcess.exitCode() == 1) {
-        qWarning() << "operation error";
-        succ = false;
-    }
-
-    if (!succ)
-        qWarning() << "Failed running command.";
-
-    pythonProcess.deleteLater();
-
-    return succ;
-}
 
 bool JupyterLauncher::runScriptInKernel(const QString& scriptPath, const QStringList& params)
 {
@@ -289,9 +164,12 @@ bool JupyterLauncher::ensureMvWheelIsInstalled() const
     );
 
     if (reply == QMessageBox::Yes) {
+        const auto pythonInterpreter = getPythonInterpreterPath();
+
         // Bootstrap the pip installer - does nothing if pip is available
         // https://docs.python.org/3/library/ensurepip.html
-        if (!runPythonCommand({ "-m", "ensurepip" })) {
+        if (const auto res = runPythonCommand({ "-m", "ensurepip" }, pythonInterpreter, false);
+			!res.result) {
           qWarning() << "Installing pip failed. See logging for more information";
           return false;
         }
@@ -304,14 +182,16 @@ bool JupyterLauncher::ensureMvWheelIsInstalled() const
         for (const QString& wheelpath : { kernelWheel , dataWheel }) {
           qDebug() << "wheel paths: " << wheelpath;
 
-          if (!runPythonCommand({ "-m", "pip", "install", wheelpath, "--only-binary=:all:" })) {
+          if (const auto res = runPythonCommand({ "-m", "pip", "install", wheelpath, "--only-binary=:all:" }, pythonInterpreter, false);
+              !res.result) {
             qWarning() << "Installing the given package failed. See logging for more information";
             return false;
           }
 
         }
 
-        if (!runPythonCommand(QStringList({ "-m", "jupyter", "kernelspec", "install", createKernelDir(), "--user" }))) {
+        if (const auto res = runPythonCommand(QStringList({ "-m", "jupyter", "kernelspec", "install", createKernelDir(), "--user" }), pythonInterpreter, false);
+			!res.result) {
             qWarning() << "Installing the ManiVaultStudio Jupyter kernel failed. See logging for more information";
             return false;
         }
@@ -474,25 +354,23 @@ bool JupyterLauncher::initPython(const bool activateXeus)
         return false;
     }
 
-    QString err = {};
-    QString out = {};
-    int exitCode = {};
+    setPythonEnv(getPythonInterpreterPath(), _selectedInterpreterVersion, _connectionFilePath);
 
-    // Check the path to see if the correct version of mvstudio is installed
+	// Check the path to see if the correct version of mvstudio is installed
     const QString pluginVersion = QString::fromStdString(getVersion().getVersionString());
-    exitCode = runPythonScript(":/text/check_env.py", out, err, QStringList{ pluginVersion });
+    const auto pythonResEnv = runPythonScript(":/text/check_env.py", getPythonInterpreterPath(), { pluginVersion });
 
-    if (exitCode > 0) {
+    if (pythonResEnv.result != QProcess::NormalExit) {
         qDebug() << "JupyterLauncher::createPythonPluginAndStartNotebook: Checking environment failed";
-        qDebug() << out;
-        qDebug() << err;
+        qDebug() << pythonResEnv.out;
+        qDebug() << pythonResEnv.err;
 
         // error like time out or other failed connection
-        if (exitCode >= 2)
+        if (pythonResEnv.result >= 2)
             return false;
 
         // we might just miss the communication modules
-        if (exitCode == 1)
+        if (pythonResEnv.result == 1)
         {
             if (!ensureMvWheelIsInstalled())
             {
@@ -502,18 +380,16 @@ bool JupyterLauncher::initPython(const bool activateXeus)
         }
     }
 
-    setPythonEnv(getPythonInterpreterPath(), _selectedInterpreterVersion, _connectionFilePath);
-
     // Determine the path to the python library
-    exitCode = runPythonScript(":/text/find_libpython.py", out, err);
-    if (exitCode != 0) {
+    const auto pythonResLib = runPythonScript(":/text/find_libpython.py", getPythonInterpreterPath());
+    if (pythonResLib.result != QProcess::NormalExit) {
         qDebug() << "JupyterLauncher::createPythonPluginAndStartNotebook: Finding python library failed";
-        qDebug() << out;
-        qDebug() << err;
+        qDebug() << pythonResLib.out;
+        qDebug() << pythonResLib.err;
         return false;
     }
 
-    const auto pythonLibrary = QFileInfo(out);
+    const auto pythonLibrary = QFileInfo(QDir::toNativeSeparators(pythonResLib.out));
 
     qDebug() << "Using python communication plugin library " << pythonLibrary.fileName() << " at: " << pythonLibrary.dir().absolutePath();
     if (!loadDynamicLibrary(pythonLibrary)) {
@@ -661,7 +537,9 @@ void JupyterLauncher::addPythonScripts()
         constexpr bool verbose = true;
 #endif
 
-        return runPythonCommand(params, verbose);
+        const auto res = runPythonCommand(params, getPythonInterpreterPath(), verbose);
+
+        return res.result == 0;
         };
 
     uint32_t numLoadedScripts = 0;
