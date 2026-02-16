@@ -118,28 +118,28 @@ void JupyterPlugin::runScriptWithArgs(const QString& scriptPath, const QStringLi
 
         // Clean up modules for fresh start
         for (auto& [key, item] : modules) {
-            std::string name = py::str(key);
-            if (!_baseModules.contains(name)) {
+            
+            if (std::string name = py::str(key);
+                !_baseModules.contains(name)) {
                 modules.attr("pop")(name, py::none());
             }
         }
 
     }
     catch (const py::error_already_set& e) {
-        const auto err = QStringLiteral("Python error (probably form script): ") + e.what();
-        qWarning() << err;
+        qWarning() << QStringLiteral("Python error (probably from script):");
+        qWarning() << e.what();
     }
     catch (const std::runtime_error& e) {
-        const auto err = QStringLiteral("std::runtime_error: ") + e.what();
-        qWarning() << err;
+        qWarning() << QStringLiteral("std::runtime_error:");
+        qWarning() << e.what();
     }
     catch (const std::exception& e) {
-        const auto err = QStringLiteral("std::exception: ") + e.what();
-        qWarning() << err;
+        qWarning() << QStringLiteral("std::exception:");
+        qWarning() << e.what();
     }
     catch (...) {
-        const auto err = QStringLiteral("Python error: unknown");
-        qWarning() << err;
+        qWarning() << QStringLiteral("Python error: unknown");
     }
 
 }
