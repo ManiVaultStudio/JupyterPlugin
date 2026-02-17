@@ -27,15 +27,10 @@ Q_PLUGIN_METADATA(IID "studio.manivault.JupyterPlugin")
 
 namespace py = pybind11;
 
-std::unique_ptr<py::module> JupyterPlugin::mvCommunicationModule = {};
-
-void JupyterPlugin::initMvCommunicationModule() {
-    if (mvCommunicationModule) {
-        return;
-    }
-
-    mvCommunicationModule = std::make_unique<py::module>(get_MVData_module());
-    mvCommunicationModule->doc() = "Provides access to low level ManiVaultStudio core functions";
+PYBIND11_EMBEDDED_MODULE(mvstudio_core, m, py::multiple_interpreters::per_interpreter_gil()) {
+    m.doc() = "Provides access to low level ManiVaultStudio core functions";
+    //m.attr("__version__") = tba
+    mvstudio_core::init_binding(m);
 }
 
 JupyterPlugin::JupyterPlugin(const mv::plugin::PluginFactory* factory) :
@@ -84,13 +79,9 @@ void JupyterPlugin::runScriptWithArgs(const QString& scriptPath, const QStringLi
     try {
 
         // Insert manivault communication module into sys.modules
-        py::module sys = py::module::import("sys");
-        py::dict modules = sys.attr("modules");
+        auto pyModSys = py::module::import("sys");
+        auto pyModMv = py::module::import("mvstudio_core");
 
-        if (!modules.contains("mvstudio_core")) {
-            JupyterPlugin::initMvCommunicationModule();
-            modules["mvstudio_core"] = *JupyterPlugin::mvCommunicationModule;
-        }
 
         if (_baseModules.empty()) {
             for (auto& [key, item] : modules) {
@@ -104,7 +95,7 @@ void JupyterPlugin::runScriptWithArgs(const QString& scriptPath, const QStringLi
         for (const auto& arg : args) {
             pyArgs.append(py::cast(arg.toStdString()));                                // add arguments
         }
-        sys.attr("argv") = pyArgs;
+        pyModSys.attr("argv") = pyArgs;
 
         // Execute the script in __main__'s context
         const py::module_ mainModule   = py::module_::import("__main__");

@@ -52,10 +52,6 @@ private:
     QString                         _connectionFilePath = {};
     std::unordered_set<std::string> _baseModules = {};
     PyScopedInterpreterPtr          _mainPyInterpreter = {};
-
-public:
-    static PyModulePtr mvCommunicationModule;
-    static void initMvCommunicationModule();
 };
 
 

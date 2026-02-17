@@ -36,16 +36,11 @@ void XeusInterpreter::configure_impl()
         comm_manager().register_comm_target("echo_target", handle_comm_opened);
 
         py::gil_scoped_acquire acquire;
-
-        py::module sys = py::module::import("sys");
-        py::dict modules = sys.attr("modules");
-
-        if (!modules.contains("mvstudio_core")) {
-            JupyterPlugin::initMvCommunicationModule();
-            py::module MVData_module = *(JupyterPlugin::mvCommunicationModule.get());
-
-            sys.attr("modules")["mvstudio_core"] = MVData_module;
-        }
+        auto pyModMv = py::module::import("mvstudio_core");
+    }
+    catch (const py::error_already_set& e)
+    {
+        std::cerr << "MVData modules already loaded: " << e.what() << std::endl;
     }
     catch (const std::runtime_error& e)
     {

@@ -2,8 +2,6 @@
 
 #include "pybind11/pybind11.h"
 
-pybind11::module get_MVData_module();
-
 namespace mvstudio_core {
     enum DataItemType {
         NOT_IMPLEMENTED = -1,
@@ -11,4 +9,6 @@ namespace mvstudio_core {
         Points = 1,
         Cluster = 2
     };
+
+    void init_binding(pybind11::module_& m);
 }

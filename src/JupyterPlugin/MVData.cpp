@@ -999,20 +999,17 @@ static bool set_linked_data(const std::string& sourceDataGuid, const std::string
     return true;
 }
 
+namespace mvstudio_core {
+    void init_binding(pybind11::module_& m)
+    {
+        py::enum_<DataItemType> DataItemTypes = { m, "DataItemType" };
 
-py::module get_MVData_module()
-{
-    using namespace mvstudio_core;
+        DataItemTypes
+            .value("Image", DataItemType::Image)
+            .value("Points", DataItemType::Points)
+            .value("Cluster", DataItemType::Cluster);
 
-    py::module MVData_module                = py::module_::create_extension_module("mvstudio_core", "Connection to ManiVault Studio", new py::module_::module_def);
-    py::enum_<DataItemType> DataItemTypes   = { MVData_module, "DataItemType" };
-
-    DataItemTypes
-        .value("Image", DataItemType::Image)
-        .value("Points", DataItemType::Points)
-        .value("Cluster", DataItemType::Cluster);
-
-    MVData_module
+        m
         .def("get_info", get_info)
         .def("get_top_level_item_names", get_top_level_item_names)
         .def("get_top_level_guids", get_top_level_guids)
@@ -1033,10 +1030,10 @@ py::module get_MVData_module()
         .def("find_image_dataset", find_image_dataset, py::arg("datasetGuid") = std::string())
         .def("get_image_dimensions", get_image_dimensions, py::arg("datasetGuid") = std::string())
         .def("get_cluster", get_cluster, py::arg("datasetGuid") = std::string())
-        .def("set_linked_data", 
-            set_linked_data, 
-            py::arg("sourceDataGuid") = std::string(), 
-            py::arg("targetDataGuid") = std::string(), 
+        .def("set_linked_data",
+            set_linked_data,
+            py::arg("sourceDataGuid") = std::string(),
+            py::arg("targetDataGuid") = std::string(),
             py::arg("selectionFromAToB") = std::vector<std::vector<int64_t>>()
         )
         .def(
@@ -1075,7 +1072,8 @@ py::module get_MVData_module()
             py::arg("clusterNames") = std::vector<std::string>(),
             py::arg("clusterColors") = std::vector<py::array>(),
             py::arg("datasetName") = std::string()
-            );
+        );
 
-    return MVData_module;
-}
+    }
+
+} // namespace mvstudio_core
