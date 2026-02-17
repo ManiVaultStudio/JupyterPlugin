@@ -34,8 +34,6 @@ PYBIND11_EMBEDDED_MODULE(mvstudio_core, m, py::multiple_interpreters::per_interp
     mvstudio_core::register_mv_core_module(m);
 }
 
-}
-
 JupyterPlugin::JupyterPlugin(const mv::plugin::PluginFactory* factory) :
     mv::plugin::ViewPlugin(factory)
 {
@@ -107,19 +105,6 @@ void JupyterPlugin::runScriptWithArgs(const QString& scriptPath, const QStringLi
         const py::object mainNamespace = mainModule.attr("__dict__");
 
         py::exec(scriptCode, mainNamespace);
-
-        // Run garbage collection
-        py::module gc = py::module::import("gc");
-        const auto collected = gc.attr("collect")();
-
-        // Clean up modules for fresh start
-        for (auto& [key, item] : modules) {
-            
-            if (std::string name = py::str(key);
-                !_baseModules.contains(name)) {
-                modules.attr("pop")(name, py::none());
-            }
-        }
 
     }
     catch (const py::error_already_set& e) {
