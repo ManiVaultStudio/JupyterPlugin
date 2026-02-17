@@ -71,7 +71,7 @@ void JupyterPlugin::runScriptWithArgs(const QString& scriptPath, const QStringLi
 
     // Sub-interpreter will go out of scope after script is executed
     py::subinterpreter sub = py::subinterpreter::create();
-    py::subinterpreter_scoped_activate guard(sub);
+    py::module_::import("printer").attr("which")("Created sub");
 
     // Load the script from file
     std::ifstream file(scriptPath.toStdString());
@@ -80,17 +80,9 @@ void JupyterPlugin::runScriptWithArgs(const QString& scriptPath, const QStringLi
     const std::string scriptCode = buffer.str();
 
     try {
+        py::subinterpreter_scoped_activate guard(sub);
 
-        // Insert manivault communication module into sys.modules
-        auto pyModSys = py::module::import("sys");
         auto pyModMv = py::module::import("mvstudio_core");
-
-
-        if (_baseModules.empty()) {
-            for (auto& [key, item] : modules) {
-                _baseModules.insert(py::str(key));
-            }
-        }
 
         // Set sys.argv
         auto pyArgs = py::list();
@@ -98,7 +90,7 @@ void JupyterPlugin::runScriptWithArgs(const QString& scriptPath, const QStringLi
         for (const auto& arg : args) {
             pyArgs.append(py::cast(arg.toStdString()));                                // add arguments
         }
-        pyModSys.attr("argv") = pyArgs;
+        py::module_::import("sys").attr("argv") = pyArgs;
 
         // Execute the script in __main__'s context
         const py::module_ mainModule   = py::module_::import("__main__");
