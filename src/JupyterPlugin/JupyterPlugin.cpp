@@ -29,8 +29,11 @@ namespace py = pybind11;
 
 PYBIND11_EMBEDDED_MODULE(mvstudio_core, m, py::multiple_interpreters::per_interpreter_gil()) {
     m.doc() = "Provides access to low level ManiVaultStudio core functions";
-    //m.attr("__version__") = tba
-    mvstudio_core::init_binding(m);
+    //m.attr("__version__") = tba;
+    mvstudio_core::register_mv_data_items(m);
+    mvstudio_core::register_mv_core_module(m);
+}
+
 }
 
 JupyterPlugin::JupyterPlugin(const mv::plugin::PluginFactory* factory) :
