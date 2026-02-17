@@ -10,10 +10,6 @@
 #include <xeus/xhelper.hpp>
 #include <xeus/xcomm.hpp>
 
-#undef slots
-#include <pybind11/embed.h>
-#define slots Q_SLOTS
-
 #include <QDebug>
 #include <QDir>
 #include <QFileInfo>
@@ -101,7 +97,7 @@ void XeusInterpreter::execute_request_impl(send_reply_callback cb,
 
 nl::json XeusInterpreter::kernel_info_request_impl()
 {
-    std::string banner = R"(
+    const std::string banner = R"(
           __  __             ___     __          _ _   
          |  \/  | __ _ _ __ (_) \   / /_ _ _   _| | |_ 
          | |\/| |/ _` | '_ \| |\ \ / / _` | | | | | _|
@@ -128,14 +124,4 @@ nl::json XeusInterpreter::kernel_info_request_impl()
         "",
         banner);
 
-    //return xpyt::interpreter::kernel_info_request_impl();
-}
-
-PYBIND11_MODULE(mvtest, m) {
-    m.doc() = "ManiVault test module";
-
-    // Add bindings here
-    m.def("sayhello", []() {
-        return "Hello, World!";
-    });
 }
