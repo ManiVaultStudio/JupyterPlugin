@@ -43,7 +43,7 @@ std::string get_item_name(const std::string& datasetGuid);
 std::string get_item_type(const std::string& datasetGuid);
 std::string get_item_rawname(const std::string& datasetGuid);
 pybind11::array get_selection_for_item(const std::string& datasetGuid);
-void set_selection_for_item(const std::string& datasetGuid, const pybind11::array_t<uint32_t>& selectionIDs);
+void set_selection_for_item(const std::string& datasetGuid, const std::vector<uint32_t>& selectionIDs);
 std::uint64_t get_item_rawsize(const std::string& datasetGuid);
 std::vector<std::string> get_item_properties(const std::string& datasetGuid);
 pybind11::object get_item_property(const std::string& datasetGuid, const std::string& propertyName);

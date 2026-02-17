@@ -137,6 +137,8 @@ class Item:
     def setSelection(self, selectionIDs : np.ndarray) -> None:
         """Set the selection for a given dataset, specified using its dataset ID.
         """
+        assert arr.ndim == 1, f"Expected 1D array, got {arr.ndim}D"
+        assert arr.dtype == np.uint32, f"Expected uint32, got {arr.dtype}"
         return mvstudio_core.set_selection_for_item(self.datasetId, selectionIDs)
 
     def setLinkedData(self, target : Self, selectionMapping : npt.NDArray[np.object_]) -> bool:
