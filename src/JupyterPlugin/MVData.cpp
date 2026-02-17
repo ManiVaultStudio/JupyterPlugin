@@ -362,19 +362,16 @@ std::string add_new_cluster_data(const std::string& parentPointDatasetGuid, cons
     for (size_t i = 0; i < numClusters; ++i) {
         Cluster cluster;
 
-        std::vector<std::uint32_t> clusterIndices_v = py_array_to_vector<std::uint32_t>(clusterIndices[i]);
-        cluster.setIndices(clusterIndices_v);
-
-        QString clusterName = QString::fromStdString(std::to_string(i));
+        cluster.setIndices(py_array_to_vector<std::uint32_t>(clusterIndices[i]));
 
         if (hasNames)
-            clusterName = QString::fromStdString(clusterNames[i]);
-
-        cluster.setName(clusterName);
+            cluster.setName(QString::fromStdString(clusterNames[i]));
+        else
+            cluster.setName(QString::fromStdString(std::to_string(i)));
 
         if (hasColors) {
-            std::vector<float> clusterColors_v = py_array_to_vector<float>(clusterColors[i]);
-            QColor clusterColor = QColor::fromRgbF(clusterColors_v[0], clusterColors_v[1], clusterColors_v[2], 1);
+            std::vector<float> clusterColorsVals = py_array_to_vector<float>(clusterColors[i]);
+            QColor clusterColor = QColor::fromRgbF(clusterColorsVals[0], clusterColorsVals[1], clusterColorsVals[2], 1);
             cluster.setColor(clusterColor);
         }
 
