@@ -11,21 +11,23 @@ if(${MV_JUPYTER_USE_VCPKG} AND WIN32)
     set(VCPKG_LIBRARY_LINKAGE "static" CACHE STRING "")
 endif()
 
+set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+include(read_plugin_version)
+read_plugin_version("${CMAKE_CURRENT_SOURCE_DIR}/src/JupyterLauncher/PluginInfo.json" PLUGIN_VERSION_MAJOR PLUGIN_VERSION_MINOR PLUGIN_VERSION_PATCH)
+
 # -----------------------------------------------------------------------------
 # Jupyter Plugins
 # -----------------------------------------------------------------------------
 PROJECT("JupyterPlugins"
-    VERSION 0.6.0
+    VERSION "${PLUGIN_VERSION_MAJOR}.${PLUGIN_VERSION_MINOR}.${PLUGIN_VERSION_PATCH}"
     DESCRIPTION "Jupyter plugin for ManiVault"
     LANGUAGES CXX)
-
+    
 # the version number corresponds to the pyproject.toml files in mvstudio_data and mvstudio_kernel,
-# as well as the PluginInfo.json in src/JupyterLauncher and src/JupyterPlugin
 
 # -----------------------------------------------------------------------------
 # CMake Options
 # -----------------------------------------------------------------------------
-set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 set(CMAKE_AUTOMOC ON)
 
 # Ensures that all non-inline and inline symbols are hidden unless explicitly marked for export
