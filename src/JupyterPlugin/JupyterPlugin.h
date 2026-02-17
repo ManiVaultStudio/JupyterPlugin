@@ -23,7 +23,7 @@ using PyModulePtr = std::unique_ptr<pybind11::module>;
  * This view plugin class hosts a Xeus kernel and python interpreter.
  * We open this plugin via the jupyter launcher plugin.
  *
- * @authors B. van Lew
+ * @authors B. van Lew, A. Vieth
  */
 class JupyterPlugin : public mv::plugin::ViewPlugin
 {

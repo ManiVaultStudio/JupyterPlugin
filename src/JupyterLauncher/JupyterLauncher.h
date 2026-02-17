@@ -31,7 +31,7 @@ using namespace mv::gui;
  * This plugin, JupyterLauncher fulfills that function.
  * The user selected pat is saved in the settings.
  *
- * @authors B. van Lew
+ * @authors B. van Lew, A. Vieth
  */
 class JupyterLauncher : public ViewPlugin
 {
