@@ -48,7 +48,7 @@ public:
     };
 
 private:
-    std::unique_ptr<XeusKernel>     _xeusKernel;
+    std::unique_ptr<XeusKernel>     _xeusKernel = nullptr;
     QString                         _connectionFilePath = {};
     std::unordered_set<std::string> _baseModules = {};
     PyScopedInterpreterPtr          _mainPyInterpreter = {};

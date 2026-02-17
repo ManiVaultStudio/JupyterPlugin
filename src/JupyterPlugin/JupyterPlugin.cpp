@@ -34,8 +34,7 @@ PYBIND11_EMBEDDED_MODULE(mvstudio_core, m, py::multiple_interpreters::per_interp
 }
 
 JupyterPlugin::JupyterPlugin(const mv::plugin::PluginFactory* factory) :
-    mv::plugin::ViewPlugin(factory),
-    _xeusKernel(std::make_unique<XeusKernel>())
+    mv::plugin::ViewPlugin(factory)
 {
 }
 
@@ -46,8 +45,11 @@ JupyterPlugin::~JupyterPlugin()
 
 void JupyterPlugin::init()
 {  
+    _xeusKernel = std::make_unique<XeusKernel>();
+
     // start the interpreter and keep it alive
     _mainPyInterpreter = std::make_unique<py::scoped_interpreter>();
+    auto pyModMv = py::module::import("mvstudio_core");
 }
 
 void JupyterPlugin::startJupyterNotebook() const

@@ -34,8 +34,6 @@ void XeusInterpreter::configure_impl()
     try {
         xpyt::interpreter::configure_impl();
         comm_manager().register_comm_target("echo_target", handle_comm_opened);
-
-        auto pyModMv = py::module::import("mvstudio_core");
     }
     catch (const py::error_already_set& e)
     {
