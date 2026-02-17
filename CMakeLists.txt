@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.31)
 
 option(XEUS_BUILD_STATIC_DEPENDENCIES "Xeus depends on libuuid. If that package is installed in your build env you can link statically to it" OFF)
 option(MV_JUPYTER_USE_VCPKG "Use vcpkg for openssl dependency" OFF)
+option(MV_JUPYTER_BUILD_TEST "Build test target for Jupyter plugin" OFF)
 
 # vcpkg library settings
 if(${MV_JUPYTER_USE_VCPKG} AND WIN32)
@@ -78,6 +79,10 @@ include(dependencies)
 
 add_subdirectory(src/JupyterLauncher)
 add_subdirectory(src/JupyterPlugin)
+
+if(MV_JUPYTER_BUILD_TEST)
+    add_subdirectory(tests)
+endif()
 
 # we'd like to always build the python bridge plugin when building the launcher plugin
 add_dependencies(JupyterLauncher ${JupyterPluginTarget})
