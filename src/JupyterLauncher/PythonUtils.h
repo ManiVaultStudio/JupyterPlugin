@@ -2,6 +2,7 @@
 
 #include <QString>
 #include <QStringList>
+#include <QTemporaryDir>
 #include <QOperatingSystemVersion>
 
 QString extractRegex(const QString& input, const QString& pattern, int group = 1);
@@ -45,7 +46,7 @@ void setPythonEnv(const QString& interpreterPath, const QString& interpreterVers
 
 std::pair<bool, QString> isCondaEnvironmentActive();
 
-QString createKernelDir();
+QTemporaryDir createKernelDir();
 
 PythonExecutionReturn runPythonCommand(const QStringList& params, const QString& pythonInterpreterPath, const bool verbose = false, const int waitForFinishedMSecs = 180'000);
 

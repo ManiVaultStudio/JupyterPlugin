@@ -190,7 +190,9 @@ bool JupyterLauncher::ensureMvWheelIsInstalled() const
 
         }
 
-        if (const auto res = runPythonCommand(QStringList({ "-m", "jupyter", "kernelspec", "install", createKernelDir(), "--user" }), pythonInterpreter, false);
+        const QTemporaryDir kernelDir = createKernelDir();
+
+        if (const auto res = runPythonCommand(QStringList({ "-m", "jupyter", "kernelspec", "install", kernelDir.path(), "--user"}), pythonInterpreter, true);
             res.result != QProcess::NormalExit) {
             qWarning() << "Installing the ManiVaultStudio Jupyter kernel failed. See logging for more information";
             return false;

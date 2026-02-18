@@ -133,38 +133,30 @@ std::pair<bool, QString> isCondaEnvironmentActive()
     return { true, givenInterpreterVersion.trimmed() };
 }
 
-QString createKernelDir()
+QTemporaryDir createKernelDir()
 {
     // 1. Create a marshalling directory with the correct kernel name "ManiVaultStudio"
-    const auto tempDir  = QTemporaryDir();
-    auto kernelDir      = QDir(tempDir.path());
-    [[maybe_unused]] const bool kernelDirSuccess = kernelDir.mkdir("ManiVaultStudio");
-    kernelDir.cd("ManiVaultStudio");
+    const QString templatePath = QDir::temp().filePath("ManiVaultStudio");
+    QTemporaryDir kernelDir(templatePath);
 
     // 2. Unpack the kernel files from the resources into the marshalling directory 
-    const QDir directory(":/kernel-files/");
-    const QStringList kernelList = directory.entryList(QStringList({ "*.*" }));
-    for (const QString& a : kernelList) {
-        QByteArray scriptContent;
-        auto kernFile = QFile(QString(":/kernel-files/") + a);
-        if (kernFile.open(QFile::ReadOnly)) {
-            scriptContent = kernFile.readAll();
-            kernFile.close();
-        }
+    const QDir resourceDir(":/kernel-files/");
+    const QStringList kernelList = resourceDir.entryList(QDir::Files);
 
-        QString newFilePath = kernelDir.absoluteFilePath(a);
-        QFile newFile(newFilePath);
-        qDebug() << "Kernel file: " << newFilePath;
-        if (newFile.open(QIODevice::WriteOnly)) {
-            newFile.write(scriptContent);
-            newFile.close();
+    for (const QString& filename : kernelList) {
+        const QString sourcePath = resourceDir.absoluteFilePath(filename);
+        const QString destPath = kernelDir.filePath(filename);
+
+        if (QFile::copy(sourcePath, destPath)) {
+            QFile::setPermissions(destPath, QFile::ReadOwner | QFile::WriteOwner);
+        }
+        else {
+            qWarning() << "Failed to copy kernel file:" << filename;
         }
     }
 
-    // 3. Install the ManiVaultStudio kernel for the current user 
-    return kernelDir.absolutePath();
+    return kernelDir;
 }
-
 
 PythonExecutionReturn runPythonCommand(const QStringList& params, const QString& pythonInterpreterPath, const bool verbose, const int waitForFinishedMSecs)
 {
