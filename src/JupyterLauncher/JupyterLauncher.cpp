@@ -169,7 +169,7 @@ bool JupyterLauncher::ensureMvWheelIsInstalled() const
         // Bootstrap the pip installer - does nothing if pip is available
         // https://docs.python.org/3/library/ensurepip.html
         if (const auto res = runPythonCommand({ "-m", "ensurepip" }, pythonInterpreter, false);
-			!res.result) {
+			res.result != QProcess::NormalExit) {
           qWarning() << "Installing pip failed. See logging for more information";
           return false;
         }
@@ -182,8 +182,8 @@ bool JupyterLauncher::ensureMvWheelIsInstalled() const
         for (const QString& wheelpath : { kernelWheel , dataWheel }) {
           qDebug() << "wheel paths: " << wheelpath;
 
-          if (const auto res = runPythonCommand({ "-m", "pip", "install", wheelpath, "--only-binary=:all:" }, pythonInterpreter, false);
-              !res.result) {
+          if (const auto res = runPythonCommand({ "-m", "pip", "install", wheelpath, "--only-binary=:all:" }, pythonInterpreter, true);
+              res.result != QProcess::NormalExit) {
             qWarning() << "Installing the given package failed. See logging for more information";
             return false;
           }
@@ -191,7 +191,7 @@ bool JupyterLauncher::ensureMvWheelIsInstalled() const
         }
 
         if (const auto res = runPythonCommand(QStringList({ "-m", "jupyter", "kernelspec", "install", createKernelDir(), "--user" }), pythonInterpreter, false);
-			!res.result) {
+            res.result != QProcess::NormalExit) {
             qWarning() << "Installing the ManiVaultStudio Jupyter kernel failed. See logging for more information";
             return false;
         }
@@ -370,7 +370,7 @@ bool JupyterLauncher::initPython(const bool activateXeus)
             return false;
 
         // we might just miss the communication modules
-        if (pythonResEnv.result == 1)
+        if (pythonResEnv.result == QProcess::CrashExit)
         {
             if (!ensureMvWheelIsInstalled())
             {
@@ -539,7 +539,7 @@ void JupyterLauncher::addPythonScripts()
 
         const auto res = runPythonCommand(params, getPythonInterpreterPath(), verbose);
 
-        return res.result == 0;
+        return res.result == QProcess::NormalExit;
         };
 
     uint32_t numLoadedScripts = 0;
