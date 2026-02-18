@@ -92,6 +92,7 @@ void JupyterPlugin::runScriptWithArgs(const QString& scriptPath, const QStringLi
 
     try {
         py::subinterpreter_scoped_activate guard(sub);
+        py::module_::import("printer").attr("which")("Switched to sub");
 
         auto pyModMv = py::module::import("mvstudio_core");
 
@@ -126,6 +127,7 @@ void JupyterPlugin::runScriptWithArgs(const QString& scriptPath, const QStringLi
         qWarning() << QStringLiteral("Python error: unknown");
     }
 
+    py::module_::import("printer").attr("which")("Back to main");
 }
 
 // =============================================================================
