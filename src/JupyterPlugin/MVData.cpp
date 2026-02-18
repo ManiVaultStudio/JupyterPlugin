@@ -683,65 +683,60 @@ bool set_linked_data(const std::string& sourceDataGuid, const std::string& targe
 namespace mvstudio_core {
     void register_mv_core_module(pybind11::module_& m)
     {
-        m
-            .def("get_top_level_item_names", get_top_level_item_names)
-            .def("get_top_level_guids", get_top_level_guids)
-            .def("get_data_for_item", get_data_for_item, py::arg("datasetGuid") = std::string())
-            .def("get_selection_for_item", get_selection_for_item, py::arg("datasetGuid") = std::string())
-            .def("set_selection_for_item", set_selection_for_item, py::arg("datasetGuid") = std::string(), py::arg("selectionIDs") = std::vector<uint32_t>())
-            .def("get_image_item", get_mv_image, py::arg("datasetGuid") = std::string())
-            .def("get_item_name", get_item_name, py::arg("datasetGuid") = std::string())
-            .def("get_item_rawsize", get_item_rawsize, py::arg("datasetGuid") = std::string())
-            .def("get_item_type", get_item_type, py::arg("datasetGuid") = std::string())
-            .def("get_item_rawname", get_item_rawname, py::arg("datasetGuid") = std::string())
-            .def("get_item_numdimensions", get_item_numdimensions, py::arg("datasetGuid") = std::string())
-            .def("get_item_numpoints", get_item_numpoints, py::arg("datasetGuid") = std::string())
-            .def("get_item_children", get_item_children, py::arg("datasetGuid") = std::string())
-            .def("get_item_properties", get_item_properties, py::arg("datasetGuid") = std::string())
-            .def("get_item_property", get_item_property, py::arg("datasetGuid") = std::string(), py::arg("propertyName") = std::string())
-            .def("get_data_type", get_data_type, py::arg("datasetGuid") = std::string())
-            .def("find_image_dataset", find_image_dataset, py::arg("datasetGuid") = std::string())
-            .def("get_image_dimensions", get_image_dimensions, py::arg("datasetGuid") = std::string())
-            .def("get_cluster", get_cluster, py::arg("datasetGuid") = std::string())
-            .def("set_linked_data",
-                set_linked_data,
-                py::arg("sourceDataGuid") = std::string(),
-                py::arg("targetDataGuid") = std::string(),
-                py::arg("selectionFromAToB") = std::vector<std::vector<int64_t>>()
-            )
-            //.def("add_new_points",
-            //    add_new_point_data,
-            //    py::arg("data") = py::array(),
-            //    py::arg("dataSetName") = std::string(),
-            //    py::arg("dataSetParentID") = std::string(),
-            //    py::arg("dimensionNames") = std::vector<std::string>()
-            //);
-            //.def( "add_derived_points",
-            //    add_derived_point_data,
-            //    py::arg("data") = py::array(),
-            //    py::arg("dataSetName") = std::string(),
-            //    py::arg("dataSetSourceID") = std::string(),
-            //    py::arg("dimensionNames") = std::vector<std::string>()
-            //);
-            //.def("add_new_image",
-            //    add_new_image_data,
-            //    py::arg("data") = py::array(),
-            //    py::arg("dataSetName") = std::string(),
-            //    py::arg("dimensionNames") = std::vector<std::string>()
-            //);
-            //// The cluster tuple contains the following lists
-            //// names
-            //// indexes (clusters) 
-            //// colors 
-            //// ids (ignored)
-            .def("add_new_clusters",
-                add_new_cluster_data,
-                py::arg("parentPointDatasetGuid") = std::string(),
-                py::arg("clusterIndices") = std::vector<py::array>(),
-                py::arg("clusterNames") = std::vector<std::string>(),
-                py::arg("clusterColors") = std::vector<py::array>(),
-                py::arg("datasetName") = std::string()
+        m.def("get_top_level_item_names", get_top_level_item_names);
+        m.def("get_top_level_guids", get_top_level_guids);
+        m.def("get_data_for_item", get_data_for_item, py::arg("datasetGuid") = std::string());
+        m.def("get_selection_for_item", get_selection_for_item, py::arg("datasetGuid") = std::string());
+        m.def("set_selection_for_item", set_selection_for_item, py::arg("datasetGuid") = std::string(), py::arg("selectionIDs") = std::vector<uint32_t>());
+        m.def("get_image_item", get_mv_image, py::arg("datasetGuid") = std::string());
+        m.def("get_item_name", get_item_name, py::arg("datasetGuid") = std::string());
+        m.def("get_item_rawsize", get_item_rawsize, py::arg("datasetGuid") = std::string());
+        m.def("get_item_type", get_item_type, py::arg("datasetGuid") = std::string());
+        m.def("get_item_rawname", get_item_rawname, py::arg("datasetGuid") = std::string());
+        m.def("get_item_numdimensions", get_item_numdimensions, py::arg("datasetGuid") = std::string());
+        m.def("get_item_numpoints", get_item_numpoints, py::arg("datasetGuid") = std::string());
+        m.def("get_item_children", get_item_children, py::arg("datasetGuid") = std::string());
+        m.def("get_item_properties", get_item_properties, py::arg("datasetGuid") = std::string());
+        m.def("get_item_property", get_item_property, py::arg("datasetGuid") = std::string(), py::arg("propertyName") = std::string());
+        m.def("get_data_type", get_data_type, py::arg("datasetGuid") = std::string());
+        m.def("find_image_dataset", find_image_dataset, py::arg("datasetGuid") = std::string());
+        m.def("get_image_dimensions", get_image_dimensions, py::arg("datasetGuid") = std::string());
+        m.def("get_cluster", get_cluster, py::arg("datasetGuid") = std::string());
+        m.def("set_linked_data",
+            set_linked_data,
+            py::arg("sourceDataGuid") = std::string(),
+            py::arg("targetDataGuid") = std::string(),
+            py::arg("selectionFromAToB") = std::vector<std::vector<int64_t>>()
             );
+        m.def("add_new_points",
+            add_new_point_data,
+            py::arg("data"),    // do NOT = py::array() as this break loading the module in subinterpreters
+            py::arg("dataSetName") = std::string(),
+            py::arg("dataSetParentID") = std::string(),
+            py::arg("dimensionNames") = std::vector<std::string>()
+        );
+        m.def( "add_derived_points",
+            add_derived_point_data,
+            py::arg("data"),    // do NOT = py::array() as this break loading the module in subinterpreters
+            py::arg("dataSetName") = std::string(),
+            py::arg("dataSetSourceID") = std::string(),
+            py::arg("dimensionNames") = std::vector<std::string>()
+        );
+        m.def("add_new_image",
+            add_new_image_data,
+            py::arg("data"),    // do NOT = py::array() as this break loading the module in subinterpreters
+            py::arg("dataSetName") = std::string(),
+            py::arg("dimensionNames") = std::vector<std::string>()
+        );
+        // The cluster tuple contains the following lists: names, indexes (clusters), colors, ids (ignored)
+        m.def("add_new_clusters",
+            add_new_cluster_data,
+            py::arg("parentPointDatasetGuid") = std::string(),
+            py::arg("clusterIndices") = std::vector<py::array>(),
+            py::arg("clusterNames") = std::vector<std::string>(),
+            py::arg("clusterColors") = std::vector<py::array>(),
+            py::arg("datasetName") = std::string()
+        );
 
     }
 
