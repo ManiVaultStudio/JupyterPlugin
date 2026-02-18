@@ -9,6 +9,7 @@
 #include <sstream>
 #include <string>
 #include <stdexcept>
+#include <iostream>
 
 #undef slots
 #include <pybind11/cast.h>
@@ -34,6 +35,14 @@ PYBIND11_EMBEDDED_MODULE(mvstudio_core, m, py::multiple_interpreters::per_interp
     mvstudio_core::register_mv_core_module(m);
 }
 
+PYBIND11_EMBEDDED_MODULE(printer, m, py::multiple_interpreters::per_interpreter_gil()) {
+    m.def("which", [](const std::string& when) {
+        std::cout << when << "; Current Interpreter is "
+            << py::subinterpreter::current().id()
+            << std::endl;
+        });
+}
+
 JupyterPlugin::JupyterPlugin(const mv::plugin::PluginFactory* factory) :
     mv::plugin::ViewPlugin(factory)
 {
@@ -51,6 +60,8 @@ void JupyterPlugin::init()
     // start the interpreter and keep it alive
     _mainPyInterpreter = std::make_unique<py::scoped_interpreter>();
     auto pyModMv = py::module::import("mvstudio_core");
+
+    py::module_::import("printer").attr("which")("First init");
 }
 
 void JupyterPlugin::startJupyterNotebook() const
