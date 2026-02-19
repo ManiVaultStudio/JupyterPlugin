@@ -35,14 +35,6 @@ PYBIND11_EMBEDDED_MODULE(mvstudio_core, m, py::multiple_interpreters::per_interp
     mvstudio_core::register_mv_core_module(m);
 }
 
-PYBIND11_EMBEDDED_MODULE(printer, m, py::multiple_interpreters::per_interpreter_gil()) {
-    m.def("which", [](const std::string& when) {
-        std::cout << when << "; Current Interpreter is "
-            << py::subinterpreter::current().id()
-            << std::endl;
-        });
-}
-
 JupyterPlugin::JupyterPlugin(const mv::plugin::PluginFactory* factory) :
     mv::plugin::ViewPlugin(factory)
 {
@@ -82,7 +74,6 @@ void JupyterPlugin::runScriptWithArgs(const QString& scriptPath, const QStringLi
 
     // Sub-interpreter will go out of scope after script is executed
     py::subinterpreter sub = py::subinterpreter::create();
-    py::module_::import("printer").attr("which")("Created sub");
 
     // Load the script from file
     std::ifstream file(scriptPath.toStdString());
@@ -92,7 +83,6 @@ void JupyterPlugin::runScriptWithArgs(const QString& scriptPath, const QStringLi
 
     try {
         py::subinterpreter_scoped_activate guard(sub);
-        py::module_::import("printer").attr("which")("Switched to sub");
 
         auto pyModMv = py::module::import("mvstudio_core");
 
@@ -127,7 +117,6 @@ void JupyterPlugin::runScriptWithArgs(const QString& scriptPath, const QStringLi
         qWarning() << QStringLiteral("Python error: unknown");
     }
 
-    py::module_::import("printer").attr("which")("Back to main");
 }
 
 // =============================================================================
