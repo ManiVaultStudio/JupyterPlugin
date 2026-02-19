@@ -7,6 +7,7 @@
 #include <exception>
 #include <format>
 #include <fstream>
+#include <set>
 #include <string>
 #include <stdexcept>
 
@@ -35,6 +36,17 @@ PYBIND11_EMBEDDED_MODULE(mvstudio_core, m, py::multiple_interpreters::per_interp
     mvstudio_core::register_mv_core_module(m);
 }
 
+namespace
+{
+    void importMvModule()
+    {
+        if (const py::dict modules = py::module::import("sys").attr("modules");
+            !modules.contains("mvstudio_core")) {
+            auto pyModMv = py::module::import("mvstudio_core");
+        }
+    }
+}
+
 JupyterPlugin::JupyterPlugin(const mv::plugin::PluginFactory* factory) :
     mv::plugin::ViewPlugin(factory)
 {
@@ -46,11 +58,16 @@ JupyterPlugin::~JupyterPlugin()
 }
 
 void JupyterPlugin::init()
-{  
+{
     // start the interpreter and keep it alive
     _mainPyInterpreter = std::make_unique<py::scoped_interpreter>();
-    auto pyModMv = py::module::import("mvstudio_core");
+    importMvModule();
 
+    // save global base state
+    for (const py::dict loadedModules = py::module::import("sys").attr("modules");
+        auto& [key, _] : loadedModules) {
+        _baseModules.insert(py::str(key));
+    }
 }
 
 void JupyterPlugin::startJupyterNotebook()
@@ -64,9 +81,43 @@ void JupyterPlugin::startJupyterNotebook()
     _xeusKernel->startKernel(_connectionFilePath, QString::fromStdString(getVersion().getVersionString()));
 }
 
+void JupyterPlugin::cleanGlobalNamespace() const
+{
+    // Clear user-defined globals (keep builtins)
+    py::dict pythonGlobals = py::module_::import("__main__").attr("__dict__");
+
+    // Remove everything except builtins and special attributes
+    std::set<std::string> toRemove;
+    for (auto& [key, _] : pythonGlobals) {
+
+        if (std::string globalName = py::str(key);
+            !globalName.empty() && globalName[0] != '_') {  // keep __name__, __builtins__, etc.
+            toRemove.insert(globalName);
+        }
+    }
+
+    for (const auto& key : toRemove) {
+        pythonGlobals.attr("pop")(key);
+    }
+
+    // Clean up modules for fresh start
+    for (const py::dict loadedModules = py::module::import("sys").attr("modules");
+        auto& [key, _] : loadedModules) {
+
+        if (std::string moduleName = py::str(key);
+            !_baseModules.contains(moduleName)) {
+            loadedModules.attr("pop")(moduleName, py::none());
+        }
+    }
+
+    // Run garbage collection
+    const py::module gc = py::module::import("gc");
+    const auto gcResult = gc.attr("collect")();
+}
+
 // ReSharper disable once CppMemberFunctionMayBeStatic
 // Cannot be static since we want to apply Q_INVOKABLE 
-void JupyterPlugin::runScriptWithArgs(const QString& scriptPath, const QStringList& args)
+void JupyterPlugin::runScriptWithArgs(const QString& scriptPath, const QStringList& args) const
 {
     if (!Py_IsInitialized()) {
         qWarning() << "JupyterPlugin::runScriptWithArgs: Script not executed - interpreter is not initialized";
@@ -74,6 +125,7 @@ void JupyterPlugin::runScriptWithArgs(const QString& scriptPath, const QStringLi
     }
 
     py::gil_scoped_acquire acquire;
+    importMvModule();
 
     // Load the script from file
     std::ifstream file(scriptPath.toStdString());
@@ -97,6 +149,7 @@ void JupyterPlugin::runScriptWithArgs(const QString& scriptPath, const QStringLi
 
         py::exec(scriptCode, mainNamespace);
 
+        cleanGlobalNamespace();
     }
     catch (const py::error_already_set& e) {
         qWarning() << QStringLiteral("Python error (probably from script):");
