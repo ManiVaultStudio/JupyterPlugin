@@ -123,8 +123,6 @@ bool JupyterLauncher::getShowInterpreterPathDialog()
     return !mv::settings().getPluginGlobalSettingsGroupAction<GlobalSettingsAction>("Jupyter Launcher")->getDoNotShowAgainButton().isChecked();
 }
 
-
-
 bool JupyterLauncher::runScriptInKernel(const QString& scriptPath, const QStringList& params)
 {
     if (!_initializedPythonInterpreters.contains(_selectedInterpreterVersion)) {
@@ -599,7 +597,7 @@ void JupyterLauncher::addPythonScripts()
 
         const QString fullPyVersion = QString("%1.%2").arg(_selectedInterpreterVersion, _currentInterpreterPatchVersion);
 
-        auto& scriptTriggerAction = _scriptTriggerActions.emplace_back(std::make_shared<PythonScript>(scriptName, mv::util::Script::getTypeEnum(scriptType), scriptPath, fullPyVersion, json, this, nullptr));
+        auto& scriptTriggerAction = _scriptTriggerActions.emplace_back(std::make_shared<PythonScript>(scriptName, mv::util::Script::getTypeEnum(scriptType), fullPyVersion, scriptPath, json, this, nullptr));
 
         // check if script contains input-datatypes, convert to mv::DataTypes
         if (containsMemberArray(json, "input-datatypes")) {
