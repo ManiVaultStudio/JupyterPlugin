@@ -65,6 +65,8 @@ void JupyterPlugin::startJupyterNotebook() const
     _xeusKernel->startKernel(_connectionFilePath, QString::fromStdString(getVersion().getVersionString()));
 }
 
+// ReSharper disable once CppMemberFunctionMayBeStatic
+// Cannot be static since we want to apply Q_INVOKABLE 
 void JupyterPlugin::runScriptWithArgs(const QString& scriptPath, const QStringList& args)
 {
     if (!Py_IsInitialized()) {
