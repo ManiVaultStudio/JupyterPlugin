@@ -64,11 +64,6 @@ ScriptDialog::ScriptDialog(QWidget* parent, PythonScriptContent* scriptContent, 
 
     connect(&_okButton, &mv::gui::TriggerAction::triggered, this, &QDialog::accept);
     connect(this, &QDialog::accepted, this, &ScriptDialog::runScript);
-    //connect(this, &QDialog::finished, this, [this](int result){
-    //    for (auto* argumentAction : _argumentActions)
-    //        delete argumentAction;
-    //	_argumentActions.clear();
-    //});
 }
 
 void ScriptDialog::populateDialog() 
