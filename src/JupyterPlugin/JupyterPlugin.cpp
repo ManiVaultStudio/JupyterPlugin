@@ -36,6 +36,17 @@ PYBIND11_EMBEDDED_MODULE(mvstudio_core, m, py::multiple_interpreters::per_interp
     mvstudio_core::register_mv_core_module(m);
 }
 
+namespace
+{
+    void importMvModule()
+    {
+        if (const py::dict modules = py::module::import("sys").attr("modules");
+            !modules.contains("mvstudio_core")) {
+            auto pyModMv = py::module::import("mvstudio_core");
+        }
+    }
+}
+
 JupyterPlugin::JupyterPlugin(const mv::plugin::PluginFactory* factory) :
     mv::plugin::ViewPlugin(factory)
 {
@@ -50,7 +61,7 @@ void JupyterPlugin::init()
 {  
     // start the interpreter and keep it alive
     _mainPyInterpreter = std::make_unique<py::scoped_interpreter>();
-    auto pyModMv = py::module::import("mvstudio_core");
+    importMvModule();
 
     // save global base state
     for (const py::dict loadedModules = py::module::import("sys").attr("modules");
@@ -114,6 +125,7 @@ void JupyterPlugin::runScriptWithArgs(const QString& scriptPath, const QStringLi
     }
 
     py::gil_scoped_acquire acquire;
+    importMvModule();
 
     // Load the script from file
     std::ifstream file(scriptPath.toStdString());
