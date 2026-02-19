@@ -710,21 +710,21 @@ namespace mvstudio_core {
             );
         m.def("add_new_points",
             add_new_point_data,
-            py::arg("data"),    // do NOT = py::array() as this break loading the module in subinterpreters
+            py::arg("data"),    // do NOT = py::array() as this breaks loading the module in subinterpreters
             py::arg("dataSetName") = std::string(),
             py::arg("dataSetParentID") = std::string(),
             py::arg("dimensionNames") = std::vector<std::string>()
         );
         m.def( "add_derived_points",
             add_derived_point_data,
-            py::arg("data"),    // do NOT = py::array() as this break loading the module in subinterpreters
+            py::arg("data"),    // do NOT = py::array() as this breaks loading the module in subinterpreters
             py::arg("dataSetName") = std::string(),
             py::arg("dataSetSourceID") = std::string(),
             py::arg("dimensionNames") = std::vector<std::string>()
         );
         m.def("add_new_image",
             add_new_image_data,
-            py::arg("data"),    // do NOT = py::array() as this break loading the module in subinterpreters
+            py::arg("data"),    // do NOT = py::array() as this breaks loading the module in subinterpreters
             py::arg("dataSetName") = std::string(),
             py::arg("dimensionNames") = std::vector<std::string>()
         );
