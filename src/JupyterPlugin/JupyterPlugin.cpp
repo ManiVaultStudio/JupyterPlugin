@@ -78,9 +78,10 @@ void JupyterPlugin::runScriptWithArgs(const QString& scriptPath, const QStringLi
 
     // Load the script from file
     std::ifstream file(scriptPath.toStdString());
-    std::stringstream buffer;
-    buffer << file.rdbuf();
-    const std::string scriptCode = buffer.str();
+    const std::string scriptCode(
+        std::istreambuf_iterator<char>(file),
+        std::istreambuf_iterator<char>{}
+    );
 
     try {
         py::subinterpreter_scoped_activate guard(sub);
