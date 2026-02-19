@@ -73,8 +73,7 @@ void JupyterPlugin::runScriptWithArgs(const QString& scriptPath, const QStringLi
         return;
     }
 
-    // Sub-interpreter will go out of scope after script is executed
-    py::subinterpreter sub = py::subinterpreter::create();
+    py::gil_scoped_acquire acquire;
 
     // Load the script from file
     std::ifstream file(scriptPath.toStdString());
@@ -84,15 +83,11 @@ void JupyterPlugin::runScriptWithArgs(const QString& scriptPath, const QStringLi
     );
 
     try {
-        py::subinterpreter_scoped_activate guard(sub);
-
-        auto pyModMv = py::module::import("mvstudio_core");
-
         // Set sys.argv
         auto pyArgs = py::list();
         pyArgs.append(py::cast(QFileInfo(scriptPath).fileName().toStdString()));      // add file name
         for (const auto& arg : args) {
-            pyArgs.append(py::cast(arg.toStdString()));                                // add arguments
+            pyArgs.append(py::cast(arg.toStdString()));                               // add arguments
         }
         py::module_::import("sys").attr("argv") = pyArgs;
 
