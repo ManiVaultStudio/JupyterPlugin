@@ -7,6 +7,7 @@
 #include <exception>
 #include <format>
 #include <fstream>
+#include <set>
 #include <string>
 #include <stdexcept>
 
@@ -51,6 +52,11 @@ void JupyterPlugin::init()
     _mainPyInterpreter = std::make_unique<py::scoped_interpreter>();
     auto pyModMv = py::module::import("mvstudio_core");
 
+    // save global base state
+    for (const py::dict loadedModules = py::module::import("sys").attr("modules");
+        auto& [key, _] : loadedModules) {
+        _baseModules.insert(py::str(key));
+    }
 }
 
 void JupyterPlugin::startJupyterNotebook()
@@ -62,6 +68,40 @@ void JupyterPlugin::startJupyterNotebook()
 
     _xeusKernel = std::make_unique<XeusKernel>();
     _xeusKernel->startKernel(_connectionFilePath, QString::fromStdString(getVersion().getVersionString()));
+}
+
+void JupyterPlugin::cleanGlobalNamespace() const
+{
+    // Clear user-defined globals (keep builtins)
+    py::dict pythonGlobals = py::module_::import("__main__").attr("__dict__");
+
+    // Remove everything except builtins and special attributes
+    std::set<std::string> toRemove;
+    for (auto& [key, _] : pythonGlobals) {
+
+        if (std::string globalName = py::str(key);
+            !globalName.empty() && globalName[0] != '_') {  // keep __name__, __builtins__, etc.
+            toRemove.insert(globalName);
+        }
+    }
+
+    for (const auto& key : toRemove) {
+        pythonGlobals.attr("pop")(key);
+    }
+
+    // Clean up modules for fresh start
+    for (const py::dict loadedModules = py::module::import("sys").attr("modules");
+        auto& [key, _] : loadedModules) {
+
+        if (std::string moduleName = py::str(key);
+            !_baseModules.contains(moduleName)) {
+            loadedModules.attr("pop")(moduleName, py::none());
+        }
+    }
+
+    // Run garbage collection
+    const py::module gc = py::module::import("gc");
+    const auto gcResult = gc.attr("collect")();
 }
 
 // ReSharper disable once CppMemberFunctionMayBeStatic
@@ -97,6 +137,7 @@ void JupyterPlugin::runScriptWithArgs(const QString& scriptPath, const QStringLi
 
         py::exec(scriptCode, mainNamespace);
 
+        cleanGlobalNamespace();
     }
     catch (const py::error_already_set& e) {
         qWarning() << QStringLiteral("Python error (probably from script):");

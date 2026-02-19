@@ -48,6 +48,9 @@ public:
     };
 
 private:
+    void cleanGlobalNamespace() const;
+
+private:
     std::unique_ptr<XeusKernel>     _xeusKernel;
     QString                         _connectionFilePath = {};
     std::unordered_set<std::string> _baseModules = {};
