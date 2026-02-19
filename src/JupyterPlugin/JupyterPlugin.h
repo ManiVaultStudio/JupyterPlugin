@@ -41,7 +41,7 @@ public:
     void init() override;
 
     Q_INVOKABLE void startJupyterNotebook();
-    Q_INVOKABLE void runScriptWithArgs(const QString& scriptPath, const QStringList& args);
+    Q_INVOKABLE void runScriptWithArgs(const QString& scriptPath, const QStringList& args) const;
 
     Q_INVOKABLE void setConnectionFilePath(const QString& scriptPath) {
         _connectionFilePath = scriptPath;

@@ -58,7 +58,7 @@ JupyterPlugin::~JupyterPlugin()
 }
 
 void JupyterPlugin::init()
-{  
+{
     // start the interpreter and keep it alive
     _mainPyInterpreter = std::make_unique<py::scoped_interpreter>();
     importMvModule();
@@ -117,7 +117,7 @@ void JupyterPlugin::cleanGlobalNamespace() const
 
 // ReSharper disable once CppMemberFunctionMayBeStatic
 // Cannot be static since we want to apply Q_INVOKABLE 
-void JupyterPlugin::runScriptWithArgs(const QString& scriptPath, const QStringList& args)
+void JupyterPlugin::runScriptWithArgs(const QString& scriptPath, const QStringList& args) const
 {
     if (!Py_IsInitialized()) {
         qWarning() << "JupyterPlugin::runScriptWithArgs: Script not executed - interpreter is not initialized";
