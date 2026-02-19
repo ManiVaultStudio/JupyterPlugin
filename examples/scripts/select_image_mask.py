@@ -46,7 +46,7 @@ def main(args):
         # Set selection
         import numpy as np
         thresh      = args.selection_threshold
-        mask_selection = np.flatnonzero(mask_mv_ref.points > thresh)
+        mask_selection = np.flatnonzero(mask_mv_ref.points > thresh, dtype=np.uint32)
 
         sel_mv_ref.setSelection(mask_selection)
 

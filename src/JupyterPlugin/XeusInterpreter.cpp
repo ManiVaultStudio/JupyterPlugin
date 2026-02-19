@@ -10,10 +10,6 @@
 #include <xeus/xhelper.hpp>
 #include <xeus/xcomm.hpp>
 
-#undef slots
-#include <pybind11/embed.h>
-#define slots Q_SLOTS
-
 #include <QDebug>
 #include <QDir>
 #include <QFileInfo>
@@ -38,18 +34,10 @@ void XeusInterpreter::configure_impl()
     try {
         xpyt::interpreter::configure_impl();
         comm_manager().register_comm_target("echo_target", handle_comm_opened);
-
-        py::gil_scoped_acquire acquire;
-
-        py::module sys = py::module::import("sys");
-        py::dict modules = sys.attr("modules");
-
-        if (!modules.contains("mvstudio_core")) {
-            JupyterPlugin::initMvCommunicationModule();
-            py::module MVData_module = *(JupyterPlugin::mvCommunicationModule.get());
-
-            sys.attr("modules")["mvstudio_core"] = MVData_module;
-        }
+    }
+    catch (const py::error_already_set& e)
+    {
+        std::cerr << "MVData modules already loaded: " << e.what() << std::endl;
     }
     catch (const std::runtime_error& e)
     {
@@ -101,7 +89,7 @@ void XeusInterpreter::execute_request_impl(send_reply_callback cb,
 
 nl::json XeusInterpreter::kernel_info_request_impl()
 {
-    std::string banner = R"(
+    const std::string banner = R"(
           __  __             ___     __          _ _   
          |  \/  | __ _ _ __ (_) \   / /_ _ _   _| | |_ 
          | |\/| |/ _` | '_ \| |\ \ / / _` | | | | | _|
@@ -128,14 +116,4 @@ nl::json XeusInterpreter::kernel_info_request_impl()
         "",
         banner);
 
-    //return xpyt::interpreter::kernel_info_request_impl();
-}
-
-PYBIND11_MODULE(mvtest, m) {
-    m.doc() = "ManiVault test module";
-
-    // Add bindings here
-    m.def("sayhello", []() {
-        return "Hello, World!";
-    });
 }

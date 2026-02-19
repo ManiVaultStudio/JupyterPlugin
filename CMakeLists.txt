@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.31)
 
 option(XEUS_BUILD_STATIC_DEPENDENCIES "Xeus depends on libuuid. If that package is installed in your build env you can link statically to it" OFF)
 option(MV_JUPYTER_USE_VCPKG "Use vcpkg for openssl dependency" OFF)
+option(MV_JUPYTER_BUILD_TEST "Build test target for Jupyter plugin" OFF)
 
 # vcpkg library settings
 if(${MV_JUPYTER_USE_VCPKG} AND WIN32)
@@ -11,21 +12,23 @@ if(${MV_JUPYTER_USE_VCPKG} AND WIN32)
     set(VCPKG_LIBRARY_LINKAGE "static" CACHE STRING "")
 endif()
 
+set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+include(read_plugin_version)
+read_plugin_version("${CMAKE_CURRENT_SOURCE_DIR}/src/JupyterLauncher/PluginInfo.json" PLUGIN_VERSION_MAJOR PLUGIN_VERSION_MINOR PLUGIN_VERSION_PATCH)
+
 # -----------------------------------------------------------------------------
 # Jupyter Plugins
 # -----------------------------------------------------------------------------
 PROJECT("JupyterPlugins"
-    VERSION 0.6.0
+    VERSION "${PLUGIN_VERSION_MAJOR}.${PLUGIN_VERSION_MINOR}.${PLUGIN_VERSION_PATCH}"
     DESCRIPTION "Jupyter plugin for ManiVault"
     LANGUAGES CXX)
-
+    
 # the version number corresponds to the pyproject.toml files in mvstudio_data and mvstudio_kernel,
-# as well as the PluginInfo.json in src/JupyterLauncher and src/JupyterPlugin
 
 # -----------------------------------------------------------------------------
 # CMake Options
 # -----------------------------------------------------------------------------
-set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 set(CMAKE_AUTOMOC ON)
 
 # Ensures that all non-inline and inline symbols are hidden unless explicitly marked for export
@@ -52,8 +55,8 @@ set(xeus_VERSION "5.2.6")
 set(nlohmann_json_VERSION "v3.12.0")
 set(libzmq_VERSION "v4.3.5")
 set(cppzmq_VERSION "v4.11.0")
-set(xeus-zmq_VERSION "3.1.1")
-set(pybind11_VERSION "v3.0.1")
+set(xeus-zmq_VERSION "3.1.2")
+set(pybind11_VERSION "v3.0.2")
 set(pybind11_json_VERSION "0.2.15")
 set(pybind11_json_VERSION_TAG "d0bf434be9d287d73a963ff28745542daf02c08f") # includes support for cmake 4
 set(xeus-python_VERSION "0.17.6")
@@ -76,6 +79,10 @@ include(dependencies)
 
 add_subdirectory(src/JupyterLauncher)
 add_subdirectory(src/JupyterPlugin)
+
+if(MV_JUPYTER_BUILD_TEST)
+    add_subdirectory(tests)
+endif()
 
 # we'd like to always build the python bridge plugin when building the launcher plugin
 add_dependencies(JupyterLauncher ${JupyterPluginTarget})

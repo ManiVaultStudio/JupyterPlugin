@@ -22,6 +22,8 @@ set(JUPYTERPLUGIN_SOURCES
     XeusInterpreter.cpp
     MVData.cpp
     MVData.h
+    BindingUtils.cpp
+    BindingUtils.h
     PythonBuildVersion.h
 )
 

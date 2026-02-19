@@ -23,7 +23,7 @@ using PyModulePtr = std::unique_ptr<pybind11::module>;
  * This view plugin class hosts a Xeus kernel and python interpreter.
  * We open this plugin via the jupyter launcher plugin.
  *
- * @authors B. van Lew
+ * @authors B. van Lew, A. Vieth
  */
 class JupyterPlugin : public mv::plugin::ViewPlugin
 {
@@ -40,7 +40,7 @@ public:
 
     void init() override;
 
-    Q_INVOKABLE void startJupyterNotebook() const;
+    Q_INVOKABLE void startJupyterNotebook();
     Q_INVOKABLE void runScriptWithArgs(const QString& scriptPath, const QStringList& args);
 
     Q_INVOKABLE void setConnectionFilePath(const QString& scriptPath) {
@@ -52,10 +52,6 @@ private:
     QString                         _connectionFilePath = {};
     std::unordered_set<std::string> _baseModules = {};
     PyScopedInterpreterPtr          _mainPyInterpreter = {};
-
-public:
-    static PyModulePtr mvCommunicationModule;
-    static void initMvCommunicationModule();
 };
 
 

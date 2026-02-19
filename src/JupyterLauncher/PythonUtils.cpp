@@ -6,6 +6,7 @@
 #include <QOperatingSystemVersion>
 #include <QRegularExpression>
 #include <QTemporaryDir>
+#include <QTemporaryFile>
 
 QString extractRegex(const QString& input, const QString& pattern, int group) {
     const QRegularExpression regex(pattern);
@@ -132,34 +133,109 @@ std::pair<bool, QString> isCondaEnvironmentActive()
     return { true, givenInterpreterVersion.trimmed() };
 }
 
-QString createKernelDir()
+QTemporaryDir createKernelDir()
 {
     // 1. Create a marshalling directory with the correct kernel name "ManiVaultStudio"
-    const auto tempDir  = QTemporaryDir();
-    auto kernelDir      = QDir(tempDir.path());
-    [[maybe_unused]] const bool kernelDirSuccess = kernelDir.mkdir("ManiVaultStudio");
-    kernelDir.cd("ManiVaultStudio");
+    const QString templatePath = QDir::temp().filePath("ManiVaultStudio");
+    QTemporaryDir kernelDir(templatePath);
 
     // 2. Unpack the kernel files from the resources into the marshalling directory 
-    const QDir directory(":/kernel-files/");
-    const QStringList kernelList = directory.entryList(QStringList({ "*.*" }));
-    for (const QString& a : kernelList) {
-        QByteArray scriptContent;
-        auto kernFile = QFile(QString(":/kernel-files/") + a);
-        if (kernFile.open(QFile::ReadOnly)) {
-            scriptContent = kernFile.readAll();
-            kernFile.close();
-        }
+    const QDir resourceDir(":/kernel-files/");
+    const QStringList kernelList = resourceDir.entryList(QDir::Files);
 
-        QString newFilePath = kernelDir.absoluteFilePath(a);
-        QFile newFile(newFilePath);
-        qDebug() << "Kernel file: " << newFilePath;
-        if (newFile.open(QIODevice::WriteOnly)) {
-            newFile.write(scriptContent);
-            newFile.close();
+    for (const QString& filename : kernelList) {
+        const QString sourcePath = resourceDir.absoluteFilePath(filename);
+        const QString destPath = kernelDir.filePath(filename);
+
+        if (QFile::copy(sourcePath, destPath)) {
+            QFile::setPermissions(destPath, QFile::ReadOwner | QFile::WriteOwner);
+        }
+        else {
+            qWarning() << "Failed to copy kernel file:" << filename;
         }
     }
 
-    // 3. Install the ManiVaultStudio kernel for the current user 
-    return kernelDir.absolutePath();
+    return kernelDir;
+}
+
+PythonExecutionReturn runPythonCommand(const QStringList& params, const QString& pythonInterpreterPath, const bool verbose, const int waitForFinishedMSecs)
+{
+    if (verbose) {
+        qDebug() << "Interpreter: " << pythonInterpreterPath;
+        qDebug() << "Command: " << params.join(" ");
+    }
+
+    QProcess pythonProcess;
+    PythonExecutionReturn pythonReturn = {};
+
+    auto printOut = [verbose](const QString& output) {
+        if (!verbose)
+            return;
+
+        for (const QString& outline : output.split("\n"))
+            if (!outline.isEmpty())
+                qDebug() << outline;
+        };
+
+    QObject::connect(&pythonProcess, &QProcess::readyReadStandardOutput, [printOut, &pythonProcess, &pythonReturn]() {
+        pythonReturn.out = QString::fromUtf8(pythonProcess.readAllStandardOutput()).replace("\r\n", "\n");
+        printOut(pythonReturn.out);
+        });
+
+    QObject::connect(&pythonProcess, &QProcess::readyReadStandardError, [printOut, &pythonProcess, &pythonReturn]() {
+        pythonReturn.err = QString::fromUtf8(pythonProcess.readAllStandardError()).replace("\r\n", "\n");
+        printOut(pythonReturn.err);
+        });
+
+    pythonProcess.start(pythonInterpreterPath, params);
+
+    if (!pythonProcess.waitForStarted()) {
+        pythonReturn.result = 2;
+        pythonReturn.err = QString("Could not run python interpreter %1 ").arg(pythonInterpreterPath);
+    }
+
+    if (!pythonProcess.waitForFinished(waitForFinishedMSecs)) { // three minutes, as dependency installation might take its time...
+        pythonReturn.result = 2;
+        pythonReturn.err = QString("Running python interpreter %1 timed out").arg(pythonInterpreterPath);
+    }
+
+    if (pythonReturn.result != 2)
+        pythonReturn.result = pythonProcess.exitCode();
+
+    if (pythonReturn.result != QProcess::NormalExit)
+        qWarning() << "Failed running script.";
+
+    pythonProcess.deleteLater();
+
+    return pythonReturn;
+}
+
+PythonExecutionReturn runPythonScript(const QString& scriptName, const QString& pythonInterpreterPath, const QStringList& params, const bool verbose)
+{
+    if (!verbose)
+    {
+        qDebug() << "runPythonScript:: Interpreter: " << pythonInterpreterPath;
+        qDebug() << "runPythonScript:: Script: " << scriptName;
+    }
+
+    // 1. Prepare a python process with the python path
+    auto scriptFile = QFile(scriptName);
+
+    // 2. Place the script in a temporary file
+    QByteArray scriptContent;
+    if (scriptFile.open(QFile::ReadOnly)) {
+        scriptContent = scriptFile.readAll();
+        scriptFile.close();
+    }
+
+    QTemporaryFile tempFile;
+    if (tempFile.open()) {
+        tempFile.write(scriptContent);
+        tempFile.close();
+    }
+
+    // 3. Run the script synchronously
+    const auto pythonParams = QStringList({ tempFile.fileName() }) + params;
+
+    return runPythonCommand(pythonParams, pythonInterpreterPath, false);
 }

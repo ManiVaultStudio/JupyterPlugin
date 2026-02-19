@@ -4,14 +4,9 @@
 #include <QDir>
 #include <QStandardPaths>
 
-#include <Application.h>
-
-#include "MVData.h"
-#include "XeusKernel.h"
-
 #include <exception>
+#include <format>
 #include <fstream>
-#include <sstream>
 #include <string>
 #include <stdexcept>
 
@@ -23,24 +18,25 @@
 #include <pybind11/subinterpreter.h>
 #define slots Q_SLOTS
 
+#include <Application.h>
+
+#include "MVData.h"
+#include "PythonBuildVersion.h"
+#include "XeusKernel.h"
+
 Q_PLUGIN_METADATA(IID "studio.manivault.JupyterPlugin")
 
 namespace py = pybind11;
 
-std::unique_ptr<py::module> JupyterPlugin::mvCommunicationModule = {};
-
-void JupyterPlugin::initMvCommunicationModule() {
-    if (mvCommunicationModule) {
-        return;
-    }
-
-    mvCommunicationModule = std::make_unique<py::module>(get_MVData_module());
-    mvCommunicationModule->doc() = "Provides access to low level ManiVaultStudio core functions";
+PYBIND11_EMBEDDED_MODULE(mvstudio_core, m, py::multiple_interpreters::per_interpreter_gil()) {
+    m.doc() = "Provides access to low level ManiVaultStudio core functions";
+    m.attr("__version__") = std::format("{}.{}.{}", pythonBridgeVersionMajor, pythonBridgeVersionMinor, pythonBridgeVersionPatch);
+    mvstudio_core::register_mv_data_items(m);
+    mvstudio_core::register_mv_core_module(m);
 }
 
 JupyterPlugin::JupyterPlugin(const mv::plugin::PluginFactory* factory) :
-    mv::plugin::ViewPlugin(factory),
-    _xeusKernel(std::make_unique<XeusKernel>())
+    mv::plugin::ViewPlugin(factory)
 {
 }
 
@@ -49,103 +45,75 @@ JupyterPlugin::~JupyterPlugin()
     _xeusKernel->stopKernel();
 }
 
-// https://pybind11.readthedocs.io/en/stable/reference.html#_CPPv422initialize_interpreterbiPPCKcb
 void JupyterPlugin::init()
 {  
     // start the interpreter and keep it alive
     _mainPyInterpreter = std::make_unique<py::scoped_interpreter>();
+    auto pyModMv = py::module::import("mvstudio_core");
+
 }
 
-void JupyterPlugin::startJupyterNotebook() const
+void JupyterPlugin::startJupyterNotebook()
 {
+    if (!Py_IsInitialized()) {
+        qWarning() << "JupyterPlugin::startJupyterNotebook: could not start notebook - interpreter is not initialized";
+        return;
+    }
+
+    _xeusKernel = std::make_unique<XeusKernel>();
     _xeusKernel->startKernel(_connectionFilePath, QString::fromStdString(getVersion().getVersionString()));
 }
 
+// ReSharper disable once CppMemberFunctionMayBeStatic
+// Cannot be static since we want to apply Q_INVOKABLE 
 void JupyterPlugin::runScriptWithArgs(const QString& scriptPath, const QStringList& args)
 {
-    if (!_mainPyInterpreter) {
-        init();
-    }
-
     if (!Py_IsInitialized()) {
         qWarning() << "JupyterPlugin::runScriptWithArgs: Script not executed - interpreter is not initialized";
         return;
     }
 
-    // TODO: remove and exchange with below
     py::gil_scoped_acquire acquire;
-    //py::subinterpreter sub = py::subinterpreter::create();
-    //py::subinterpreter_scoped_activate guard(sub);
 
     // Load the script from file
     std::ifstream file(scriptPath.toStdString());
-    std::stringstream buffer;
-    buffer << file.rdbuf();
-    const std::string script_code = buffer.str();
+    const std::string scriptCode(
+        std::istreambuf_iterator<char>(file),
+        std::istreambuf_iterator<char>{}
+    );
 
     try {
-
-        // Insert manivault communication module into sys.modules
-        py::module sys = py::module::import("sys");
-        py::dict modules = sys.attr("modules");
-
-        if (!modules.contains("mvstudio_core")) {
-            JupyterPlugin::initMvCommunicationModule();
-            modules["mvstudio_core"] = *JupyterPlugin::mvCommunicationModule;
-        }
-
-        if (_baseModules.empty()) {
-            for (auto& [key, item] : modules) {
-                std::string name = py::str(key);
-                _baseModules.insert(name);
-            }
-        }
-
         // Set sys.argv
-        py::list py_args = py::list();
-        py_args.append(py::cast(QFileInfo(scriptPath).fileName().toStdString()));      // add file name
+        auto pyArgs = py::list();
+        pyArgs.append(py::cast(QFileInfo(scriptPath).fileName().toStdString()));      // add file name
         for (const auto& arg : args) {
-            py_args.append(py::cast(arg.toStdString()));                                // add arguments
+            pyArgs.append(py::cast(arg.toStdString()));                               // add arguments
         }
-        sys.attr("argv") = py_args;
+        py::module_::import("sys").attr("argv") = pyArgs;
 
         // Execute the script in __main__'s context
         const py::module_ mainModule   = py::module_::import("__main__");
         const py::object mainNamespace = mainModule.attr("__dict__");
 
-        py::exec(script_code, mainNamespace);
-
-        // Run garbage collection
-        py::module gc = py::module::import("gc");
-        const auto collected = gc.attr("collect")();
-
-        // Clean up modules for fresh start
-        for (auto& [key, item] : modules) {
-            std::string name = py::str(key);
-            if (!_baseModules.contains(name)) {
-                modules.attr("pop")(name, py::none());
-            }
-        }
+        py::exec(scriptCode, mainNamespace);
 
     }
     catch (const py::error_already_set& e) {
-        const auto err = QStringLiteral("Python error (probably form script): ") + e.what();
-        qWarning() << err;
+        qWarning() << QStringLiteral("Python error (probably from script):");
+        qWarning() << e.what();
     }
     catch (const std::runtime_error& e) {
-        const auto err = QStringLiteral("std::runtime_error: ") + e.what();
-        qWarning() << err;
+        qWarning() << QStringLiteral("std::runtime_error:");
+        qWarning() << e.what();
     }
     catch (const std::exception& e) {
-        const auto err = QStringLiteral("std::exception: ") + e.what();
-        qWarning() << err;
+        qWarning() << QStringLiteral("std::exception:");
+        qWarning() << e.what();
     }
     catch (...) {
-        const auto err = QStringLiteral("Python error: unknown");
-        qWarning() << err;
+        qWarning() << QStringLiteral("Python error: unknown");
     }
 
-    // GIL is released when 'guard' goes out of scope
 }
 
 // =============================================================================
