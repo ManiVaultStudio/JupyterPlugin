@@ -53,7 +53,6 @@ void JupyterPlugin::init()
     _mainPyInterpreter = std::make_unique<py::scoped_interpreter>();
     auto pyModMv = py::module::import("mvstudio_core");
 
-    py::module_::import("printer").attr("which")("First init");
 }
 
 void JupyterPlugin::startJupyterNotebook() const
