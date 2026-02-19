@@ -5,11 +5,10 @@
 #include <QStandardPaths>
 
 #include <exception>
+#include <format>
 #include <fstream>
-#include <sstream>
 #include <string>
 #include <stdexcept>
-#include <iostream>
 
 #undef slots
 #include <pybind11/cast.h>
@@ -22,6 +21,7 @@
 #include <Application.h>
 
 #include "MVData.h"
+#include "PythonBuildVersion.h"
 #include "XeusKernel.h"
 
 Q_PLUGIN_METADATA(IID "studio.manivault.JupyterPlugin")
@@ -30,7 +30,7 @@ namespace py = pybind11;
 
 PYBIND11_EMBEDDED_MODULE(mvstudio_core, m, py::multiple_interpreters::per_interpreter_gil()) {
     m.doc() = "Provides access to low level ManiVaultStudio core functions";
-    //m.attr("__version__") = tba;
+    m.attr("__version__") = std::format("{}.{}.{}", pythonBridgeVersionMajor, pythonBridgeVersionMinor, pythonBridgeVersionPatch);
     mvstudio_core::register_mv_data_items(m);
     mvstudio_core::register_mv_core_module(m);
 }
