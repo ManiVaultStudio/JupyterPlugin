@@ -47,20 +47,20 @@ JupyterPlugin::~JupyterPlugin()
 
 void JupyterPlugin::init()
 {  
-    _xeusKernel = std::make_unique<XeusKernel>();
-
     // start the interpreter and keep it alive
     _mainPyInterpreter = std::make_unique<py::scoped_interpreter>();
     auto pyModMv = py::module::import("mvstudio_core");
 
 }
 
-void JupyterPlugin::startJupyterNotebook() const
+void JupyterPlugin::startJupyterNotebook()
 {
     if (!Py_IsInitialized()) {
         qWarning() << "JupyterPlugin::startJupyterNotebook: could not start notebook - interpreter is not initialized";
         return;
     }
+
+    _xeusKernel = std::make_unique<XeusKernel>();
     _xeusKernel->startKernel(_connectionFilePath, QString::fromStdString(getVersion().getVersionString()));
 }
 
