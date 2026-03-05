@@ -57,7 +57,8 @@ CPMAddPackage(
 CPMAddPackage(
     NAME                libzmq
     GITHUB_REPOSITORY   "zeromq/libzmq"
-    GIT_TAG             ${libzmq_VERSION}
+    GIT_TAG             ${libzmq_VERSION_TAG}
+    VERSION             ${libzmq_VERSION}
     EXCLUDE_FROM_ALL    YES
     OPTIONS 
         "WITH_PERF_TOOL OFF"

@@ -51,15 +51,16 @@ include(CMakePackageConfigHelpers)
 # xeus depends on: nlohmann_json
 # xeus-zmq depends on: xeus, ZeroMQ (libzmq), cppzmq, OpenSSL, and nlohmann_json
 # xeus-python depends on: xeus-zmq, pybind11, pybind11_json and nlohmann_json
-set(xeus_VERSION "5.2.6")
+set(xeus_VERSION "6.0.1")
 set(nlohmann_json_VERSION "v3.12.0")
-set(libzmq_VERSION "v4.3.5")
+set(libzmq_VERSION "v4.3.5-20260302")
+set(libzmq_VERSION_TAG "3a1af92db37d192d4319864a21d9fc14138f4a41") # includes support for cmake 4
 set(cppzmq_VERSION "v4.11.0")
-set(xeus-zmq_VERSION "3.1.2")
+set(xeus-zmq_VERSION "4.0.0")
 set(pybind11_VERSION "v3.0.2")
-set(pybind11_json_VERSION "0.2.15")
+set(pybind11_json_VERSION "0.2.15-20250524")
 set(pybind11_json_VERSION_TAG "d0bf434be9d287d73a963ff28745542daf02c08f") # includes support for cmake 4
-set(xeus-python_VERSION "0.17.6")
+set(xeus-python_VERSION "0.18.0")
 
 find_package(Qt6 COMPONENTS Widgets WebEngineWidgets REQUIRED)
 find_package(ManiVault COMPONENTS Core PointData ClusterData ImageData CONFIG QUIET)
