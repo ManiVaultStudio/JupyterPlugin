@@ -19,8 +19,11 @@
 class XeusInterpreter : public xpyt::interpreter
 {
 public:
+    XeusInterpreter() = delete;
+    XeusInterpreter(XeusInterpreter& xeusInterpreter) = delete;
+    XeusInterpreter(XeusInterpreter&& xeusInterpreter) = delete;
     XeusInterpreter(const QString& pluginVersion);
-    ~XeusInterpreter() = default;
+    ~XeusInterpreter() override = default;
 
 private:
     void configure_impl() override;
