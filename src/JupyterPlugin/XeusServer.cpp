@@ -62,8 +62,11 @@ std::unique_ptr<xeus::xserver> make_XeusServer(xeus::xcontext& context,
     const xeus::xconfiguration& config,
     nl::json::error_handler_t eh)
 {
-    qDebug() << "Server IP: " << config.m_ip.c_str();
-    qDebug() << "Server Key: " << config.m_key.c_str();
+
+    if (auto* kernel_config = std::get_if<xeus::xkernel_configuration>(&config)) {
+        qDebug() << "Server IP: " << kernel_config->m_ip.c_str();
+        qDebug() << "Server Key: " << kernel_config->m_key.c_str();
+    }
 
     return std::make_unique<XeusServer>(context, config, eh);
  }
