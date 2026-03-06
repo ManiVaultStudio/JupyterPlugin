@@ -53,6 +53,13 @@ CPMAddPackage(
         "XEUS_STATIC_DEPENDENCIES ${XEUS_BUILD_STATIC_DEPENDENCIES}"
 )
 
+if(APPLE AND CMAKE_SYSTEM_PROCESSOR MATCHES "arm64|aarch64")
+    message(STATUS "Enabling compiler intrinsics for macOS ARM64")
+    set(LIBZMQ_ENABLE_INTRINSICS ON CACHE BOOL "Build libzmq using compiler intrinsics" FORCE)
+else()
+    set(LIBZMQ_ENABLE_INTRINSICS OFF CACHE BOOL "Build libzmq using compiler intrinsics" FORCE)
+endif()
+
 # produces libzmq and libzmq-static depending on settings
 CPMAddPackage(
     NAME                libzmq
@@ -70,6 +77,7 @@ CPMAddPackage(
         "ENABLE_CURVE OFF"
         "WITH_TLS OFF"
         "WITH_DOC OFF"
+        "ENABLE_INTRINSICS ${LIBZMQ_ENABLE_INTRINSICS}"
 )
 
 # produces cppzmq and cppzmq-static
