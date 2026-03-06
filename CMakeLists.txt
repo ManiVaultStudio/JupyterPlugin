@@ -45,6 +45,9 @@ endif()
 
 include(CMakePackageConfigHelpers)
 
+set(MV_JUPYTER_CXX_STANDARD 20)
+set(MV_JUPYTER_C_STANDARD 17)
+
 # -----------------------------------------------------------------------------
 # Dependencies
 # -----------------------------------------------------------------------------

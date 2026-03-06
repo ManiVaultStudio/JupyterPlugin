@@ -76,7 +76,7 @@ target_include_directories(${JUPYTERLAUNCHER} PRIVATE ${md4qt_SOURCE_DIR})
 # -----------------------------------------------------------------------------
 # Target properties
 # -----------------------------------------------------------------------------
-target_compile_features(${JUPYTERLAUNCHER} PRIVATE cxx_std_20)
+target_compile_features(${JUPYTERLAUNCHER} PRIVATE cxx_std_${MV_JUPYTER_CXX_STANDARD})
 
 set_target_properties(${JUPYTERLAUNCHER} 
     PROPERTIES 

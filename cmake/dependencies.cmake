@@ -70,7 +70,9 @@ CPMAddPackage(
         "ENABLE_CURVE OFF"
         "WITH_TLS OFF"
         "WITH_DOC OFF"
-)
+        "C_STANDARD ${MV_JUPYTER_C_STANDARD}"
+        "CXX_STANDARD ${MV_JUPYTER_CXX_STANDARD}"
+    )
 
 # produces cppzmq and cppzmq-static
 CPMAddPackage(
