@@ -12,9 +12,9 @@ XeusServer::XeusServer(xeus::xcontext& context, const xeus::xconfiguration& conf
     m_pollTimer = new QTimer();
     m_pollTimer->setInterval(10);
 
-    QObject::connect(m_pollTimer, &QTimer::timeout, [this]() { 
-        auto msg = poll_channels(0);
-        if (msg)
+    connect(m_pollTimer, &QTimer::timeout, [this]() { 
+        
+        if (auto msg = poll_channels(0))
         {
             if (msg.value().second == xeus::channel::SHELL)
                 notify_shell_listener(std::move(msg.value().first));
