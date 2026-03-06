@@ -51,6 +51,8 @@ CPMAddPackage(
         "XEUS_BUILD_SHARED_LIBS OFF"
         "XEUS_BUILD_STATIC_LIBS ON"
         "XEUS_STATIC_DEPENDENCIES ${XEUS_BUILD_STATIC_DEPENDENCIES}"
+        "C_STANDARD ${MV_JUPYTER_C_STANDARD}"
+        "CXX_STANDARD ${MV_JUPYTER_CXX_STANDARD}"
 )
 
 # produces libzmq and libzmq-static depending on settings
@@ -96,6 +98,8 @@ CPMAddPackage(
         "XEUS_ZMQ_BUILD_SHARED_LIBS OFF"
         "XEUS_ZMQ_BUILD_STATIC_LIBS ON"
         "XEUS_ZMQ_STATIC_DEPENDENCIES ON"
+        "C_STANDARD ${MV_JUPYTER_C_STANDARD}"
+        "CXX_STANDARD ${MV_JUPYTER_CXX_STANDARD}"
 )
 
 install(TARGETS nlohmann_json EXPORT xeus-targets)
@@ -135,6 +139,8 @@ CPMAddPackage(
         "XPYT_USE_SHARED_XEUS_PYTHON OFF"
         "XPYT_USE_SHARED_XEUS OFF"
         "EMSCRIPTEN OFF"
+        "C_STANDARD ${MV_JUPYTER_C_STANDARD}"
+        "CXX_STANDARD ${MV_JUPYTER_CXX_STANDARD}"
 )
 
 if(UNIX)
