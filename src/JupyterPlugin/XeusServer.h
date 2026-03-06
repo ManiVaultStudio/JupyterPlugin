@@ -38,12 +38,15 @@ public:
 
     Q_OBJECT
 
-public: 
+public:
+    XeusServer() = delete;
+    XeusServer(XeusServer& xeusServer) = delete;
+    XeusServer(XeusServer&& xeusServer) = delete;
     XeusServer(xeus::xcontext& context,
                const xeus::xconfiguration& config,
                nl::json::error_handler_t eh);
 
-    ~XeusServer();
+    ~XeusServer() override;
 
 protected:
     void start_impl(xeus::xpub_message message) override;
