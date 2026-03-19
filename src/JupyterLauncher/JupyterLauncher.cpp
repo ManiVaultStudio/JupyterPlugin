@@ -52,6 +52,7 @@ JupyterLauncher::JupyterLauncher(const PluginFactory* factory) :
     _launcherDialog(std::make_unique<LauncherDialog>(nullptr, this))
 {
     setObjectName("Jupyter kernel plugin launcher");
+    getVisibleAction().setChecked(false);
 
     const QDir temporaryApplicationDirectory = Application::current()->getTemporaryDir().path();
     const auto temporaryPluginDirectory = QDir(temporaryApplicationDirectory.absolutePath() + QDir::separator() + "JupyterLauncher");
