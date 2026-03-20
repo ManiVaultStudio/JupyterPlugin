@@ -13,11 +13,11 @@ using namespace mv::gui;
 GlobalSettingsAction::GlobalSettingsAction(QObject* parent, const plugin::PluginFactory* pluginFactory) :
     PluginGlobalSettingsGroupAction(parent, pluginFactory),
     _defaultPythonPathAction(this, "Python interpreter", ""),
-    _defaultWorkingDirectoryAction(this, "Python working directory", ""),
+    _defaultKernelWorkingDirectoryAction(this, "Python working directory", ""),
     _doNotShowAgainButton(this, "Do not show interpreter path picker on start", false)
 {
     _defaultPythonPathAction.setToolTip("A python (.exe on Windows) interpreter for Jupyter Plugin");
-    _defaultWorkingDirectoryAction.setToolTip("Working directory for the python notebook");
+    _defaultKernelWorkingDirectoryAction.setToolTip("Working directory for the python notebook");
     _doNotShowAgainButton.setToolTip("Whether to show the interpreter path picker on start of the plugin");
 
     const auto pythonFilter = pythonInterpreterFilters();
@@ -35,6 +35,6 @@ GlobalSettingsAction::GlobalSettingsAction(QObject* parent, const plugin::Plugin
     }
 
     addAction(&_defaultPythonPathAction);
-    addAction(&_defaultWorkingDirectoryAction);
+    addAction(&_defaultKernelWorkingDirectoryAction);
     addAction(&_doNotShowAgainButton);
 }

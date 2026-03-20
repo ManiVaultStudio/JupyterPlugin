@@ -47,8 +47,8 @@ public:
         _connectionFilePath = scriptPath.toStdString();
     }
 
-    Q_INVOKABLE void setNotebookWorkingDir(const QString& workingDir) {
-        _workingDir = workingDir.toStdString();
+    Q_INVOKABLE void setKernelWorkingDir(const QString& kernelWorkingDirectory) {
+        _kernelWorkingDirectory = kernelWorkingDirectory.toStdString();
     }
 
 private:
@@ -57,7 +57,7 @@ private:
 private:
     std::unique_ptr<XeusKernel>     _xeusKernel;
     std::string                     _connectionFilePath = {};
-    std::string                     _workingDir = {};
+    std::string                     _kernelWorkingDirectory = {};
     std::unordered_set<std::string> _baseModules = {};
     PyScopedInterpreterPtr          _mainPyInterpreter = {};
 };
