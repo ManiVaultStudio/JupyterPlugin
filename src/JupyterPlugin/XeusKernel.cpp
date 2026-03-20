@@ -12,20 +12,24 @@
 #include <xeus/xkernel.hpp>
 #include <zmq.hpp>
 
+#include <filesystem>
 #include <fstream>
 #include <memory>
 #include <string>
 
-void XeusKernel::startKernel(const std::string& connection_path, const std::string& pluginVersion)
+void XeusKernel::startKernel(const std::string& connection_path, const std::string& pluginVersion, const std::string& workingDir)
 {
     using context_type = xeus::xcontext_impl<zmq::context_t>;
+
+    auto interpreter = std::make_unique<XeusInterpreter>(pluginVersion);
+    xpyt::interpreter* interpreter_ptr = interpreter.get();
 
     try {
         m_kernel = std::make_unique<xeus::xkernel>(
             /*config: not used here */
             /*user_name      */ xeus::get_user_name(),
             /*context        */ std::make_unique<context_type>(),
-            /*interpreter    */ std::make_unique<XeusInterpreter>(pluginVersion),
+            /*interpreter    */ std::move(interpreter),
             /*server_builder */ make_XeusServer,
             /*history_manager*/ xeus::make_in_memory_history_manager(),
             /*logger         */ nullptr
@@ -59,6 +63,19 @@ void XeusKernel::startKernel(const std::string& connection_path, const std::stri
     configFile << kernel_spec;
 
     m_kernel->start();
+
+    if (!workingDir.empty() && std::filesystem::exists(workingDir))
+    {
+        qDebug() << "Setting notebook working directory to " << workingDir;
+        interpreter_ptr->execute_request(
+            xeus::xrequest_context{},       // Minimal context - no header or message ID needed for internal startup calls
+            [](nl::json reply) {},  // No-op callback - we don't need the reply during initialization
+            std::format("import os; os.chdir('{}')", workingDir),
+            xeus::execute_request_config{ false, false, false },
+            nl::json::object()              // empty user_expressions
+        );
+    }
+    
 }
 
 void XeusKernel::stopKernel()

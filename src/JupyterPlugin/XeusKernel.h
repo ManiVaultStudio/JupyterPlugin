@@ -26,7 +26,7 @@ class XeusKernel
 
 public: 
 
-    void startKernel(const std::string& connection_path, const std::string& pluginVersion);
+    void startKernel(const std::string& connection_path, const std::string& pluginVersion, const std::string& workingDir = "");
     void stopKernel();
 
 private:
