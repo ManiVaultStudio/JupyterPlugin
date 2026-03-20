@@ -41,7 +41,7 @@ namespace {
     }
 }
 
-XeusInterpreter::XeusInterpreter(const QString& pluginVersion):
+XeusInterpreter::XeusInterpreter(const std::string& pluginVersion):
     xpyt::interpreter(false, false),
     _pluginVersion(pluginVersion)
 {
@@ -113,7 +113,7 @@ nl::json XeusInterpreter::kernel_info_request_impl()
 
     return xeus::create_info_reply(
         /*implementation             */ "ManiVault JupyterPlugin",
-        /*implementation_version     */ _pluginVersion.toStdString(),
+        /*implementation_version     */ _pluginVersion,
         /*language_name              */ "python",
         /*language_version           */ std::to_string(pythonVersionMajor) + "." + std::to_string(pythonVersionMinor),
         /*language_mimetype          */ "text/x-python",

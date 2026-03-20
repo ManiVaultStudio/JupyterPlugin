@@ -44,7 +44,7 @@ public:
     Q_INVOKABLE void runScriptWithArgs(const QString& scriptPath, const QStringList& args) const;
 
     Q_INVOKABLE void setConnectionFilePath(const QString& scriptPath) {
-        _connectionFilePath = scriptPath;
+        _connectionFilePath = scriptPath.toStdString();
     };
 
 private:
@@ -52,7 +52,7 @@ private:
 
 private:
     std::unique_ptr<XeusKernel>     _xeusKernel;
-    QString                         _connectionFilePath = {};
+    std::string                     _connectionFilePath = {};
     std::unordered_set<std::string> _baseModules = {};
     PyScopedInterpreterPtr          _mainPyInterpreter = {};
 };

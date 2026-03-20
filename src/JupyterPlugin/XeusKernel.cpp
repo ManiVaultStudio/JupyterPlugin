@@ -16,7 +16,7 @@
 #include <memory>
 #include <string>
 
-void XeusKernel::startKernel(const QString& connection_path, const QString& pluginVersion)
+void XeusKernel::startKernel(const std::string& connection_path, const std::string& pluginVersion)
 {
     using context_type = xeus::xcontext_impl<zmq::context_t>;
 
@@ -56,7 +56,7 @@ void XeusKernel::startKernel(const QString& connection_path, const QString& plug
     qInfo().noquote() << QString::fromStdString(kernel_spec.dump(4));
 
     qDebug() << "Writing connection config to " << connection_path;
-    std::ofstream configFile(connection_path.toUtf8());
+    std::ofstream configFile(connection_path);
     configFile << kernel_spec;
 
     m_kernel->start();

@@ -29,7 +29,7 @@ public:
     XeusKernel() = default;
     ~XeusKernel() = default;
 
-    void startKernel(const QString& connection_path, const QString& pluginVersion);
+    void startKernel(const std::string& connection_path, const std::string& pluginVersion);
     void stopKernel();
 
 private:
