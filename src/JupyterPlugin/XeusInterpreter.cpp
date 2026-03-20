@@ -112,16 +112,16 @@ nl::json XeusInterpreter::kernel_info_request_impl()
           A python kernel with access to the ManiVault Studio)";
 
     return xeus::create_info_reply(
-        /*implementation*/ "ManiVault JupyterPlugin",
-        /*implementation_version*/ _pluginVersion.toStdString(),
-        /*language_name*/ "python",
-        /*language_version*/ std::to_string(pythonVersionMajor) + "." + std::to_string(pythonVersionMinor),
-        /*language_mimetype*/ "text/x-python",
-        /*language_file_extension*/ ".py",
-        /*language_pygments_lexer*/ "",
-        /*language_codemirror_mode*/ std::string(""),
+        /*implementation             */ "ManiVault JupyterPlugin",
+        /*implementation_version     */ _pluginVersion.toStdString(),
+        /*language_name              */ "python",
+        /*language_version           */ std::to_string(pythonVersionMajor) + "." + std::to_string(pythonVersionMinor),
+        /*language_mimetype          */ "text/x-python",
+        /*language_file_extension    */ ".py",
+        /*language_pygments_lexer    */ "",
+        /*language_codemirror_mode   */ std::string(""),
         /*language_nbconvert_exporter*/ "",
-        /*banner*/ banner
+        /*banner                     */ banner
         );
 
 }
