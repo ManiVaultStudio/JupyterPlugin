@@ -45,5 +45,5 @@ private:
 
     int                         _mode = 0;  // 0 calls notebook, 1 calls init scripts
 
-    JupyterLauncher*            _launcherLauncher = nullptr;
+    JupyterLauncher*            _launcherPlugin = nullptr;
 };

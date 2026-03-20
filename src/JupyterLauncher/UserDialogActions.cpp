@@ -6,7 +6,7 @@
 #include <QOperatingSystemVersion>
 #include <QWidget>
 
-LauncherDialog::LauncherDialog(QWidget* parent, JupyterLauncher* launcherLauncher) :
+LauncherDialog::LauncherDialog(QWidget* parent, JupyterLauncher* launcherPlugin) :
     QDialog(parent),
     _interpreterFileAction(this, "Python interpreter"),
     _okButton(this, "Ok"),
@@ -14,7 +14,7 @@ LauncherDialog::LauncherDialog(QWidget* parent, JupyterLauncher* launcherLaunche
     _moduleInfoText(this, "Python packages"),
     _moduleInfoGroup(this, "Necessary Python modules"),
     _moduleInfoGroups(this, "Info section container"),
-    _launcherLauncher(launcherLauncher)
+    _launcherPlugin(launcherPlugin)
 {
     setWindowTitle(tr("Jupyter Launcher"));
 
@@ -22,7 +22,7 @@ LauncherDialog::LauncherDialog(QWidget* parent, JupyterLauncher* launcherLaunche
     _interpreterFileAction.setNameFilters(pythonFilter);
     _interpreterFileAction.setUseNativeFileDialog(true);
     _interpreterFileAction.getFilePathAction().setText("Python interpreter");
-    _interpreterFileAction.setFilePath(_launcherLauncher->getPythonInterpreterPath());
+    _interpreterFileAction.setFilePath(JupyterLauncher::getPythonInterpreterPath());
 
     const auto [isConda, pyVersion] = isCondaEnvironmentActive();
     auto interpreterFileActionWidget =_interpreterFileAction.createWidget(this);
@@ -31,7 +31,7 @@ LauncherDialog::LauncherDialog(QWidget* parent, JupyterLauncher* launcherLaunche
     {
         const QString pythonInterpreterPath = QString::fromLocal8Bit(qgetenv("CONDA_PREFIX")) + "/bin/python3";
 
-        _launcherLauncher->setPythonInterpreterPath(pythonInterpreterPath);
+        _launcherPlugin->setPythonInterpreterPath(pythonInterpreterPath);
         _interpreterFileAction.setFilePath(pythonInterpreterPath);
         _interpreterFileAction.setToolTip("On UNIX systems in a conda/mamba environment you cannot switch the python interpreter");
         interpreterFileActionWidget->setDisabled(true);
@@ -98,7 +98,7 @@ LauncherDialog::LauncherDialog(QWidget* parent, JupyterLauncher* launcherLaunche
         adjustSize();
         });
 
-    connect(&_interpreterFileAction, &mv::gui::FilePickerAction::filePathChanged, _launcherLauncher, &JupyterLauncher::setPythonInterpreterPath);
+    connect(&_interpreterFileAction, &mv::gui::FilePickerAction::filePathChanged, _launcherPlugin, &JupyterLauncher::setPythonInterpreterPath);
 
     _moduleInfoGroup.collapse();
 
