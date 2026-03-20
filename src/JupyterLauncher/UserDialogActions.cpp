@@ -25,6 +25,9 @@ LauncherDialog::LauncherDialog(QWidget* parent, JupyterLauncher* launcherPlugin)
     _interpreterFileAction.getFilePathAction().setText("Python interpreter");
     _interpreterFileAction.setFilePath(JupyterLauncher::getPythonInterpreterPath());
 
+    _workingDirectoryAction.setDirectory(JupyterLauncher::getPythonWorkingDirectory());
+    _workingDirectoryAction.setUseNativeFileDialog(true);
+
     const auto [isConda, pyVersion]   = isCondaEnvironmentActive();
     auto interpreterFileActionWidget  =_interpreterFileAction.createWidget(this);
     auto workingDirectoryActionWidget = _workingDirectoryAction.createWidget(this);
