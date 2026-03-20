@@ -75,10 +75,11 @@ LauncherDialog::LauncherDialog(QWidget* parent, JupyterLauncher* launcherPlugin)
     layout->setContentsMargins(10, 10, 10, 10);
     int row = 0;
 
-    QLabel* infoText = new QLabel(this);
-    infoText->setText("Please provide a path to a python interpreter, i.e., the environment you want to use.");
+    QLabel* infoTextInterpreter = new QLabel(
+        "Please provide a path to a python interpreter, i.e., the environment you want to use.", 
+		this);
 
-    layout->addWidget(infoText, row, 0, 1, 5);
+    layout->addWidget(infoTextInterpreter, row, 0, 1, 5);
     layout->addWidget(interpreterFileActionWidget, ++row, 0, 1, 5);
     layout->addWidget(_moduleInfoGroupsWidget, ++row, 0, 1, 5);
     layout->addWidget(_okButton.createWidget(this), ++row, 4, 1, 1, Qt::AlignRight);
