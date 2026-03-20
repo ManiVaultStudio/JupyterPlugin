@@ -12,30 +12,27 @@
 #include <xeus/xkernel.hpp>
 #include <zmq.hpp>
 
+#include <filesystem>
 #include <fstream>
 #include <memory>
 #include <string>
 
-void XeusKernel::startKernel(const QString& connection_path, const QString& pluginVersion)
+void XeusKernel::startKernel(const std::string& connection_path, const std::string& pluginVersion, const std::string& workingDir)
 {
-    // Test without configuration file (default zmq ports)
-    //xeus::xconfiguration config = xeus::load_configuration("D:\\TempProj\\DevBundle\\Jupyter\\install\\Debug\\external_kernels\\ManiVault\\connection.json");
-
     using context_type = xeus::xcontext_impl<zmq::context_t>;
 
-    std::unique_ptr<context_type>           context     = std::make_unique<context_type>();
-    std::unique_ptr<XeusInterpreter>        interpreter = std::make_unique<XeusInterpreter>(pluginVersion);
-    std::unique_ptr<xeus::xhistory_manager> history     = xeus::make_in_memory_history_manager();
+    auto interpreter = std::make_unique<XeusInterpreter>(pluginVersion);
+    xpyt::interpreter* interpreter_ptr = interpreter.get();
 
     try {
         m_kernel = std::make_unique<xeus::xkernel>(
             /*config: not used here */
-            /*user_name*/ xeus::get_user_name(),
-            /*context*/ std::move(context),
-            /*interpreter*/ std::move(interpreter),
-            /*server_builder*/ make_XeusServer,
-            /*history_manager*/ std::move(history),
-            /*logger*/ nullptr
+            /*user_name      */ xeus::get_user_name(),
+            /*context        */ std::make_unique<context_type>(),
+            /*interpreter    */ std::move(interpreter),
+            /*server_builder */ make_XeusServer,
+            /*history_manager*/ xeus::make_in_memory_history_manager(),
+            /*logger         */ nullptr
         );
     } catch (const std::exception& ex) {
         qDebug() << "Cannot create xeus kernel: " << ex.what();
@@ -44,36 +41,41 @@ void XeusKernel::startKernel(const QString& connection_path, const QString& plug
     }
 
     // Save the config that was generated
-    const auto& set_config = m_kernel->get_config();
-    nlohmann::json jsonObj;
-    jsonObj["transport"] = set_config.m_transport.c_str();
-    jsonObj["ip"] = set_config.m_ip.c_str();
-    jsonObj["control_port"] = std::stoi(set_config.m_control_port);
-    jsonObj["shell_port"] = std::stoi(set_config.m_shell_port);
-    jsonObj["stdin_port"] = std::stoi(set_config.m_stdin_port);
-    jsonObj["iopub_port"] = std::stoi(set_config.m_iopub_port);
-    jsonObj["hb_port"] = std::stoi(set_config.m_hb_port);
-    jsonObj["signature_scheme"] = set_config.m_signature_scheme.c_str();
-    jsonObj["key"] = set_config.m_key.c_str();
-    jsonObj["kernel_name"] = "ManiVaultStudio";
+    const auto& kernel_config           = m_kernel->get_config();
+    nlohmann::json kernel_spec          = {};
+    kernel_spec["transport"]            = kernel_config.m_transport.c_str();
+    kernel_spec["ip"]                   = kernel_config.m_ip.c_str();
+    kernel_spec["control_port"]         = std::stoi(kernel_config.m_control_port);
+    kernel_spec["shell_port"]           = std::stoi(kernel_config.m_shell_port);
+    kernel_spec["stdin_port"]           = std::stoi(kernel_config.m_stdin_port);
+    kernel_spec["iopub_port"]           = std::stoi(kernel_config.m_iopub_port);
+    kernel_spec["hb_port"]              = std::stoi(kernel_config.m_hb_port);
+    kernel_spec["signature_scheme"]     = kernel_config.m_signature_scheme.c_str();
+    kernel_spec["key"]                  = kernel_config.m_key.c_str();
+    kernel_spec["language"]             = "python";
+    kernel_spec["kernel_name"]          = "ManiVaultStudio";
+
+    qInfo() << "Xeus Kernel settings:";
+    qInfo().noquote() << QString::fromStdString(kernel_spec.dump(4));
 
     qDebug() << "Writing connection config to " << connection_path;
-    std::ofstream configFile(connection_path.toUtf8());
-    configFile << jsonObj;
-
-    //const auto& config = m_kernel->get_config();
-    qInfo() << "Xeus Kernel settings";
-    qInfo() << "transport protocol: " << set_config.m_transport.c_str();
-    qInfo() << "IP address: " << set_config.m_ip.c_str();
-    qInfo() << "control port: " << set_config.m_control_port.c_str();
-    qInfo() << "shell port: " << set_config.m_shell_port.c_str();
-    qInfo() << "stdin port: " << set_config.m_stdin_port.c_str();
-    qInfo() << "iopub port: " << set_config.m_iopub_port.c_str();
-    qInfo() << "hb port: " << set_config.m_hb_port.c_str();
-    qInfo() << "signature scheme: " << set_config.m_signature_scheme.c_str();
-    qInfo() << "connection key: " << set_config.m_key.c_str();
+    std::ofstream configFile(connection_path);
+    configFile << kernel_spec;
 
     m_kernel->start();
+
+    if (!workingDir.empty() && std::filesystem::exists(workingDir))
+    {
+        qDebug() << "Setting notebook working directory to " << workingDir;
+        interpreter_ptr->execute_request(
+            xeus::xrequest_context{},       // Minimal context - no header or message ID needed for internal startup calls
+            [](nl::json reply) {},  // No-op callback - we don't need the reply during initialization
+            std::format("import os; os.chdir('{}')", workingDir),
+            xeus::execute_request_config{ false, false, false },
+            nl::json::object()              // empty user_expressions
+        );
+    }
+    
 }
 
 void XeusKernel::stopKernel()

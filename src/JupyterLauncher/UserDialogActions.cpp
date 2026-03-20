@@ -6,15 +6,16 @@
 #include <QOperatingSystemVersion>
 #include <QWidget>
 
-LauncherDialog::LauncherDialog(QWidget* parent, JupyterLauncher* launcherLauncher) :
+LauncherDialog::LauncherDialog(QWidget* parent, JupyterLauncher* launcherPlugin) :
     QDialog(parent),
     _interpreterFileAction(this, "Python interpreter"),
+    _workingDirectoryAction(this, "Working directory"),
     _okButton(this, "Ok"),
     _doNotShowAgainButton(this, "Do not show again"),
     _moduleInfoText(this, "Python packages"),
     _moduleInfoGroup(this, "Necessary Python modules"),
     _moduleInfoGroups(this, "Info section container"),
-    _launcherLauncher(launcherLauncher)
+    _launcherPlugin(launcherPlugin)
 {
     setWindowTitle(tr("Jupyter Launcher"));
 
@@ -22,16 +23,20 @@ LauncherDialog::LauncherDialog(QWidget* parent, JupyterLauncher* launcherLaunche
     _interpreterFileAction.setNameFilters(pythonFilter);
     _interpreterFileAction.setUseNativeFileDialog(true);
     _interpreterFileAction.getFilePathAction().setText("Python interpreter");
-    _interpreterFileAction.setFilePath(_launcherLauncher->getPythonInterpreterPath());
+    _interpreterFileAction.setFilePath(JupyterLauncher::getPythonInterpreterPath());
 
-    const auto [isConda, pyVersion] = isCondaEnvironmentActive();
-    auto interpreterFileActionWidget =_interpreterFileAction.createWidget(this);
+    _workingDirectoryAction.setDirectory(JupyterLauncher::getPythonWorkingDirectory());
+    _workingDirectoryAction.setUseNativeFileDialog(true);
+
+    const auto [isConda, pyVersion]   = isCondaEnvironmentActive();
+    auto interpreterFileActionWidget  =_interpreterFileAction.createWidget(this);
+    auto workingDirectoryActionWidget = _workingDirectoryAction.createWidget(this);
 
     if(QOperatingSystemVersion::currentType() != QOperatingSystemVersion::Windows && isConda)
     {
         const QString pythonInterpreterPath = QString::fromLocal8Bit(qgetenv("CONDA_PREFIX")) + "/bin/python3";
 
-        _launcherLauncher->setPythonInterpreterPath(pythonInterpreterPath);
+        _launcherPlugin->setPythonInterpreterPath(pythonInterpreterPath);
         _interpreterFileAction.setFilePath(pythonInterpreterPath);
         _interpreterFileAction.setToolTip("On UNIX systems in a conda/mamba environment you cannot switch the python interpreter");
         interpreterFileActionWidget->setDisabled(true);
@@ -75,11 +80,17 @@ LauncherDialog::LauncherDialog(QWidget* parent, JupyterLauncher* launcherLaunche
     layout->setContentsMargins(10, 10, 10, 10);
     int row = 0;
 
-    QLabel* infoText = new QLabel(this);
-    infoText->setText("Please provide a path to a python interpreter, i.e., the environment you want to use.");
+    QLabel* infoTextInterpreter = new QLabel(
+        "Please provide a path to a python interpreter, i.e., the environment you want to use.", 
+		this);
+    QLabel* infoTextWorkingDir = new QLabel(
+        "Notebook working directory (if empty, the application directory is used)", 
+		this);
 
-    layout->addWidget(infoText, row, 0, 1, 5);
+    layout->addWidget(infoTextInterpreter, row, 0, 1, 5);
     layout->addWidget(interpreterFileActionWidget, ++row, 0, 1, 5);
+    layout->addWidget(infoTextWorkingDir, ++row, 0, 1, 5);
+    layout->addWidget(workingDirectoryActionWidget, ++row, 0, 1, 5);
     layout->addWidget(_moduleInfoGroupsWidget, ++row, 0, 1, 5);
     layout->addWidget(_okButton.createWidget(this), ++row, 4, 1, 1, Qt::AlignRight);
     layout->addWidget(_doNotShowAgainButton.createWidget(this), ++row, 4, 1, 1, Qt::AlignRight);
@@ -98,10 +109,11 @@ LauncherDialog::LauncherDialog(QWidget* parent, JupyterLauncher* launcherLaunche
         adjustSize();
         });
 
-    connect(&_interpreterFileAction, &mv::gui::FilePickerAction::filePathChanged, _launcherLauncher, &JupyterLauncher::setPythonInterpreterPath);
+    connect(&_interpreterFileAction, &mv::gui::FilePickerAction::filePathChanged, _launcherPlugin, &JupyterLauncher::setPythonInterpreterPath);
+    connect(&_workingDirectoryAction, &mv::gui::DirectoryPickerAction::directoryChanged, _launcherPlugin, &JupyterLauncher::setPythonWorkingDirectory);
 
     _moduleInfoGroup.collapse();
 
     setFixedWidth(_dialogPreferredWidth);
-    resize(_dialogPreferredWidth, _dialogPreferredHeight);
+    _moduleInfoGroupsWidget->setMaximumHeight(_moduleInfoGroupsWidgetMinimumHeight);
 }

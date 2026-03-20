@@ -44,15 +44,20 @@ public:
     Q_INVOKABLE void runScriptWithArgs(const QString& scriptPath, const QStringList& args) const;
 
     Q_INVOKABLE void setConnectionFilePath(const QString& scriptPath) {
-        _connectionFilePath = scriptPath;
-    };
+        _connectionFilePath = scriptPath.toStdString();
+    }
+
+    Q_INVOKABLE void setNotebookWorkingDir(const QString& workingDir) {
+        _workingDir = workingDir.toStdString();
+    }
 
 private:
     void cleanGlobalNamespace() const;
 
 private:
     std::unique_ptr<XeusKernel>     _xeusKernel;
-    QString                         _connectionFilePath = {};
+    std::string                     _connectionFilePath = {};
+    std::string                     _workingDir = {};
     std::unordered_set<std::string> _baseModules = {};
     PyScopedInterpreterPtr          _mainPyInterpreter = {};
 };

@@ -2,9 +2,8 @@
 
 #include <xeus/xkernel.hpp>
 
-#include <QString>
-
 #include <memory>
+#include <string>
 
 /**
  * Xeus kernel class 
@@ -26,10 +25,8 @@ class XeusKernel
 {
 
 public: 
-    XeusKernel() = default;
-    ~XeusKernel() = default;
 
-    void startKernel(const QString& connection_path, const QString& pluginVersion);
+    void startKernel(const std::string& connection_path, const std::string& pluginVersion, const std::string& workingDir = "");
     void stopKernel();
 
 private:

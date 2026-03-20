@@ -1,5 +1,6 @@
 #pragma once
 
+#include <actions/DirectoryPickerAction.h>
 #include <actions/FilePickerAction.h>
 #include <actions/GroupAction.h>
 #include <actions/GroupsAction.h>
@@ -24,12 +25,13 @@ public:
         return _mode;
     }
 
-    void setMode(int m) {
+    void setMode(const int m) {
         _mode = m;
     }
 
 private:
     mv::gui::FilePickerAction   _interpreterFileAction;
+    mv::gui::DirectoryPickerAction   _workingDirectoryAction;
     mv::gui::TriggerAction      _okButton;
     mv::gui::ToggleAction       _doNotShowAgainButton;
     mv::gui::StringAction       _moduleInfoText;
@@ -37,13 +39,12 @@ private:
     mv::gui::GroupsAction       _moduleInfoGroups;
 
     QWidget*                    _moduleInfoGroupsWidget = nullptr;
-    int                         _moduleInfoGroupsWidgetMinimumHeight = 35;
+    const int                   _moduleInfoGroupsWidgetMinimumHeight = 32;  // this is a suboptimal setup but helps hide the text field
     int                         _moduleInfoGroupsWidgetMaximumHeight = -1;  // set in constructor based on content
 
-    int const                   _dialogPreferredWidth = 700;
-    int const                   _dialogPreferredHeight = 195;
+    const int                   _dialogPreferredWidth = 700;
 
     int                         _mode = 0;  // 0 calls notebook, 1 calls init scripts
 
-    JupyterLauncher*            _launcherLauncher = nullptr;
+    JupyterLauncher*            _launcherPlugin = nullptr;
 };

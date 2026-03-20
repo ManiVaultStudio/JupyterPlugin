@@ -119,6 +119,16 @@ void JupyterLauncher::setPythonInterpreterPath(const QString& p)
     mv::settings().getPluginGlobalSettingsGroupAction<GlobalSettingsAction>("Jupyter Launcher")->getDefaultPythonPathAction().setFilePath(p);
 }
 
+QString JupyterLauncher::getPythonWorkingDirectory()
+{
+    return mv::settings().getPluginGlobalSettingsGroupAction<GlobalSettingsAction>("Jupyter Launcher")->getDefaultWorkingDirectoryAction().getDirectory();
+}
+
+void JupyterLauncher::setPythonWorkingDirectory(const QString& p)
+{
+    mv::settings().getPluginGlobalSettingsGroupAction<GlobalSettingsAction>("Jupyter Launcher")->getDefaultWorkingDirectoryAction().setDirectory(p);
+}
+
 bool JupyterLauncher::getShowInterpreterPathDialog()
 {
     return !mv::settings().getPluginGlobalSettingsGroupAction<GlobalSettingsAction>("Jupyter Launcher")->getDoNotShowAgainButton().isChecked();
@@ -430,7 +440,7 @@ bool JupyterLauncher::initPython(const bool activateXeus)
     // Create the jupyter plugin
     mv::plugin::Plugin* jupyterPluginInstance = jupyterPluginFactory->produce();
 
-    // Communicate the connection file path via the child action in the JupyterPlugin
+    // Communicate the connection file path and working directory via the child action in the JupyterPlugin
     const bool setConnectionFilePath = QMetaObject::invokeMethod(
         jupyterPluginInstance,
         "setConnectionFilePath",
@@ -439,6 +449,16 @@ bool JupyterLauncher::initPython(const bool activateXeus)
 
     if (!setConnectionFilePath) {
         qWarning() << "Failed to invoke JupyterPlugin::setConnectionFilePath";
+    }
+
+    const bool setNotebookWorkingDir = QMetaObject::invokeMethod(
+        jupyterPluginInstance,
+        "setNotebookWorkingDir",
+        Q_ARG(QString, getPythonWorkingDirectory())
+    );
+
+    if (!setNotebookWorkingDir) {
+        qWarning() << "Failed to invoke JupyterPlugin::setNotebookWorkingDir";
     }
 
     jupyterPluginInstance->init();
