@@ -26,8 +26,6 @@ class XeusKernel
 {
 
 public: 
-    XeusKernel() = default;
-    ~XeusKernel() = default;
 
     void startKernel(const std::string& connection_path, const std::string& pluginVersion);
     void stopKernel();
