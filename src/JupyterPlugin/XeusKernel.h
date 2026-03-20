@@ -2,9 +2,8 @@
 
 #include <xeus/xkernel.hpp>
 
-#include <QString>
-
 #include <memory>
+#include <string>
 
 /**
  * Xeus kernel class 
