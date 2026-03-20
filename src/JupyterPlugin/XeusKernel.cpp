@@ -50,7 +50,6 @@ void XeusKernel::startKernel(const std::string& connection_path, const std::stri
     kernel_spec["key"]                  = kernel_config.m_key.c_str();
     kernel_spec["language"]             = "python";
     kernel_spec["kernel_name"]          = "ManiVaultStudio";
-    kernel_spec["env"]["PYTHONSTARTUP"] = "D:/avieth/Documents/ManiVault/DevBundle/allmain/install/RelWithDebInfo/examples/JupyterPlugin/projects/volume_data";
 
     qInfo() << "Xeus Kernel settings:";
     qInfo().noquote() << QString::fromStdString(kernel_spec.dump(4));
