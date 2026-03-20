@@ -31,7 +31,7 @@ public:
 
 private:
     mv::gui::FilePickerAction   _interpreterFileAction;
-    mv::gui::DirectoryPickerAction   _workingDirectoryAction;
+    mv::gui::DirectoryPickerAction   _kernelWorkingDirectoryAction;
     mv::gui::TriggerAction      _okButton;
     mv::gui::ToggleAction       _doNotShowAgainButton;
     mv::gui::StringAction       _moduleInfoText;

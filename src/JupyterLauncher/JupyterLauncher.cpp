@@ -119,14 +119,14 @@ void JupyterLauncher::setPythonInterpreterPath(const QString& p)
     mv::settings().getPluginGlobalSettingsGroupAction<GlobalSettingsAction>("Jupyter Launcher")->getDefaultPythonPathAction().setFilePath(p);
 }
 
-QString JupyterLauncher::getPythonWorkingDirectory()
+QString JupyterLauncher::getKernelWorkingDirectory()
 {
-    return mv::settings().getPluginGlobalSettingsGroupAction<GlobalSettingsAction>("Jupyter Launcher")->getDefaultWorkingDirectoryAction().getDirectory();
+    return mv::settings().getPluginGlobalSettingsGroupAction<GlobalSettingsAction>("Jupyter Launcher")->getDefaultKernelWorkingDirectoryAction().getDirectory();
 }
 
-void JupyterLauncher::setPythonWorkingDirectory(const QString& p)
+void JupyterLauncher::setKernelWorkingDirectory(const QString& p)
 {
-    mv::settings().getPluginGlobalSettingsGroupAction<GlobalSettingsAction>("Jupyter Launcher")->getDefaultWorkingDirectoryAction().setDirectory(p);
+    mv::settings().getPluginGlobalSettingsGroupAction<GlobalSettingsAction>("Jupyter Launcher")->getDefaultKernelWorkingDirectoryAction().setDirectory(p);
 }
 
 bool JupyterLauncher::getShowInterpreterPathDialog()
@@ -451,13 +451,13 @@ bool JupyterLauncher::initPython(const bool activateXeus)
         qWarning() << "Failed to invoke JupyterPlugin::setConnectionFilePath";
     }
 
-    const bool setNotebookWorkingDir = QMetaObject::invokeMethod(
+    const bool setKernelWorkingDir = QMetaObject::invokeMethod(
         jupyterPluginInstance,
-        "setNotebookWorkingDir",
-        Q_ARG(QString, getPythonWorkingDirectory())
+        "setKernelWorkingDir",
+        Q_ARG(QString, getKernelWorkingDirectory())
     );
 
-    if (!setNotebookWorkingDir) {
+    if (!setKernelWorkingDir) {
         qWarning() << "Failed to invoke JupyterPlugin::setNotebookWorkingDir";
     }
 

@@ -17,7 +17,7 @@
 #include <memory>
 #include <string>
 
-void XeusKernel::startKernel(const std::string& connection_path, const std::string& pluginVersion, const std::string& workingDir)
+void XeusKernel::startKernel(const std::string& connection_path, const std::string& pluginVersion, const std::string& kernelWorkingDirectory)
 {
     using context_type = xeus::xcontext_impl<zmq::context_t>;
 
@@ -64,13 +64,13 @@ void XeusKernel::startKernel(const std::string& connection_path, const std::stri
 
     m_kernel->start();
 
-    if (!workingDir.empty() && std::filesystem::exists(workingDir))
+    if (!kernelWorkingDirectory.empty() && std::filesystem::exists(kernelWorkingDirectory))
     {
-        qDebug() << "Setting notebook working directory to " << workingDir;
+        qDebug() << "Setting kernel working directory to " << kernelWorkingDirectory;
         interpreter_ptr->execute_request(
             xeus::xrequest_context{},       // Minimal context - no header or message ID needed for internal startup calls
             [](nl::json reply) {},  // No-op callback - we don't need the reply during initialization
-            std::format("import os; os.chdir('{}')", workingDir),
+            std::format("import os; os.chdir('{}')", kernelWorkingDirectory),
             xeus::execute_request_config{ false, false, false },
             nl::json::object()              // empty user_expressions
         );

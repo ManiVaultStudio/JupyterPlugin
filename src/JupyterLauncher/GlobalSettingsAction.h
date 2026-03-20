@@ -34,11 +34,11 @@ public:
 
 public: // Action getters
     mv::gui::FilePickerAction& getDefaultPythonPathAction() { return _defaultPythonPathAction; }
-    mv::gui::DirectoryPickerAction& getDefaultWorkingDirectoryAction() { return _defaultWorkingDirectoryAction; }
+    mv::gui::DirectoryPickerAction& getDefaultKernelWorkingDirectoryAction() { return _defaultKernelWorkingDirectoryAction; }
     mv::gui::ToggleAction& getDoNotShowAgainButton() { return _doNotShowAgainButton; }
 
 private:
     mv::gui::FilePickerAction           _defaultPythonPathAction;               /** Default python path */
-    mv::gui::DirectoryPickerAction      _defaultWorkingDirectoryAction;        /** Default python working directory */
+    mv::gui::DirectoryPickerAction      _defaultKernelWorkingDirectoryAction;   /** Default python working directory */
     mv::gui::ToggleAction               _doNotShowAgainButton;                  /** Whether to show the interpreter path picker on start */
 };

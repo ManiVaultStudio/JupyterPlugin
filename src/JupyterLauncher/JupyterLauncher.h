@@ -69,10 +69,10 @@ public:
 
 public: // Global settings
     static QString getPythonInterpreterPath();
-    static QString getPythonWorkingDirectory();
+    static QString getKernelWorkingDirectory();
 
     static void setPythonInterpreterPath(const QString& p);
-    static void setPythonWorkingDirectory(const QString& p);
+    static void setKernelWorkingDirectory(const QString& p);
 
     static bool getShowInterpreterPathDialog();
 
