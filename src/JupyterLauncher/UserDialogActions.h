@@ -24,7 +24,7 @@ public:
         return _mode;
     }
 
-    void setMode(int m) {
+    void setMode(const int m) {
         _mode = m;
     }
 
@@ -40,8 +40,8 @@ private:
     int                         _moduleInfoGroupsWidgetMinimumHeight = 35;
     int                         _moduleInfoGroupsWidgetMaximumHeight = -1;  // set in constructor based on content
 
-    int const                   _dialogPreferredWidth = 700;
-    int const                   _dialogPreferredHeight = 195;
+    const int                   _dialogPreferredWidth = 700;
+    const int                   _dialogPreferredHeight = 195;
 
     int                         _mode = 0;  // 0 calls notebook, 1 calls init scripts
 
