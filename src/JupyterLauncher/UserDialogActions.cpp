@@ -9,6 +9,7 @@
 LauncherDialog::LauncherDialog(QWidget* parent, JupyterLauncher* launcherPlugin) :
     QDialog(parent),
     _interpreterFileAction(this, "Python interpreter"),
+    _workingDirectoryAction(this, "Working directory"),
     _okButton(this, "Ok"),
     _doNotShowAgainButton(this, "Do not show again"),
     _moduleInfoText(this, "Python packages"),
@@ -24,8 +25,9 @@ LauncherDialog::LauncherDialog(QWidget* parent, JupyterLauncher* launcherPlugin)
     _interpreterFileAction.getFilePathAction().setText("Python interpreter");
     _interpreterFileAction.setFilePath(JupyterLauncher::getPythonInterpreterPath());
 
-    const auto [isConda, pyVersion] = isCondaEnvironmentActive();
-    auto interpreterFileActionWidget =_interpreterFileAction.createWidget(this);
+    const auto [isConda, pyVersion]   = isCondaEnvironmentActive();
+    auto interpreterFileActionWidget  =_interpreterFileAction.createWidget(this);
+    auto workingDirectoryActionWidget = _workingDirectoryAction.createWidget(this);
 
     if(QOperatingSystemVersion::currentType() != QOperatingSystemVersion::Windows && isConda)
     {
@@ -78,9 +80,14 @@ LauncherDialog::LauncherDialog(QWidget* parent, JupyterLauncher* launcherPlugin)
     QLabel* infoTextInterpreter = new QLabel(
         "Please provide a path to a python interpreter, i.e., the environment you want to use.", 
 		this);
+    QLabel* infoTextWorkingDir = new QLabel(
+        "Notebook working directory (if empty, the application directory is used)", 
+		this);
 
     layout->addWidget(infoTextInterpreter, row, 0, 1, 5);
     layout->addWidget(interpreterFileActionWidget, ++row, 0, 1, 5);
+    layout->addWidget(infoTextWorkingDir, ++row, 0, 1, 5);
+    layout->addWidget(workingDirectoryActionWidget, ++row, 0, 1, 5);
     layout->addWidget(_moduleInfoGroupsWidget, ++row, 0, 1, 5);
     layout->addWidget(_okButton.createWidget(this), ++row, 4, 1, 1, Qt::AlignRight);
     layout->addWidget(_doNotShowAgainButton.createWidget(this), ++row, 4, 1, 1, Qt::AlignRight);
@@ -100,6 +107,7 @@ LauncherDialog::LauncherDialog(QWidget* parent, JupyterLauncher* launcherPlugin)
         });
 
     connect(&_interpreterFileAction, &mv::gui::FilePickerAction::filePathChanged, _launcherPlugin, &JupyterLauncher::setPythonInterpreterPath);
+    connect(&_workingDirectoryAction, &mv::gui::DirectoryPickerAction::directoryChanged, _launcherPlugin, &JupyterLauncher::setPythonWorkingDirectory);
 
     _moduleInfoGroup.collapse();
 

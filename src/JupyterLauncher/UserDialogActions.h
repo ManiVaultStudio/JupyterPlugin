@@ -1,5 +1,6 @@
 #pragma once
 
+#include <actions/DirectoryPickerAction.h>
 #include <actions/FilePickerAction.h>
 #include <actions/GroupAction.h>
 #include <actions/GroupsAction.h>
@@ -30,6 +31,7 @@ public:
 
 private:
     mv::gui::FilePickerAction   _interpreterFileAction;
+    mv::gui::DirectoryPickerAction   _workingDirectoryAction;
     mv::gui::TriggerAction      _okButton;
     mv::gui::ToggleAction       _doNotShowAgainButton;
     mv::gui::StringAction       _moduleInfoText;

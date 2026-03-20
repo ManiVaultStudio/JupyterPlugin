@@ -2,6 +2,7 @@
 
 #include <PluginGlobalSettingsGroupAction.h>
 
+#include <actions/DirectoryPickerAction.h>
 #include <actions/FilePickerAction.h>
 #include <actions/ToggleAction.h>
 
@@ -33,9 +34,11 @@ public:
 
 public: // Action getters
     mv::gui::FilePickerAction& getDefaultPythonPathAction() { return _defaultPythonPathAction; }
+    mv::gui::DirectoryPickerAction& getDefaultWorkingDirectoryAction() { return _defaultWorkingDirectoryAction; }
     mv::gui::ToggleAction& getDoNotShowAgainButton() { return _doNotShowAgainButton; }
 
 private:
-    mv::gui::FilePickerAction   _defaultPythonPathAction;       /** Default python path */
-    mv::gui::ToggleAction       _doNotShowAgainButton;          /** Whether to show the interpreter path picker on start */
+    mv::gui::FilePickerAction           _defaultPythonPathAction;               /** Default python path */
+    mv::gui::DirectoryPickerAction      _defaultWorkingDirectoryAction;        /** Default python working directory */
+    mv::gui::ToggleAction               _doNotShowAgainButton;                  /** Whether to show the interpreter path picker on start */
 };

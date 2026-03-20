@@ -78,7 +78,7 @@ void JupyterPlugin::startJupyterNotebook()
     }
 
     _xeusKernel = std::make_unique<XeusKernel>();
-    _xeusKernel->startKernel(_connectionFilePath, getVersion().getVersionString());
+    _xeusKernel->startKernel(_connectionFilePath, getVersion().getVersionString(), _workingDir);
 }
 
 void JupyterPlugin::cleanGlobalNamespace() const
