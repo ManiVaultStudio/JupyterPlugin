@@ -18,24 +18,17 @@
 
 void XeusKernel::startKernel(const QString& connection_path, const QString& pluginVersion)
 {
-    // Test without configuration file (default zmq ports)
-    //xeus::xconfiguration config = xeus::load_configuration("D:\\TempProj\\DevBundle\\Jupyter\\install\\Debug\\external_kernels\\ManiVault\\connection.json");
-
     using context_type = xeus::xcontext_impl<zmq::context_t>;
-
-    std::unique_ptr<context_type>           context     = std::make_unique<context_type>();
-    std::unique_ptr<XeusInterpreter>        interpreter = std::make_unique<XeusInterpreter>(pluginVersion);
-    std::unique_ptr<xeus::xhistory_manager> history     = xeus::make_in_memory_history_manager();
 
     try {
         m_kernel = std::make_unique<xeus::xkernel>(
             /*config: not used here */
-            /*user_name*/ xeus::get_user_name(),
-            /*context*/ std::move(context),
-            /*interpreter*/ std::move(interpreter),
-            /*server_builder*/ make_XeusServer,
-            /*history_manager*/ std::move(history),
-            /*logger*/ nullptr
+            /*user_name      */ xeus::get_user_name(),
+            /*context        */ std::make_unique<context_type>(),
+            /*interpreter    */ std::make_unique<XeusInterpreter>(pluginVersion),
+            /*server_builder */ make_XeusServer,
+            /*history_manager*/ xeus::make_in_memory_history_manager(),
+            /*logger         */ nullptr
         );
     } catch (const std::exception& ex) {
         qDebug() << "Cannot create xeus kernel: " << ex.what();
