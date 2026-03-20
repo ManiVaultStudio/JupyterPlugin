@@ -39,11 +39,10 @@ private:
     mv::gui::GroupsAction       _moduleInfoGroups;
 
     QWidget*                    _moduleInfoGroupsWidget = nullptr;
-    int                         _moduleInfoGroupsWidgetMinimumHeight = 35;
+    const int                   _moduleInfoGroupsWidgetMinimumHeight = 32;  // this is a suboptimal setup but helps hide the text field
     int                         _moduleInfoGroupsWidgetMaximumHeight = -1;  // set in constructor based on content
 
     const int                   _dialogPreferredWidth = 700;
-    const int                   _dialogPreferredHeight = 195;
 
     int                         _mode = 0;  // 0 calls notebook, 1 calls init scripts
 

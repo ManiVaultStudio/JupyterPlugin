@@ -115,5 +115,5 @@ LauncherDialog::LauncherDialog(QWidget* parent, JupyterLauncher* launcherPlugin)
     _moduleInfoGroup.collapse();
 
     setFixedWidth(_dialogPreferredWidth);
-    resize(_dialogPreferredWidth, _dialogPreferredHeight);
+    _moduleInfoGroupsWidget->setMaximumHeight(_moduleInfoGroupsWidgetMinimumHeight);
 }
