@@ -37,34 +37,27 @@ void XeusKernel::startKernel(const QString& connection_path, const QString& plug
     }
 
     // Save the config that was generated
-    const auto& set_config = m_kernel->get_config();
-    nlohmann::json jsonObj;
-    jsonObj["transport"] = set_config.m_transport.c_str();
-    jsonObj["ip"] = set_config.m_ip.c_str();
-    jsonObj["control_port"] = std::stoi(set_config.m_control_port);
-    jsonObj["shell_port"] = std::stoi(set_config.m_shell_port);
-    jsonObj["stdin_port"] = std::stoi(set_config.m_stdin_port);
-    jsonObj["iopub_port"] = std::stoi(set_config.m_iopub_port);
-    jsonObj["hb_port"] = std::stoi(set_config.m_hb_port);
-    jsonObj["signature_scheme"] = set_config.m_signature_scheme.c_str();
-    jsonObj["key"] = set_config.m_key.c_str();
-    jsonObj["kernel_name"] = "ManiVaultStudio";
+    const auto& kernel_config           = m_kernel->get_config();
+    nlohmann::json kernel_spec          = {};
+    kernel_spec["transport"]            = kernel_config.m_transport.c_str();
+    kernel_spec["ip"]                   = kernel_config.m_ip.c_str();
+    kernel_spec["control_port"]         = std::stoi(kernel_config.m_control_port);
+    kernel_spec["shell_port"]           = std::stoi(kernel_config.m_shell_port);
+    kernel_spec["stdin_port"]           = std::stoi(kernel_config.m_stdin_port);
+    kernel_spec["iopub_port"]           = std::stoi(kernel_config.m_iopub_port);
+    kernel_spec["hb_port"]              = std::stoi(kernel_config.m_hb_port);
+    kernel_spec["signature_scheme"]     = kernel_config.m_signature_scheme.c_str();
+    kernel_spec["key"]                  = kernel_config.m_key.c_str();
+    kernel_spec["language"]             = "python";
+    kernel_spec["kernel_name"]          = "ManiVaultStudio";
+    kernel_spec["env"]["PYTHONSTARTUP"] = "D:/avieth/Documents/ManiVault/DevBundle/allmain/install/RelWithDebInfo/examples/JupyterPlugin/projects/volume_data";
+
+    qInfo() << "Xeus Kernel settings:";
+    qInfo().noquote() << QString::fromStdString(kernel_spec.dump(4));
 
     qDebug() << "Writing connection config to " << connection_path;
     std::ofstream configFile(connection_path.toUtf8());
-    configFile << jsonObj;
-
-    //const auto& config = m_kernel->get_config();
-    qInfo() << "Xeus Kernel settings";
-    qInfo() << "transport protocol: " << set_config.m_transport.c_str();
-    qInfo() << "IP address: " << set_config.m_ip.c_str();
-    qInfo() << "control port: " << set_config.m_control_port.c_str();
-    qInfo() << "shell port: " << set_config.m_shell_port.c_str();
-    qInfo() << "stdin port: " << set_config.m_stdin_port.c_str();
-    qInfo() << "iopub port: " << set_config.m_iopub_port.c_str();
-    qInfo() << "hb port: " << set_config.m_hb_port.c_str();
-    qInfo() << "signature scheme: " << set_config.m_signature_scheme.c_str();
-    qInfo() << "connection key: " << set_config.m_key.c_str();
+    configFile << kernel_spec;
 
     m_kernel->start();
 }
