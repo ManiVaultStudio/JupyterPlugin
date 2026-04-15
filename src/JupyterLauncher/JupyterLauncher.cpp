@@ -39,6 +39,45 @@
 
 using namespace mv;
 
+namespace
+{
+QString getJupyterLauncherDependencyRootDirectory()
+{
+    auto jupyterLauncherDependencyRootDirectory = QCoreApplication::applicationDirPath() + "/PluginDependencies/JupyterLauncher";
+
+    if constexpr (QOperatingSystemVersion::currentType() == QOperatingSystemVersion::MacOS)
+    {
+        if (QDir(QCoreApplication::applicationDirPath()).dirName() == "MacOS")
+            jupyterLauncherDependencyRootDirectory = QDir::cleanPath(QCoreApplication::applicationDirPath() + "/../../../PluginDependencies/JupyterLauncher");
+    }
+
+    return jupyterLauncherDependencyRootDirectory;
+}
+
+QString getJupyterPluginDirectory()
+{
+    return getJupyterLauncherDependencyRootDirectory() + "/bin/";
+}
+
+QString getJupyterLauncherWheelDirectory()
+{
+    return QDir::toNativeSeparators(getJupyterLauncherDependencyRootDirectory() + "/py/");
+}
+
+QString getJupyterLauncherExamplesDirectory()
+{
+    auto jupyterLauncherExamplesDirectory = QCoreApplication::applicationDirPath() + "/examples/JupyterPlugin/scripts";
+
+    if constexpr (QOperatingSystemVersion::currentType() == QOperatingSystemVersion::MacOS)
+    {
+        if (QDir(QCoreApplication::applicationDirPath()).dirName() == "MacOS")
+            jupyterLauncherExamplesDirectory = QDir::cleanPath(QCoreApplication::applicationDirPath() + "/../../../examples/JupyterPlugin/scripts");
+    }
+
+    return jupyterLauncherExamplesDirectory;
+}
+}
+
 Q_PLUGIN_METADATA(IID "studio.manivault.JupyterLauncher")
 
 // =============================================================================
@@ -47,7 +86,6 @@ Q_PLUGIN_METADATA(IID "studio.manivault.JupyterLauncher")
 
 JupyterLauncher::JupyterLauncher(const PluginFactory* factory) :
     ViewPlugin(factory),
-    _jupyterPluginFolder(QCoreApplication::applicationDirPath() + "/PluginDependencies/JupyterLauncher/bin/"),
     _serverProcess(this),
     _launcherDialog(std::make_unique<LauncherDialog>(nullptr, this))
 {
@@ -184,7 +222,7 @@ bool JupyterLauncher::ensureMvWheelIsInstalled() const
         }
 
         // Install the manivault wheels
-        const QString mvWheelPath = QDir::toNativeSeparators(QCoreApplication::applicationDirPath() + "/PluginDependencies/JupyterLauncher/py/");
+        const QString mvWheelPath = getJupyterLauncherWheelDirectory();
         const QString kernelWheel = mvWheelPath + "mvstudio_kernel-" + pluginVersion + "-py3-none-any.whl";
         const QString dataWheel = mvWheelPath + "mvstudio_data-" + pluginVersion + "-py3-none-any.whl";
 
@@ -407,7 +445,7 @@ bool JupyterLauncher::initPython(const bool activateXeus)
         qWarning() << "Failed to load/locate python communication plugin";
     }
 
-    QString jupyterPluginPath = QCoreApplication::applicationDirPath() + "/PluginDependencies/JupyterLauncher/bin/JupyterPlugin" + _selectedInterpreterVersion.remove(".");
+    QString jupyterPluginPath = getJupyterPluginDirectory() + "JupyterPlugin" + _selectedInterpreterVersion.remove(".");
 
     // plugin lib version suffix
     const auto coreVersion  = mv::Application::current()->getVersion();
@@ -532,7 +570,7 @@ void JupyterLauncher::addPythonScripts()
         return;
 
     // Look for all available scripts
-    const auto jupyterPluginDir = QDir(QCoreApplication::applicationDirPath() + "/examples/JupyterPlugin/scripts");
+    const auto jupyterPluginDir = QDir(getJupyterLauncherExamplesDirectory());
 
     qDebug() << "JupyterLauncher: Loading scripts from " << jupyterPluginDir;
 
@@ -736,7 +774,7 @@ void JupyterLauncherFactory::initialize()
     // Position to the right of the status bar action
     _statusBarAction->setIndex(-1);
 
-    const QString jupyterPluginFolder   = QCoreApplication::applicationDirPath() + "/PluginDependencies/JupyterLauncher/bin/";
+    QString jupyterPluginFolder = getJupyterPluginDirectory();
     QStringList pythonPlugins           = findLibraryFiles(jupyterPluginFolder);
 
 	qDebug() << "jupyterPluginFolder:" << jupyterPluginFolder;
