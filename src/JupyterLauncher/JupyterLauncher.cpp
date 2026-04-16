@@ -47,8 +47,8 @@ QString getJupyterLauncherDependencyRootDirectory()
 
     if constexpr (QOperatingSystemVersion::currentType() == QOperatingSystemVersion::MacOS)
     {
-        if (QDir(QCoreApplication::applicationDirPath()).dirName() == "MacOS")
-            jupyterLauncherDependencyRootDirectory = QDir::cleanPath(QCoreApplication::applicationDirPath() + "/../../../PluginDependencies/JupyterLauncher");
+        //if (QDir(QCoreApplication::applicationDirPath()).dirName() == "MacOS")
+        jupyterLauncherDependencyRootDirectory = QDir::cleanPath(QCoreApplication::applicationDirPath() + "/../../../PluginDependencies/JupyterLauncher");
     }
 
     return jupyterLauncherDependencyRootDirectory;
