@@ -41,6 +41,29 @@ using namespace mv;
 
 Q_PLUGIN_METADATA(IID "studio.manivault.JupyterLauncher")
 
+namespace
+ {
+
+    // Transition: replace with util::StandardPaths::getPluginDependenciesDirectory() from <util/StandardPaths.h>
+    QString getPluginDependenciesDirectory()
+    {
+        const auto applicationDir = QDir(QCoreApplication::applicationDirPath());
+        const auto dirName = QString("PluginDependencies");
+
+        auto pathSuffix = QString("/%1/").arg(dirName);
+
+        if constexpr (QOperatingSystemVersion::currentType() == QOperatingSystemVersion::MacOS)
+            pathSuffix = applicationDir.dirName() == "MacOS" ? QString("../../../../%1").arg(dirName) : QString("/../%1").arg(dirName);
+
+        return QDir::cleanPath(applicationDir.path() + pathSuffix);
+    }
+
+	QString getPluginDependenciesFolder()
+	{
+		return getPluginDependenciesDirectory() + "/JupyterLauncher";
+	}
+ }
+
 // =============================================================================
 // JupyterLauncher
 // =============================================================================
@@ -183,7 +206,7 @@ bool JupyterLauncher::ensureMvWheelIsInstalled() const
         }
 
         // Install the manivault wheels
-        const QString mvWheelPath = QDir::toNativeSeparators(QCoreApplication::applicationDirPath() + "/PluginDependencies/JupyterLauncher/py/");
+        const QString mvWheelPath = QDir::toNativeSeparators(getPluginDependenciesFolder() + "/py/");
         const QString kernelWheel = mvWheelPath + "mvstudio_kernel-" + pluginVersion + "-py3-none-any.whl";
         const QString dataWheel = mvWheelPath + "mvstudio_data-" + pluginVersion + "-py3-none-any.whl";
 
@@ -406,7 +429,7 @@ bool JupyterLauncher::initPython(const bool activateXeus)
         qWarning() << "Failed to load/locate python communication plugin";
     }
 
-    QString jupyterPluginPath = QCoreApplication::applicationDirPath() + "/PluginDependencies/JupyterLauncher/bin/JupyterPlugin" + _selectedInterpreterVersion.remove(".");
+    QString jupyterPluginPath = getPluginDependenciesFolder() + "/bin/JupyterPlugin" + _selectedInterpreterVersion.remove(".");
 
     // plugin lib version suffix
     const auto coreVersion  = mv::Application::current()->getVersion();
@@ -735,7 +758,7 @@ void JupyterLauncherFactory::initialize()
     // Position to the right of the status bar action
     _statusBarAction->setIndex(-1);
 
-    const QString jupyterPluginFolder   = QCoreApplication::applicationDirPath() + "/PluginDependencies/JupyterLauncher/bin/";
+    const QString jupyterPluginFolder   = getPluginDependenciesFolder() + "/bin/";
     QStringList pythonPlugins           = findLibraryFiles(jupyterPluginFolder);
 
 	qDebug() << "jupyterPluginFolder:" << jupyterPluginFolder;
