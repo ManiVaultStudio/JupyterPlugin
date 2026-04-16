@@ -106,7 +106,6 @@ private:
     QString                         _connectionFilePath = {};
     QString                         _selectedInterpreterVersion = {};
     QString                         _currentInterpreterPatchVersion = {};
-    QString                         _jupyterPluginFolder = {};
 
     using LoadedPythonInterpreters  = std::unordered_map<QString, mv::plugin::Plugin*>;
     LoadedPythonInterpreters        _initializedPythonInterpreters = {};
