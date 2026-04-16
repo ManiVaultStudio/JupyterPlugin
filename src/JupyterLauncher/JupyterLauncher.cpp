@@ -47,7 +47,6 @@ Q_PLUGIN_METADATA(IID "studio.manivault.JupyterLauncher")
 
 JupyterLauncher::JupyterLauncher(const PluginFactory* factory) :
     ViewPlugin(factory),
-    _jupyterPluginFolder(QCoreApplication::applicationDirPath() + "/PluginDependencies/JupyterLauncher/bin/"),
     _serverProcess(this),
     _launcherDialog(std::make_unique<LauncherDialog>(nullptr, this))
 {
