@@ -19,8 +19,11 @@ namespace py = pybind11;
 
 namespace {
     void printWorkaroundSuggestion() {
-        if(QOperatingSystemVersion::currentType() != QOperatingSystemVersion::Windows && qEnvironmentVariableIsSet("CONDA_PREFIX"))
+        if constexpr (QOperatingSystemVersion::currentType() != QOperatingSystemVersion::Windows)
         {
+            if (!qEnvironmentVariableIsSet("CONDA_PREFIX"))
+                return;
+
             const QString condaPrefix = QString::fromLocal8Bit(qgetenv("CONDA_PREFIX"));
             QFileInfo condaPrefixPath(condaPrefix);
             std::string environmentName = QDir(condaPrefixPath.absoluteFilePath()).dirName().toStdString();
