@@ -23,6 +23,7 @@
 #include <QJsonObject>
 #include <QLibrary>
 #include <QMainWindow>
+#include <QMessageBox>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QOperatingSystemVersion>
