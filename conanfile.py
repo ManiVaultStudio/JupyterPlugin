@@ -140,6 +140,7 @@ class JupyterPluginConan(ConanFile):
                 tc.variables["VCPKG_ROOT"]              = vcpkg_dir.as_posix()
 
                 tc.variables["CMAKE_PROJECT_INCLUDE"] = vcpkg_tc.as_posix()
+                tc.variables["CMAKE_MAP_IMPORTED_CONFIG_MINSIZEREL"] = "RelWithDebInfo"
 
         tc.generate()
 
