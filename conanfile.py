@@ -111,6 +111,7 @@ class JupyterPluginConan(ConanFile):
 
         # Set some build options
         tc.variables["MV_UNITY_BUILD"] = "ON"
+        tc.variables["CMAKE_CONFIGURATION_TYPES"] = "RelWithDebInfo"
 
         # Use vcpkg-installed dependencies
         if self.settings.os == "Windows":
