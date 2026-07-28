@@ -8,7 +8,7 @@ from rules_support import PluginBranchInfo
 
 
 class JupyterPluginConan(ConanFile):
-    """Class to package SNE-Analyses using conan
+    """Class to package the Jupyter plugin using conan
 
     Packages both RELEASE and DEBUG.
     Uses rules_support (github.com/ManiVaultStudio/rulessupport) to derive
@@ -110,7 +110,7 @@ class JupyterPluginConan(ConanFile):
         tc.variables["ManiVault_DIR"] = manivault_dir
 
         # Set some build options
-        tc.variables["MV_UNITY_BUILD"] = "ON"
+        tc.cache_variables["MV_UNITY_BUILD"] = "ON"
         tc.cache_variables["CMAKE_CONFIGURATION_TYPES"] = "RelWithDebInfo"
 
         # Use vcpkg-installed dependencies
@@ -138,9 +138,6 @@ class JupyterPluginConan(ConanFile):
                 tc.variables["VCPKG_ROOT"]              = vcpkg_dir.as_posix()
 
                 tc.variables["CMAKE_PROJECT_INCLUDE"] = vcpkg_tc.as_posix()
-                tc.cache_variables["CMAKE_MAP_IMPORTED_CONFIG_DEBUG"] = "RelWithDebInfo"
-                tc.cache_variables["CMAKE_MAP_IMPORTED_CONFIG_MINSIZEREL"] = "RelWithDebInfo"
-                tc.cache_variables["CMAKE_MAP_IMPORTED_CONFIG_RELEASE"] = "RelWithDebInfo"
 
         tc.generate()
 
