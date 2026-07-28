@@ -1,8 +1,10 @@
 cmake_minimum_required(VERSION 3.31)
 
-set(CMAKE_MAP_IMPORTED_CONFIG_MINSIZEREL RelWithDebInfo)
-set(CMAKE_MAP_IMPORTED_CONFIG_DEBUG RelWithDebInfo)
-set(CMAKE_MAP_IMPORTED_CONFIG_RELEASE RelWithDebInfo)
+if(WIN32)
+    set(CMAKE_MAP_IMPORTED_CONFIG_MINSIZEREL RelWithDebInfo)
+    set(CMAKE_MAP_IMPORTED_CONFIG_DEBUG RelWithDebInfo)
+    set(CMAKE_MAP_IMPORTED_CONFIG_RELEASE RelWithDebInfo)
+endif()
 
 option(XEUS_BUILD_STATIC_DEPENDENCIES "Xeus depends on libuuid. If that package is installed in your build env you can link statically to it" OFF)
 option(MV_JUPYTER_USE_VCPKG "Use vcpkg for openssl dependency" OFF)
