@@ -86,7 +86,7 @@ class JupyterPluginConan(ConanFile):
             del self.options.fPIC
 
     def generate(self):
-        generator = "Ninja"  # single-config
+        generator = None
         if self.settings.os == "Macos":
             generator = "Xcode"
         if self.settings.os == "Linux":
@@ -111,7 +111,7 @@ class JupyterPluginConan(ConanFile):
 
         # Set some build options
         tc.variables["MV_UNITY_BUILD"] = "ON"
-        tc.variables["CMAKE_CONFIGURATION_TYPES"] = "RelWithDebInfo"
+        tc.cache_variables["CMAKE_CONFIGURATION_TYPES"] = "RelWithDebInfo"
 
         # Use vcpkg-installed dependencies
         if self.settings.os == "Windows":
@@ -138,7 +138,9 @@ class JupyterPluginConan(ConanFile):
                 tc.variables["VCPKG_ROOT"]              = vcpkg_dir.as_posix()
 
                 tc.variables["CMAKE_PROJECT_INCLUDE"] = vcpkg_tc.as_posix()
+                tc.cache_variables["CMAKE_MAP_IMPORTED_CONFIG_DEBUG"] = "RelWithDebInfo"
                 tc.cache_variables["CMAKE_MAP_IMPORTED_CONFIG_MINSIZEREL"] = "RelWithDebInfo"
+                tc.cache_variables["CMAKE_MAP_IMPORTED_CONFIG_RELEASE"] = "RelWithDebInfo"
 
         tc.generate()
 
