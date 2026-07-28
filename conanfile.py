@@ -111,9 +111,7 @@ class JupyterPluginConan(ConanFile):
 
         # Set some build options
         tc.variables["MV_UNITY_BUILD"] = "ON"
-        
-        # libzmq still sets a cmake version <3.0 
-        tc.variables["CMAKE_POLICY_VERSION_MINIMUM"] = 3.5
+        tc.cache_variables["CMAKE_CONFIGURATION_TYPES"] = "RelWithDebInfo"
 
         # Use vcpkg-installed dependencies
         if self.settings.os == "Windows":
@@ -140,6 +138,9 @@ class JupyterPluginConan(ConanFile):
                 tc.variables["VCPKG_ROOT"]              = vcpkg_dir.as_posix()
 
                 tc.variables["CMAKE_PROJECT_INCLUDE"] = vcpkg_tc.as_posix()
+                tc.cache_variables["CMAKE_MAP_IMPORTED_CONFIG_DEBUG"] = "RelWithDebInfo"
+                tc.cache_variables["CMAKE_MAP_IMPORTED_CONFIG_MINSIZEREL"] = "RelWithDebInfo"
+                tc.cache_variables["CMAKE_MAP_IMPORTED_CONFIG_RELEASE"] = "RelWithDebInfo"
 
         tc.generate()
 
@@ -154,7 +155,6 @@ class JupyterPluginConan(ConanFile):
 
         cmake = self._configure_cmake()
         cmake.build(build_type="RelWithDebInfo")
-        cmake.build(build_type="Release")
 
     def package(self):
         package_dir = pathlib.Path(self.build_folder, "package")
@@ -172,23 +172,9 @@ class JupyterPluginConan(ConanFile):
                 relWithDebInfo_dir,
             ]
         )
-        subprocess.run(
-            [
-                "cmake",
-                "--install",
-                self.build_folder,
-                "--config",
-                "Release",
-                "--prefix",
-                release_dir,
-            ]
-        )
         self.copy(pattern="*", src=package_dir)
 
     def package_info(self):
         self.cpp_info.relwithdebinfo.libdirs = ["RelWithDebInfo/lib"]
         self.cpp_info.relwithdebinfo.bindirs = ["RelWithDebInfo/Plugins", "RelWithDebInfo"]
         self.cpp_info.relwithdebinfo.includedirs = ["RelWithDebInfo/include", "RelWithDebInfo"]
-        self.cpp_info.release.libdirs = ["Release/lib"]
-        self.cpp_info.release.bindirs = ["Release/Plugins", "Release"]
-        self.cpp_info.release.includedirs = ["Release/include", "Release"]
