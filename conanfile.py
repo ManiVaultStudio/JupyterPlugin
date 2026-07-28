@@ -86,7 +86,7 @@ class JupyterPluginConan(ConanFile):
             del self.options.fPIC
 
     def generate(self):
-        generator = None
+        generator = "Ninja"  # single-config
         if self.settings.os == "Macos":
             generator = "Xcode"
         if self.settings.os == "Linux":
