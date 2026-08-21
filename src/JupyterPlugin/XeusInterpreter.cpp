@@ -10,10 +10,6 @@
 #include <xeus/xhelper.hpp>
 #include <xeus/xcomm.hpp>
 
-#undef slots
-#include <pybind11/embed.h>
-#define slots Q_SLOTS
-
 #include <QDebug>
 #include <QDir>
 #include <QFileInfo>
@@ -21,47 +17,13 @@
 
 namespace py = pybind11;
 
-XeusInterpreter::XeusInterpreter(const QString& pluginVersion):
-    xpyt::interpreter(false, false),
-    _pluginVersion(pluginVersion)
-{
-    m_release_gil_at_startup = false;
-}
-
-void XeusInterpreter::configure_impl()
-{
-    this->redirect_output();
-    auto handle_comm_opened = [](xeus::xcomm&& comm, const xeus::xmessage&) {
-        std::cerr << "Comm opened for target: " << comm.target().name() << std::endl;
-    };
-
-    try {
-        xpyt::interpreter::configure_impl();
-        comm_manager().register_comm_target("echo_target", handle_comm_opened);
-
-        py::gil_scoped_acquire acquire;
-
-        py::module sys = py::module::import("sys");
-        py::dict modules = sys.attr("modules");
-
-        if (!modules.contains("mvstudio_core")) {
-            JupyterPlugin::init_mv_communication_module();
-            py::module MVData_module = *(JupyterPlugin::mv_communication_module.get());
-
-            sys.attr("modules")["mvstudio_core"] = MVData_module;
-        }
-    }
-    catch (const std::runtime_error& e)
-    {
-        std::cerr << "MVData modules failed to load: " << e.what() << std::endl;
-        throw std::runtime_error("Required python modules not available");
-    }
-    catch (...) 
-    {
-        std::cerr << "Unable to start jupyter notebook..." << std::endl;
-
-        if(QOperatingSystemVersion::currentType() != QOperatingSystemVersion::Windows && qEnvironmentVariableIsSet("CONDA_PREFIX"))
+namespace {
+    void printWorkaroundSuggestion() {
+        if constexpr (QOperatingSystemVersion::currentType() != QOperatingSystemVersion::Windows)
         {
+            if (!qEnvironmentVariableIsSet("CONDA_PREFIX"))
+                return;
+
             const QString condaPrefix = QString::fromLocal8Bit(qgetenv("CONDA_PREFIX"));
             QFileInfo condaPrefixPath(condaPrefix);
             std::string environmentName = QDir(condaPrefixPath.absoluteFilePath()).dirName().toStdString();
@@ -79,6 +41,42 @@ void XeusInterpreter::configure_impl()
             std::cerr << "   micromamba deactivate && micromamba activate " + environmentName + "\n";
             std::cerr << std::endl;
         }
+    }
+}
+
+XeusInterpreter::XeusInterpreter(const std::string& pluginVersion):
+    xpyt::interpreter(false, false),
+    _pluginVersion(pluginVersion)
+{
+    m_release_gil_at_startup = false;
+}
+
+void XeusInterpreter::configure_impl()
+{
+    this->redirect_output();
+    auto handle_comm_opened = [](xeus::xcomm&& comm, const xeus::xmessage&) {
+        std::cerr << "Comm opened for target: " << comm.target().name() << std::endl;
+    };
+
+    try {
+        xpyt::interpreter::configure_impl();
+        comm_manager().register_comm_target("echo_target", handle_comm_opened);
+    }
+    catch (const py::error_already_set& e)
+    {
+        std::cerr << "Xeus setup failed - error while loading a module: " << e.what() << std::endl;
+        printWorkaroundSuggestion();
+    }
+    catch (const std::runtime_error& e)
+    {
+        std::cerr << "Xeus setup failed: " << e.what() << std::endl;
+        printWorkaroundSuggestion();
+        throw std::runtime_error("Required python modules not available");
+    }
+    catch (...) 
+    {
+        std::cerr << "Unable to start jupyter notebook..." << std::endl;
+        printWorkaroundSuggestion();
         throw std::runtime_error("Cannot start notebook");
     }
 
@@ -101,7 +99,7 @@ void XeusInterpreter::execute_request_impl(send_reply_callback cb,
 
 nl::json XeusInterpreter::kernel_info_request_impl()
 {
-    std::string banner = R"(
+    const std::string banner = R"(
           __  __             ___     __          _ _   
          |  \/  | __ _ _ __ (_) \   / /_ _ _   _| | |_ 
          | |\/| |/ _` | '_ \| |\ \ / / _` | | | | | _|
@@ -116,26 +114,17 @@ nl::json XeusInterpreter::kernel_info_request_impl()
                  ManiVaultStudio JupyterPlugin
           A python kernel with access to the ManiVault Studio)";
 
-    return xeus::create_info_reply(xeus::get_protocol_version(),
-        "ManiVault JupyterPlugin",
-        _pluginVersion.toStdString(), // as defined in JupyterPlugin.json
-        "python",
-        std::to_string(pythonVersionMajor) + "." + std::to_string(pythonVersionMinor),
-        "text/x-python",
-        "py",
-        "",
-        "",
-        "",
-        banner);
+    return xeus::create_info_reply(
+        /*implementation             */ "ManiVault JupyterPlugin",
+        /*implementation_version     */ _pluginVersion,
+        /*language_name              */ "python",
+        /*language_version           */ std::to_string(pythonVersionMajor) + "." + std::to_string(pythonVersionMinor),
+        /*language_mimetype          */ "text/x-python",
+        /*language_file_extension    */ ".py",
+        /*language_pygments_lexer    */ "",
+        /*language_codemirror_mode   */ std::string(""),
+        /*language_nbconvert_exporter*/ "",
+        /*banner                     */ banner
+        );
 
-    //return xpyt::interpreter::kernel_info_request_impl();
-}
-
-PYBIND11_MODULE(mvtest, m) {
-    m.doc() = "ManiVault test module";
-
-    // Add bindings here
-    m.def("sayhello", []() {
-        return "Hello, World!";
-    });
 }

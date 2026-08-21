@@ -1,7 +1,7 @@
 #include "ScriptDialogAction.h"
 
 #include "JupyterLauncher.h"
-#include "Utils.h"
+#include "JsonUtils.h"
 
 #include <Dataset.h>
 #include <Set.h>
@@ -23,30 +23,43 @@
 #include <QStringList>
 #include <QWidget>
 
-inline static QString insertDotAfter3(const QString& v) {
-    QString temp = v;
-    temp.insert(1, ".");
-    return temp;
-}
+// =============================================================================
+// Utilities 
+// =============================================================================
 
-PythonScript::PythonScript(const QString& title, const Type& type, const QString& location, const QString& interpreterVersion, const QJsonObject& json, JupyterLauncher* launcher, QObject* parent) :
-    Script(title, type, Language::Python, mv::util::Version(insertDotAfter3(interpreterVersion)), location, parent),
-    _dialog(nullptr, json, location, interpreterVersion, launcher)
+namespace
 {
-
+    QString insertDotAtPos(const QString& v, const qsizetype pos) {
+        QString temp = v;
+        temp.insert(pos, ".");
+        return temp;
+    }
 }
 
-ScriptDialog::ScriptDialog(QWidget* parent, const QJsonObject& json, const QString& scriptPath, const QString& interpreterVersion, JupyterLauncher* launcher) :
-    QDialog(parent),
-    _okButton(this, "Run script"),
-    _argumentActions(),
-    _interpreterVersion(interpreterVersion),
-    _scriptPath(scriptPath),
-    _json(json),
-    _argumentMap(),
+// =============================================================================
+// PythonScript 
+// =============================================================================
+
+PythonScript::PythonScript(const QString& title, const Type& type, const QString& interpreterVersion, const QString& scriptPath, const QJsonObject& scriptText, JupyterLauncher* launcher, QObject* parent) :
+    Script(title, type, Language::Python, mv::util::Version(insertDotAtPos(interpreterVersion, 1)), scriptPath),
+    _scriptContent(scriptPath, scriptText),
     _launcherPlugin(launcher)
 {
-    setWindowTitle(json["name"].toString());
+
+}
+
+// =============================================================================
+// ScriptDialog 
+// =============================================================================
+
+ScriptDialog::ScriptDialog(QWidget* parent, PythonScriptContent* scriptContent, JupyterLauncher* launcher) :
+    QDialog(parent),
+    _okButton(this, "Run script"),
+    _okButtonWidget(_okButton.createWidget(this)),
+    _scriptContent(scriptContent),
+    _launcherPlugin(launcher)
+{
+    setWindowTitle(_scriptContent->scriptText["name"].toString());
     setWindowIcon(mv::util::StyledIcon("gears"));
 
     connect(&_okButton, &mv::gui::TriggerAction::triggered, this, &QDialog::accept);
@@ -59,8 +72,8 @@ void ScriptDialog::populateDialog()
     layout->setContentsMargins(10, 10, 10, 10);
     int row = 0;
 
-    if (containsMemberString(_json, "description")) {
-        QString description = _json["description"].toString();
+    if (containsMemberString(_scriptContent->scriptText, "description")) {
+        const QString description = _scriptContent->scriptText["description"].toString();
 
         auto widgetAction = _argumentActions.emplace_back(new mv::gui::StringAction(this, "Description"));
         auto stringAction = static_cast<mv::gui::StringAction*>(widgetAction);
@@ -70,10 +83,9 @@ void ScriptDialog::populateDialog()
         layout->addWidget(widgetAction->createWidget(this), row, 1, 1, -1);
     }
 
-    if (containsMemberArray(_json, "arguments")) {
-        QJsonArray arguments = _json["arguments"].toArray();
+    if (containsMemberArray(_scriptContent->scriptText, "arguments")) {
 
-        for (const QJsonValue& argument : arguments) {
+        for (const QJsonValueRef argument : _scriptContent->scriptText["arguments"].toArray()) {
             if (!argument.isObject()) continue;
 
             const QJsonObject argObj = argument.toObject();
@@ -152,19 +164,19 @@ void ScriptDialog::populateDialog()
                 layout->addWidget(decimalAction->createWidget(this), row, 1, 1, -1);
 
                 if (containsMemberDouble(argObj, "default")) {
-                    decimalAction->setValue(argObj["default"].toDouble());
+                    decimalAction->setValue(static_cast<float>(argObj["default"].toDouble()));
                 }
 
                 if (containsMemberDouble(argObj, "range-min")) {
-                    decimalAction->setMinimum(argObj["range-min"].toDouble());
+                    decimalAction->setMinimum(static_cast<float>(argObj["range-min"].toDouble()));
                 }
 
                 if (containsMemberDouble(argObj, "range-max")) {
-                    decimalAction->setMaximum(argObj["range-max"].toDouble());
+                    decimalAction->setMaximum(static_cast<float>(argObj["range-max"].toDouble()));
                 }
 
                 if (containsMemberDouble(argObj, "step-size")) {
-                    decimalAction->setSingleStep(argObj["step-size"].toDouble());
+                    decimalAction->setSingleStep(static_cast<float>(argObj["step-size"].toDouble()));
                 }
 
                 if (containsMemberDouble(argObj, "num-decimals")) {
@@ -208,24 +220,23 @@ void ScriptDialog::populateDialog()
                 auto widgetAction = _argumentActions.emplace_back(new mv::gui::DatasetPickerAction(this, name));
                 auto datasetPickerAction = static_cast<mv::gui::DatasetPickerAction*>(widgetAction);
 
-                std::unordered_set<QString> allowed_types;
+                std::unordered_set<QString> allowedDataTypes;
 
                 if (containsMemberArray(argObj, "datatypes")) {
-                    const QJsonArray datatypesArray = argObj["datatypes"].toArray();
 
-                    for (const QJsonValue& val : datatypesArray) {
-                        if (val.isString()) {
-                            allowed_types.insert(val.toString());
+                    for (const QJsonValueRef datatype : argObj["datatypes"].toArray()) {
+                        if (datatype.isString()) {
+                            allowedDataTypes.insert(datatype.toString());
                         }
                     }
                 }
 
-                datasetPickerAction->setFilterFunction([allowed_types](const mv::Dataset<mv::DatasetImpl>& dataset) -> bool {
-                    if (allowed_types.empty())
+                datasetPickerAction->setFilterFunction([allowedDataTypes](const mv::Dataset<mv::DatasetImpl>& dataset) -> bool {
+                    if (allowedDataTypes.empty())
                         return true;
 
-                    return std::any_of(allowed_types.cbegin(), allowed_types.cend(), [&dataset](const QString& type) {
-                        return dataset->getRawDataKind() == type;
+                    return std::ranges::any_of(allowedDataTypes, [&dataset](const QString& dataType) {
+                        return dataset->getRawDataKind() == dataType;
                         });
                     });
 
@@ -241,11 +252,10 @@ void ScriptDialog::populateDialog()
         }
     }
 
-    layout->addWidget(_okButton.createWidget(this), ++row, 0, 1, -1, Qt::AlignRight);
+    layout->addWidget(_okButtonWidget, ++row, 0, 1, -1, Qt::AlignRight);
 
     setLayout(layout);
 }
-
 
 void ScriptDialog::runScript() {
     if (!_launcherPlugin) {
@@ -259,5 +269,5 @@ void ScriptDialog::runScript() {
         scriptParams.append(value);
     }
 
-    _launcherPlugin->runScriptInKernel(_scriptPath, _interpreterVersion, scriptParams);
+    _launcherPlugin->runScriptInKernel(_scriptContent->scriptPath, scriptParams);
 }

@@ -3,6 +3,8 @@
 Python scripts offer a simple way of extending the feature set of ManiVault.
 They make it easy to load a custom file format into ManiVault, use any analysis module available in Python or save data in arbitrary formats to disk without having to compile a new ManiVault plugin.
 
+> To use a script, you currently need to ensure that the script's requirements are installed in your local Python environment. ManiVault will check this, but not install them. If the requirements are not installed, the respective script will not be available.
+
 ## How to write a script extension for ManiVault
 
 You'll need:

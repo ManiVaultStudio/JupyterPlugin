@@ -8,7 +8,7 @@ from rules_support import PluginBranchInfo
 
 
 class JupyterPluginConan(ConanFile):
-    """Class to package SNE-Analyses using conan
+    """Class to package the Jupyter plugin using conan
 
     Packages both RELEASE and DEBUG.
     Uses rules_support (github.com/ManiVaultStudio/rulessupport) to derive
@@ -110,10 +110,8 @@ class JupyterPluginConan(ConanFile):
         tc.variables["ManiVault_DIR"] = manivault_dir
 
         # Set some build options
-        tc.variables["MV_UNITY_BUILD"] = "ON"
-        
-        # libzmq still sets a cmake version <3.0 
-        tc.variables["CMAKE_POLICY_VERSION_MINIMUM"] = 3.5
+        tc.cache_variables["MV_UNITY_BUILD"] = "ON"
+        tc.cache_variables["CMAKE_CONFIGURATION_TYPES"] = "RelWithDebInfo"
 
         # Use vcpkg-installed dependencies
         if self.settings.os == "Windows":
@@ -154,7 +152,6 @@ class JupyterPluginConan(ConanFile):
 
         cmake = self._configure_cmake()
         cmake.build(build_type="RelWithDebInfo")
-        cmake.build(build_type="Release")
 
     def package(self):
         package_dir = pathlib.Path(self.build_folder, "package")
@@ -172,23 +169,9 @@ class JupyterPluginConan(ConanFile):
                 relWithDebInfo_dir,
             ]
         )
-        subprocess.run(
-            [
-                "cmake",
-                "--install",
-                self.build_folder,
-                "--config",
-                "Release",
-                "--prefix",
-                release_dir,
-            ]
-        )
         self.copy(pattern="*", src=package_dir)
 
     def package_info(self):
         self.cpp_info.relwithdebinfo.libdirs = ["RelWithDebInfo/lib"]
         self.cpp_info.relwithdebinfo.bindirs = ["RelWithDebInfo/Plugins", "RelWithDebInfo"]
         self.cpp_info.relwithdebinfo.includedirs = ["RelWithDebInfo/include", "RelWithDebInfo"]
-        self.cpp_info.release.libdirs = ["Release/lib"]
-        self.cpp_info.release.bindirs = ["Release/Plugins", "Release"]
-        self.cpp_info.release.includedirs = ["Release/include", "Release"]

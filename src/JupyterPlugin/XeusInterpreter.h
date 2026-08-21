@@ -5,7 +5,7 @@
 #include <xeus-python/xinterpreter.hpp>
 #define slots Q_SLOTS
 
-#include <QString>
+#include <string>
 
 /**
  * This class wraps the xeus python interpreter 
@@ -19,8 +19,11 @@
 class XeusInterpreter : public xpyt::interpreter
 {
 public:
-    XeusInterpreter(const QString& pluginVersion);
-    ~XeusInterpreter() = default;
+    XeusInterpreter() = delete;
+    XeusInterpreter(XeusInterpreter& xeusInterpreter) = delete;
+    XeusInterpreter(XeusInterpreter&& xeusInterpreter) = delete;
+    XeusInterpreter(const std::string& pluginVersion);
+    ~XeusInterpreter() override = default;
 
 private:
     void configure_impl() override;
@@ -34,5 +37,5 @@ private:
     nl::json kernel_info_request_impl() override;
 
 private:
-    QString _pluginVersion = "";
+    std::string _pluginVersion = "";
 };

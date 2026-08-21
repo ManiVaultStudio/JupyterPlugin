@@ -2,11 +2,10 @@
 
 #include <ViewPlugin.h>
 
-#include <actions/FilePickerAction.h>
-
 #include <memory>
 #include <unordered_set>
 
+#include <QString>
 #include <QStringList>
 
 #undef slots
@@ -14,10 +13,9 @@
 #include <pybind11/pybind11.h>
 #define slots Q_SLOTS
 
-using namespace mv::plugin;
-using namespace mv::gui;
-
 class XeusKernel;
+using PyScopedInterpreterPtr = std::unique_ptr<pybind11::scoped_interpreter>;
+using PyModulePtr = std::unique_ptr<pybind11::module>;
 
 /**
  * Jupyter plugin class
@@ -25,9 +23,9 @@ class XeusKernel;
  * This view plugin class hosts a Xeus kernel and python interpreter.
  * We open this plugin via the jupyter launcher plugin.
  *
- * @authors B. van Lew
+ * @authors B. van Lew, A. Vieth
  */
-class JupyterPlugin : public ViewPlugin
+class JupyterPlugin : public mv::plugin::ViewPlugin
 {
     Q_OBJECT
 
@@ -37,23 +35,31 @@ public:
      * Constructor
      * @param factory Pointer to the plugin factory
      */
-    JupyterPlugin(const PluginFactory* factory);
+    JupyterPlugin(const mv::plugin::PluginFactory* factory);
     ~JupyterPlugin();
 
     void init() override;
 
-    Q_INVOKABLE void runScriptWithArgs(const QString& scriptPath, const QStringList& args);
+    Q_INVOKABLE void startJupyterNotebook();
+    Q_INVOKABLE void runScriptWithArgs(const QString& scriptPath, const QStringList& args) const;
 
-    static std::unique_ptr<pybind11::module> mv_communication_module;
-    static void init_mv_communication_module();
+    Q_INVOKABLE void setConnectionFilePath(const QString& scriptPath) {
+        _connectionFilePath = scriptPath.toStdString();
+    }
+
+    Q_INVOKABLE void setKernelWorkingDir(const QString& kernelWorkingDirectory) {
+        _kernelWorkingDirectory = kernelWorkingDirectory.toStdString();
+    }
 
 private:
-    std::unique_ptr<XeusKernel>     _pKernel;
-    FilePickerAction                _connectionFilePath;        /** Settings action */
+    void cleanGlobalNamespace() const;
 
-    std::unordered_set<std::string> _base_modules = {};
-
-    std::unique_ptr<pybind11::scoped_interpreter>   _init_guard = {};
+private:
+    std::unique_ptr<XeusKernel>     _xeusKernel;
+    std::string                     _connectionFilePath = {};
+    std::string                     _kernelWorkingDirectory = {};
+    std::unordered_set<std::string> _baseModules = {};
+    PyScopedInterpreterPtr          _mainPyInterpreter = {};
 };
 
 
@@ -61,7 +67,7 @@ private:
 // Factory
 // =============================================================================
 
-class JupyterPluginFactory : public ViewPluginFactory
+class JupyterPluginFactory : public mv::plugin::ViewPluginFactory
 {
     Q_INTERFACES(mv::plugin::ViewPluginFactory mv::plugin::PluginFactory)
     Q_OBJECT
@@ -69,15 +75,8 @@ class JupyterPluginFactory : public ViewPluginFactory
                       FILE  "PluginInfo.json")
 
 public:
-
-    /** Default constructor */
-    JupyterPluginFactory() = default;
-
-    /** Destructor */
-    ~JupyterPluginFactory() = default;
-    
     /** Creates an instance of the example view plugin */
-    ViewPlugin* produce() override;
+    mv::plugin::ViewPlugin* produce() override;
 
     /** Returns the data types that are supported by the example view plugin */
     mv::DataTypes supportedDataTypes() const override;

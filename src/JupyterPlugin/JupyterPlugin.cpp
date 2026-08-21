@@ -4,12 +4,10 @@
 #include <QDir>
 #include <QStandardPaths>
 
-#include "MVData.h"
-#include "XeusKernel.h"
-
 #include <exception>
+#include <format>
 #include <fstream>
-#include <sstream>
+#include <set>
 #include <string>
 #include <stdexcept>
 
@@ -17,140 +15,165 @@
 #include <pybind11/cast.h>
 #include <pybind11/embed.h>
 #include <pybind11/eval.h>
-#include <pybind11/gil.h>
 #include <pybind11/pybind11.h>
+#include <pybind11/subinterpreter.h>
 #define slots Q_SLOTS
+
+#include <Application.h>
+
+#include "MVData.h"
+#include "PythonBuildVersion.h"
+#include "XeusKernel.h"
 
 Q_PLUGIN_METADATA(IID "studio.manivault.JupyterPlugin")
 
-using namespace mv;
 namespace py = pybind11;
 
-std::unique_ptr<pybind11::module> JupyterPlugin::mv_communication_module = {};
-
-void JupyterPlugin::init_mv_communication_module() {
-    if (mv_communication_module) {
-        return;
-    }
-
-    mv_communication_module = std::make_unique<pybind11::module>(get_MVData_module());
-    mv_communication_module->doc() = "Provides access to low level ManiVaultStudio core functions";
+PYBIND11_EMBEDDED_MODULE(mvstudio_core, m, py::multiple_interpreters::per_interpreter_gil()) {
+    m.doc() = "Provides access to low level ManiVaultStudio core functions";
+    m.attr("__version__") = std::format("{}.{}.{}", pythonBridgeVersionMajor, pythonBridgeVersionMinor, pythonBridgeVersionPatch);
+    mvstudio_core::register_mv_data_items(m);
+    mvstudio_core::register_mv_core_module(m);
 }
 
-JupyterPlugin::JupyterPlugin(const PluginFactory* factory) :
-    ViewPlugin(factory),
-    _pKernel(std::make_unique<XeusKernel>()),
-    _connectionFilePath(this, "Connection file", QDir(QStandardPaths::standardLocations(QStandardPaths::HomeLocation)[0]).filePath("connection.json"))
+namespace
+{
+    void importMvModule()
+    {
+        if (const py::dict modules = py::module::import("sys").attr("modules");
+            !modules.contains("mvstudio_core")) {
+            auto pyModMv = py::module::import("mvstudio_core");
+        }
+    }
+}
+
+JupyterPlugin::JupyterPlugin(const mv::plugin::PluginFactory* factory) :
+    mv::plugin::ViewPlugin(factory)
 {
 }
 
 JupyterPlugin::~JupyterPlugin()
 {
-    _pKernel->stopKernel();
+    _xeusKernel->stopKernel();
 }
 
-// https://pybind11.readthedocs.io/en/stable/reference.html#_CPPv422initialize_interpreterbiPPCKcb
 void JupyterPlugin::init()
-{  
-    QString jupyter_configFilepath = _connectionFilePath.getFilePath();
-    QString pluginVersion = QString::fromStdString(getVersion().getVersionString());
-
-    _init_guard = std::make_unique<pybind11::scoped_interpreter>(); // start the interpreter and keep it alive
-
-    _pKernel->startKernel(jupyter_configFilepath, pluginVersion);
-}
-
-void JupyterPlugin::runScriptWithArgs(const QString& scriptPath, const QStringList& args)
 {
     // start the interpreter and keep it alive
-    if (!_init_guard) {
-        _init_guard = std::make_unique<pybind11::scoped_interpreter>();
-    }
+    _mainPyInterpreter = std::make_unique<py::scoped_interpreter>();
+    importMvModule();
 
+    // save global base state
+    for (const py::dict loadedModules = py::module::import("sys").attr("modules");
+        auto& [key, _] : loadedModules) {
+        _baseModules.insert(py::str(key));
+    }
+}
+
+void JupyterPlugin::startJupyterNotebook()
+{
     if (!Py_IsInitialized()) {
-        qWarning() << "Script not executed";
+        qWarning() << "JupyterPlugin::startJupyterNotebook: could not start notebook - interpreter is not initialized";
         return;
     }
 
+    _xeusKernel = std::make_unique<XeusKernel>();
+    _xeusKernel->startKernel(_connectionFilePath, getVersion().getVersionString(), _kernelWorkingDirectory);
+}
+
+void JupyterPlugin::cleanGlobalNamespace() const
+{
+    // Clear user-defined globals (keep builtins)
+    py::dict pythonGlobals = py::module_::import("__main__").attr("__dict__");
+
+    // Remove everything except builtins and special attributes
+    std::set<std::string> toRemove;
+    for (auto& [key, _] : pythonGlobals) {
+
+        if (std::string globalName = py::str(key);
+            !globalName.empty() && globalName[0] != '_') {  // keep __name__, __builtins__, etc.
+            toRemove.insert(globalName);
+        }
+    }
+
+    for (const auto& key : toRemove) {
+        pythonGlobals.attr("pop")(key);
+    }
+
+    // Clean up modules for fresh start
+    for (const py::dict loadedModules = py::module::import("sys").attr("modules");
+        auto& [key, _] : loadedModules) {
+
+        if (std::string moduleName = py::str(key);
+            !_baseModules.contains(moduleName)) {
+            loadedModules.attr("pop")(moduleName, py::none());
+        }
+    }
+
+    // Run garbage collection
+    const py::module gc = py::module::import("gc");
+    const auto gcResult = gc.attr("collect")();
+}
+
+// ReSharper disable once CppMemberFunctionMayBeStatic
+// Cannot be static since we want to apply Q_INVOKABLE 
+void JupyterPlugin::runScriptWithArgs(const QString& scriptPath, const QStringList& args) const
+{
+    if (!Py_IsInitialized()) {
+        qWarning() << "JupyterPlugin::runScriptWithArgs: Script not executed - interpreter is not initialized";
+        return;
+    }
+
+    py::gil_scoped_acquire acquire;
+    importMvModule();
+
     // Load the script from file
     std::ifstream file(scriptPath.toStdString());
-    std::stringstream buffer;
-    buffer << file.rdbuf();
-    const std::string script_code = buffer.str();
-
-    // Acquire GIL
-    py::gil_scoped_acquire acquire;
+    const std::string scriptCode(
+        std::istreambuf_iterator<char>(file),
+        std::istreambuf_iterator<char>{}
+    );
 
     try {
-
-        // Insert manivault communication module into sys.modules
-        py::module sys = py::module::import("sys");
-        py::dict modules = sys.attr("modules");
-
-        if (!modules.contains("mvstudio_core")) {
-            JupyterPlugin::init_mv_communication_module();
-            modules["mvstudio_core"] = *(JupyterPlugin::mv_communication_module.get());
-        }
-
-        if (_base_modules.empty()) {
-            for (auto& [key, item] : modules) {
-                std::string name = py::str(key);
-                _base_modules.insert(name);
-            }
-        }
-
         // Set sys.argv
-        py::list py_args = py::list();
-        py_args.append(py::cast(QFileInfo(scriptPath).fileName().toStdString()));      // add file name
+        auto pyArgs = py::list();
+        pyArgs.append(py::cast(QFileInfo(scriptPath).fileName().toStdString()));      // add file name
         for (const auto& arg : args) {
-            py_args.append(py::cast(arg.toStdString()));                                // add arguments
+            pyArgs.append(py::cast(arg.toStdString()));                               // add arguments
         }
-        sys.attr("argv") = py_args;
+        py::module_::import("sys").attr("argv") = pyArgs;
 
         // Execute the script in __main__'s context
-        py::module_ main_module = py::module_::import("__main__");
-        py::object main_namespace = main_module.attr("__dict__");
+        const py::module_ mainModule   = py::module_::import("__main__");
+        const py::object mainNamespace = mainModule.attr("__dict__");
 
-        py::exec(script_code, main_namespace);
+        py::exec(scriptCode, mainNamespace);
 
-        // Run garbage collection
-        py::module gc = py::module::import("gc");
-        gc.attr("collect")();
-
-        // Clean up modules for fresh start
-        for (auto& [key, item] : modules) {
-            std::string name = py::str(key);
-            if (!_base_modules.contains(name)) {
-                modules.attr("pop")(name, py::none());
-            }
-        }
-
+        cleanGlobalNamespace();
     }
     catch (const py::error_already_set& e) {
-        QString err = QStringLiteral("Python error (probably form script): ") + e.what();
-        qWarning() << err;
+        qWarning() << QStringLiteral("Python error (probably from script):");
+        qWarning() << e.what();
     }
     catch (const std::runtime_error& e) {
-        QString err = QStringLiteral("std::runtime_error: ") + e.what();
-        qWarning() << err;
+        qWarning() << QStringLiteral("std::runtime_error:");
+        qWarning() << e.what();
     }
     catch (const std::exception& e) {
-        QString err = QStringLiteral("std::exception: ") + e.what();
-        qWarning() << err;
+        qWarning() << QStringLiteral("std::exception:");
+        qWarning() << e.what();
     }
     catch (...) {
-        QString err = QStringLiteral("Python error: unkown");
-        qWarning() << err;
+        qWarning() << QStringLiteral("Python error: unknown");
     }
 
-    // GIL is released when 'guard' goes out of scope
 }
 
 // =============================================================================
 // Plugin Factory
 // =============================================================================
 
-ViewPlugin* JupyterPluginFactory::produce()
+mv::plugin::ViewPlugin* JupyterPluginFactory::produce()
 {
     return new JupyterPlugin(this);
 }

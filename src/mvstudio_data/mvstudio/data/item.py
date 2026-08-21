@@ -76,7 +76,7 @@ class Item:
         if self.itemId == itemId:
             return self
         
-        for child in self.children():
+        for child in filter(None, self.children()):
             item = child.getItem(itemId)
             if item is not None:
                 return item
@@ -89,7 +89,7 @@ class Item:
         if self.datasetId == datasetId:
             return self
         
-        for child in self.children():
+        for child in filter(None, self.children()):
             item = child.getItemByDataID(datasetId)
             if item is not None:
                 return item
@@ -102,7 +102,7 @@ class Item:
         if self._name == name:
             return self
         
-        for child in self.children():
+        for child in filter(None, self.children()):
             item = child.getItemByName(name)
             if item is not None:
                 return item
@@ -123,7 +123,7 @@ class Item:
         if self._hierarchy_id == index:
             return self
         
-        for child in self.children():
+        for child in filter(None, self.children()):
             item = child.getItemByIndex(index)
             if item is not None:
                 break
@@ -137,6 +137,8 @@ class Item:
     def setSelection(self, selectionIDs : np.ndarray) -> None:
         """Set the selection for a given dataset, specified using its dataset ID.
         """
+        assert arr.ndim == 1, f"Expected 1D array, got {arr.ndim}D"
+        assert arr.dtype == np.uint32, f"Expected uint32, got {arr.dtype}"
         return mvstudio_core.set_selection_for_item(self.datasetId, selectionIDs)
 
     def setLinkedData(self, target : Self, selectionMapping : npt.NDArray[np.object_]) -> bool:
@@ -211,14 +213,14 @@ class Item:
 
     def __str__(self) -> str:
         children_strs = [f'{"  "*(len(self._hierarchy_id)-1)}Item id: {self._hierarchy_id}, dataset id: {self.datasetId}, display name: {self.name}, type: {self.type}']
-        for child in self.children():
+        for child in filter(None, self.children()):
             children_strs.append(str(child))
 
         return '\n'.join(children_strs)
     
     def __repr__(self) -> str:
         children_reprs = [f'Item({self._hierarchy_id}, {self.datasetId}, {self.name}, {repr(self.type)})']
-        for child in self.children():
+        for child in filter(None, self.children()):
             children_reprs.append(repr(child))
 
         return '\n'.join(children_reprs)

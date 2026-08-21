@@ -2,8 +2,14 @@
 
 #include <cstdint>
 
-// Python version this plugin was built against
+// Version of Python interpreter this library was built against
 
 constexpr std::int32_t pythonVersionMajor = @Python_VERSION_MAJOR@;
 constexpr std::int32_t pythonVersionMinor = @Python_VERSION_MINOR@;
 constexpr std::int32_t pythonVersionPatch = @Python_VERSION_PATCH@;
+
+// Version of this library
+
+constexpr std::int32_t pythonBridgeVersionMajor = @PROJECT_VERSION_MAJOR@;
+constexpr std::int32_t pythonBridgeVersionMinor = @PROJECT_VERSION_MINOR@;
+constexpr std::int32_t pythonBridgeVersionPatch = @PROJECT_VERSION_PATCH@;

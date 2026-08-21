@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.22)
+cmake_minimum_required(VERSION 3.31)
 
 set(JUPYTERLAUNCHER "JupyterLauncher")
 message(STATUS "Plugin: ${JUPYTERLAUNCHER}")
@@ -19,8 +19,12 @@ set(JUPYTERLAUNCHER_SOURCES
     UserDialogActions.cpp
     ScriptDialogAction.h
     ScriptDialogAction.cpp
-    Utils.h
-    Utils.cpp
+    JsonUtils.h
+    JsonUtils.cpp
+    FileHandlingUtils.h
+    FileHandlingUtils.cpp
+    PythonUtils.h
+    PythonUtils.cpp
 )
 
 set(JUPYTERLAUNCHER_AUX
@@ -72,7 +76,7 @@ target_include_directories(${JUPYTERLAUNCHER} PRIVATE ${md4qt_SOURCE_DIR})
 # -----------------------------------------------------------------------------
 # Target properties
 # -----------------------------------------------------------------------------
-target_compile_features(${JUPYTERLAUNCHER} PRIVATE cxx_std_20)
+target_compile_features(${JUPYTERLAUNCHER} PRIVATE cxx_std_${MV_JUPYTER_CXX_STANDARD})
 
 set_target_properties(${JUPYTERLAUNCHER} 
     PROPERTIES 

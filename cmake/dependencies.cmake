@@ -28,7 +28,7 @@ endif()
 CPMAddPackage(
   NAME              nlohmann_json
   GITHUB_REPOSITORY	"nlohmann/json"
-  GIT_TAG           v3.12.0
+  GIT_TAG           ${nlohmann_json_VERSION}
   DOWNLOAD_ONLY     NO
   EXCLUDE_FROM_ALL  YES
   OPTIONS
@@ -51,13 +51,16 @@ CPMAddPackage(
         "XEUS_BUILD_SHARED_LIBS OFF"
         "XEUS_BUILD_STATIC_LIBS ON"
         "XEUS_STATIC_DEPENDENCIES ${XEUS_BUILD_STATIC_DEPENDENCIES}"
+        "C_STANDARD ${MV_JUPYTER_C_STANDARD}"
+        "CXX_STANDARD ${MV_JUPYTER_CXX_STANDARD}"
 )
 
 # produces libzmq and libzmq-static depending on settings
 CPMAddPackage(
     NAME                libzmq
     GITHUB_REPOSITORY   "zeromq/libzmq"
-    GIT_TAG             ${libzmq_VERSION}
+    GIT_TAG             ${libzmq_VERSION_TAG}
+    VERSION             ${libzmq_VERSION}
     EXCLUDE_FROM_ALL    YES
     OPTIONS 
         "WITH_PERF_TOOL OFF"
@@ -69,7 +72,9 @@ CPMAddPackage(
         "ENABLE_CURVE OFF"
         "WITH_TLS OFF"
         "WITH_DOC OFF"
-)
+        "C_STANDARD ${MV_JUPYTER_C_STANDARD}"
+        "CXX_STANDARD ${MV_JUPYTER_CXX_STANDARD}"
+    )
 
 # produces cppzmq and cppzmq-static
 CPMAddPackage(
@@ -93,6 +98,8 @@ CPMAddPackage(
         "XEUS_ZMQ_BUILD_SHARED_LIBS OFF"
         "XEUS_ZMQ_BUILD_STATIC_LIBS ON"
         "XEUS_ZMQ_STATIC_DEPENDENCIES ON"
+        "C_STANDARD ${MV_JUPYTER_C_STANDARD}"
+        "CXX_STANDARD ${MV_JUPYTER_CXX_STANDARD}"
 )
 
 install(TARGETS nlohmann_json EXPORT xeus-targets)
@@ -114,15 +121,16 @@ include("${pybind_SOURCE_DIR}/tools/pybind11Common.cmake")
 CPMAddPackage(
     NAME                pybind11_json
     GITHUB_REPOSITORY   pybind/pybind11_json
-    GIT_TAG             ${pybind11_json_VERSION}
+    GIT_TAG             ${pybind11_json_VERSION_TAG}
+    VERSION             ${pybind11_json_VERSION}
     EXCLUDE_FROM_ALL    YES
 )
 
 CPMAddPackage(
     NAME                xeus-python
-    URL                 "https://github.com/jupyter-xeus/xeus-python/archive/refs/tags/${xeus-python_VERSION}.tar.gz"
+    GITHUB_REPOSITORY   jupyter-xeus/xeus-python
+    GIT_TAG             ${xeus-python_VERSION}
     EXCLUDE_FROM_ALL    YES
-    CPM_USE_LOCAL_PACKAGES ON
     OPTIONS 
         "XPYT_BUILD_TESTS OFF"
         "XPYT_BUILD_SHARED OFF"
@@ -131,6 +139,8 @@ CPMAddPackage(
         "XPYT_USE_SHARED_XEUS_PYTHON OFF"
         "XPYT_USE_SHARED_XEUS OFF"
         "EMSCRIPTEN OFF"
+        "C_STANDARD ${MV_JUPYTER_C_STANDARD}"
+        "CXX_STANDARD ${MV_JUPYTER_CXX_STANDARD}"
 )
 
 if(UNIX)
@@ -144,8 +154,8 @@ endif()
 CPMAddPackage(
     NAME                md4qt
     GIT_REPOSITORY      https://invent.kde.org/libraries/md4qt.git
-    GIT_TAG             6c07e69824a269e0f6903caa4b59c905650a0749
-    VERSION             4.2.0           # see md4qt/CMakeLists.txt
+    GIT_TAG             a777b56c14679b94d48261ec465cf0e97650daad
+    VERSION             4.2.1
     DOWNLOAD_ONLY       YES
     EXCLUDE_FROM_ALL    YES
 )

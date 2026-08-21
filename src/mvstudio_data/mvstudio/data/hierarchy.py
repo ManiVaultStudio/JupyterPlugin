@@ -32,7 +32,7 @@ class Hierarchy:
         """Return the Item corresponding
         to the data hierarchy guid 
         """
-        for item in self.children():
+        for item in filter(None, self.children()):
             result = item.getItem(itemId)
             if result is not None:
                 return result
@@ -42,7 +42,7 @@ class Hierarchy:
         """Return the Item corresponding
         to the data set guid 
         """
-        for item in self.children():
+        for item in filter(None, self.children()):
             result = item.getItemByDataID(datasetId)
             if result is not None:
                 return result
@@ -52,7 +52,7 @@ class Hierarchy:
         """Return the Item corresponding
         to the data name 
         """
-        for item in self.children():
+        for item in filter(None, self.children()):
             result = item.getItemByName(name)
             if result is not None:
                 return result
@@ -72,7 +72,7 @@ class Hierarchy:
             DataHierarchyItem: _description_
         """
         item = None
-        for child in self.children():
+        for child in filter(None, self.children()):
             item = child.getItemByIndex(index)
             if item is not None:
                 break
@@ -204,13 +204,13 @@ class Hierarchy:
 
     def __str__(self) -> str:
         result =  f'ManiVault data items:' 
-        for item in self.children():
+        for item in filter(None, self.children()):
             result = result + '\n' + str(item)
         return result
     
     def __repr__(self) -> str:
         result =  f'DataHierarchy(\n' 
-        for item in self.children():
+        for item in filter(None, self.children()):
             result = result + '\n' + repr(item)
         return result
 

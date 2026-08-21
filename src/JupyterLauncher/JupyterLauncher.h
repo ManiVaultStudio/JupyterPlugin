@@ -8,6 +8,7 @@
 
 #include <actions/HorizontalGroupAction.h>
 #include <actions/StringAction.h>
+#include <actions/TriggerAction.h>
 #include <actions/PluginStatusBarAction.h>
 
 #include <QOperatingSystemVersion>
@@ -17,26 +18,10 @@
 
 #include <memory>
 #include <unordered_map>
-#include <utility>
 #include <vector>
 
 using namespace mv::plugin;
 using namespace mv::gui;
-
-inline QStringList pythonInterpreterFilters()
-{
-    QStringList pythonFilter = {};
-    if (QOperatingSystemVersion::currentType() == QOperatingSystemVersion::Windows)
-        pythonFilter = { "Python interpreter (python*.exe)" };
-    else
-        pythonFilter = { "Python interpreter (python*)" };
-
-    return pythonFilter;
-}
-
-std::pair<bool, QString> isCondaEnvironmentActive();
-
-QString getPythonVersion(const QString& pythonInterpreterPath);
 
 /**
  * Transitive JupyterPlugin Loader
@@ -46,7 +31,7 @@ QString getPythonVersion(const QString& pythonInterpreterPath);
  * This plugin, JupyterLauncher fulfills that function.
  * The user selected pat is saved in the settings.
  *
- * @authors B. van Lew
+ * @authors B. van Lew, A. Vieth
  */
 class JupyterLauncher : public ViewPlugin
 {
@@ -66,11 +51,6 @@ public:
     /** This function is called by the core after the view plugin has been created */
     void init() override;
 
-    // TBD
-    bool validatePythonEnvironment() {
-        return true;
-    }
-
     // The pyversion should correspond to a python major.minor version
     // e.g. "3.11", "3.12"
     // There  must be a JupyterPlugin (a kernel provider) that matches the python version for this to work.
@@ -88,34 +68,28 @@ public:
     mv::gui::ScriptTriggerActions getScriptTriggerActions(const mv::Datasets& datasets) const override;
 
 public: // Global settings
-    // Python interpreter path
     static QString getPythonInterpreterPath();
+    static QString getKernelWorkingDirectory();
 
     static void setPythonInterpreterPath(const QString& p);
+    static void setKernelWorkingDirectory(const QString& p);
 
     static bool getShowInterpreterPathDialog();
 
-public: // Call python
-    // TBD merge the two runPythonScript signatures
-    /** Run a python script from the resources return the exit code and stderr and stdout */
-    static int runPythonScript(const QString& scriptName, QString& sout, QString& serr, const QStringList& params = {});
-    static bool runPythonCommand(const QStringList& params, bool verbose = true);
-
-    bool runScriptInKernel(const QString& scriptPath, QString interpreterVersion, const QStringList& params = {});
+public: 
+    bool runScriptInKernel(const QString& scriptPath, const QStringList& params = {});
 
 private:
-    void jupyterServerError(QProcess::ProcessError error);
-    void jupyterServerFinished(int exitCode, QProcess::ExitStatus exitStatus);
-    void jupyterServerStateChanged(QProcess::ProcessState newState);
-    void jupyterServerStarted();
-    void shutdownJupyterServer();
+    void jupyterServerError(const QProcess::ProcessError& error) const;
+    void jupyterServerFinished(const int exitCode, const QProcess::ExitStatus& exitStatus) const;
+    void jupyterServerStateChanged(const QProcess::ProcessState& newState) const;
+    void jupyterServerStarted() const;
+    void shutdownJupyterServer() const;
 
 private:
-    void setPythonEnv();
-    bool installKernel();
-    bool optionallyInstallMVWheel();
-    bool initLauncher(const QString& version, int mode);
-    bool initPython(bool activateXeus = true);
+    bool ensureMvWheelIsInstalled() const;
+    bool initLauncher(const QString& version, const int mode);
+    bool initPython(const bool activateXeus = true);
 
     bool checkPythonVersion();
 
@@ -123,17 +97,15 @@ private:
 
     void logProcessOutput();
 
-    // Distinguish between python in a regular or conda directory and python in a venv
-    std::pair<bool, QString> getPythonHomePath(const QString& pyInterpreterPath);
-    
     void createPythonPluginAndStartNotebook();
     void addPythonScripts();
+
+    void setLaunchTriggersEnabled(bool const enabled) const;
 
 private:
     QString                         _connectionFilePath = {};
     QString                         _selectedInterpreterVersion = {};
     QString                         _currentInterpreterPatchVersion = {};
-    QString                         _jupyterPluginFolder = {};
 
     using LoadedPythonInterpreters  = std::unordered_map<QString, mv::plugin::Plugin*>;
     LoadedPythonInterpreters        _initializedPythonInterpreters = {};
@@ -162,10 +134,7 @@ class JupyterLauncherFactory : public ViewPluginFactory
 
 public:
 
-    /** Default constructor */
     JupyterLauncherFactory();
-
-    /** Destructor */
     ~JupyterLauncherFactory() = default;
 
     /** Perform post-construction initialization */
@@ -189,8 +158,14 @@ public:
     /** Returns the data types that are supported by the example view plugin */
     mv::DataTypes supportedDataTypes() const override;
 
+public:
+	std::vector<TriggerAction*> getLaunchTriggersEnabled() const { return _launchTriggerActions; };
+
 private:
     PluginStatusBarAction*  _statusBarAction;               /** For global action in a status bar */
     HorizontalGroupAction   _statusBarPopupGroupAction;     /** Popup group action for status bar action */
     StringAction            _statusBarPopupAction;          /** Popup action for the status bar */
+
+    using TriggerActions = std::vector<TriggerAction*>;
+    TriggerActions          _launchTriggerActions = {};     /** Trigger actions in the popup menu */
 };

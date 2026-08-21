@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.22)
+cmake_minimum_required(VERSION 3.31)
 
 set(JUPYTERPLUGIN "JupyterPlugin${Python_VERSION_MAJOR}${Python_VERSION_MINOR}")
 set(JupyterPluginTarget "${JUPYTERPLUGIN}" PARENT_SCOPE) # for add_dependencies in parent scope
@@ -22,6 +22,8 @@ set(JUPYTERPLUGIN_SOURCES
     XeusInterpreter.cpp
     MVData.cpp
     MVData.h
+    BindingUtils.cpp
+    BindingUtils.h
     PythonBuildVersion.h
 )
 
@@ -46,7 +48,7 @@ target_include_directories(${JUPYTERPLUGIN} PRIVATE "${ManiVault_INCLUDE_DIR}")
 # Target properties
 # -----------------------------------------------------------------------------
 # Request C++20
-target_compile_features(${JUPYTERPLUGIN} PRIVATE cxx_std_20)
+target_compile_features(${JUPYTERPLUGIN} PRIVATE cxx_std_${MV_JUPYTER_CXX_STANDARD})
 
 set_target_properties(${JUPYTERPLUGIN} 
     PROPERTIES 
