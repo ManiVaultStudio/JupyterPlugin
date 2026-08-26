@@ -715,6 +715,9 @@ JupyterLauncherFactory::JupyterLauncherFactory() :
     setIcon(QIcon(":/images/logo.svg"));
     setMaximumNumberOfInstances(1);
 
+    PluginFactory::getPluginTriggerAction().setDisabled(true);
+    PluginFactory::setToolTip("Open JupyterLauncher from the status bar at the bottom");
+
     for (const auto& tutorialFile : listTutorialFiles("tutorials/JupyterLauncher")) {
       if (insertMarkdownIntoJson(tutorialFile)) {
 
