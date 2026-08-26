@@ -715,6 +715,9 @@ JupyterLauncherFactory::JupyterLauncherFactory() :
     setIcon(QIcon(":/images/logo.svg"));
     setMaximumNumberOfInstances(1);
 
+    PluginFactory::getPluginTriggerAction().setDisabled(true);
+    PluginFactory::setToolTip("Open JupyterLauncher from the status bar at the bottom");
+
     for (const auto& tutorialFile : listTutorialFiles("tutorials/JupyterLauncher")) {
       if (insertMarkdownIntoJson(tutorialFile)) {
 
@@ -733,8 +736,6 @@ ViewPlugin* JupyterLauncherFactory::produce()
 
 void JupyterLauncherFactory::initialize()
 {
-    qDebug() << "JupyterLauncherFactory::initialize";
-
 	ViewPluginFactory::initialize();
 
     // Create an instance of our GlobalSettingsAction (derived from PluginGlobalSettingsGroupAction) and assign it to the factory
@@ -762,8 +763,8 @@ void JupyterLauncherFactory::initialize()
     const QString jupyterPluginFolder   = getPluginDependenciesFolder() + "/bin/";
     QStringList pythonPlugins           = findLibraryFiles(jupyterPluginFolder);
 
-	qDebug() << "jupyterPluginFolder:" << jupyterPluginFolder;
-    qDebug() << "pythonPlugins:" << pythonPlugins;
+	qDebug() << "JupyterLauncherFactory::initialize: jupyterPluginFolder:" << jupyterPluginFolder;
+    qDebug() << "JupyterLauncherFactory::initialize: pythonPlugins:" << pythonPlugins;
 
     // On Linux/Mac in a conda environment we cannot switch between environments
     if constexpr (QOperatingSystemVersion::currentType() != QOperatingSystemVersion::Windows)
@@ -777,8 +778,8 @@ void JupyterLauncherFactory::initialize()
                 const QFileInfo fileInfo(path);
                 const QString fileName = fileInfo.fileName().split("_p")[0]; // Extract file name without plugin and core version
 
-                qDebug() << "fileName:" << fileName;
-                qDebug() << "pyVersion:" << pyVersionShort;
+                qDebug() << "JupyterLauncherFactory::initialize: fileName:" << fileName;
+                qDebug() << "JupyterLauncherFactory::initialize: pyVersion:" << pyVersionShort;
 
                 if (fileName.contains(pyVersionShort, Qt::CaseInsensitive))
                     filteredPythonPlugins.append(path);
@@ -789,7 +790,7 @@ void JupyterLauncherFactory::initialize()
         }
     }
 
-    qDebug() << "pythonPlugins:" << pythonPlugins;
+    qDebug() << "JupyterLauncherFactory::initialize: pythonPlugins:" << pythonPlugins;
 
     auto getJupyterLauncherPlugin = [this]() -> JupyterLauncher* {
         const std::vector<plugin::Plugin*> openJupyterPlugins = mv::plugins().getPluginsByFactory(this);
@@ -807,7 +808,7 @@ void JupyterLauncherFactory::initialize()
     {
         const QString pythonVersionOfPlugin = extractRegex(QFileInfo(pythonPlugin).fileName(), R"(\d+)", 0).insert(1, ".");
 
-        qDebug() << "pythonVersionOfPlugin:" << pythonVersionOfPlugin;
+        qDebug() << "JupyterLauncherFactory::initialize: pythonVersionOfPlugin:" << pythonVersionOfPlugin;
 
         auto launchJupyterPython = new TriggerAction(this, "Start Jupyter Kernel and Lab (" + pythonVersionOfPlugin + ")");
         auto initPythonScripts   = new TriggerAction(this, "Init Python Scripts (" + pythonVersionOfPlugin + ") [BETA]");
