@@ -196,6 +196,11 @@ class Item:
     def numdimensions(self) -> int:
         """Return the number of dimensions"""
         return mvstudio_core.get_item_numdimensions(self.datasetId)
+
+    @property
+    def dimensionNames(self) -> list[str]:
+        """Return the dimension names."""
+        return mvstudio_core.get_item_dimension_names(self.datasetId)
     
     @property
     def numpoints(self) -> int:
