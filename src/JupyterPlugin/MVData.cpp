@@ -406,6 +406,20 @@ std::uint64_t get_item_numdimensions(const std::string& datasetGuid)
     return item->getDataset<Points>()->getNumDimensions();
 }
 
+std::vector<std::string> get_item_dimension_names(const std::string& datasetGuid)
+{
+    auto item = mv::dataHierarchy().getItem(QString(datasetGuid.c_str()));
+    const auto dimensionNames = item->getDataset<Points>()->getDimensionNames();
+
+    std::vector<std::string> result;
+    result.reserve(dimensionNames.size());
+
+    for (const auto& dimensionName : dimensionNames)
+        result.push_back(dimensionName.toStdString());
+
+    return result;
+}
+
 std::uint64_t get_item_numpoints(const std::string& datasetGuid)
 {
     auto item = mv::dataHierarchy().getItem(QString(datasetGuid.c_str()));
@@ -696,6 +710,7 @@ namespace mvstudio_core {
         m.def("get_item_type", get_item_type, py::arg("datasetGuid") = std::string());
         m.def("get_item_rawname", get_item_rawname, py::arg("datasetGuid") = std::string());
         m.def("get_item_numdimensions", get_item_numdimensions, py::arg("datasetGuid") = std::string());
+        m.def("get_item_dimension_names", get_item_dimension_names, py::arg("datasetGuid") = std::string());
         m.def("get_item_numpoints", get_item_numpoints, py::arg("datasetGuid") = std::string());
         m.def("get_item_children", get_item_children, py::arg("datasetGuid") = std::string());
         m.def("get_item_properties", get_item_properties, py::arg("datasetGuid") = std::string());
