@@ -9,25 +9,31 @@
 XeusServer::XeusServer(xeus::xcontext& context, const xeus::xconfiguration& config, nl::json::error_handler_t eh) :
     xserver_zmq(context, config, eh)
 {
-    m_pollTimer = new QTimer();
+    m_pollTimer = new QTimer(this);
     m_pollTimer->setInterval(10);
 
-    connect(m_pollTimer, &QTimer::timeout, [this]() { 
-        
-        if (auto msg = poll_channels(0))
+    connect(m_pollTimer, &QTimer::timeout, [this]() {
+        if (auto msg_opt = poll_channels(0))
         {
-            if (msg.value().second == xeus::channel::SHELL)
-                notify_shell_listener(std::move(msg.value().first));
-            else
-                notify_control_listener(std::move(msg.value().first));
+            xeus::xmessage message = std::move(msg_opt.value().first);
+            auto channel = msg_opt.value().second;
+
+            switch (channel)
+            {
+            case xeus::channel::SHELL:   notify_shell_listener(std::move(message)); break;
+            case xeus::channel::CONTROL: notify_control_listener(std::move(message)); break;
+            }
         }
-    });
+        });
+
 }
 
 XeusServer::~XeusServer()
 {
-    m_pollTimer->stop();
-    delete m_pollTimer;
+    if (m_pollTimer)
+    {
+        m_pollTimer->stop();
+    }
 }
 
 void XeusServer::start_impl(xeus::xpub_message message)
@@ -36,20 +42,6 @@ void XeusServer::start_impl(xeus::xpub_message message)
     start_heartbeat_thread();
     m_pollTimer->start();
     publish(std::move(message), xeus::channel::SHELL);
-}
-
-void XeusServer::on_received_control_msg(xeus::xmessage* pmsg)
-{
-    xeus::xmessage msg(std::move(*pmsg));
-    xserver::notify_control_listener(std::move(msg));
-    delete pmsg;
-}
-
-void XeusServer::on_received_shell_msg(xeus::xmessage* pmsg)
-{
-    xeus::xmessage msg(std::move(*pmsg));
-    xserver::notify_shell_listener(std::move(msg));
-    delete pmsg;
 }
 
 void XeusServer::stop_impl()
