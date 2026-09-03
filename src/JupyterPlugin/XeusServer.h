@@ -52,11 +52,6 @@ private:
     void start_impl(xeus::xpub_message message) override;
     void stop_impl() override;
 
-private slots:
-
-    void on_received_shell_msg(xeus::xmessage* msg);
-    void on_received_control_msg(xeus::xmessage* msg);
-
 private:
     QTimer* m_pollTimer = nullptr;
 };

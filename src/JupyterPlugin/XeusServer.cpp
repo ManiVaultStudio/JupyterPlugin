@@ -44,20 +44,6 @@ void XeusServer::start_impl(xeus::xpub_message message)
     publish(std::move(message), xeus::channel::SHELL);
 }
 
-void XeusServer::on_received_control_msg(xeus::xmessage* pmsg)
-{
-    xeus::xmessage msg(std::move(*pmsg));
-    xserver::notify_control_listener(std::move(msg));
-    delete pmsg;
-}
-
-void XeusServer::on_received_shell_msg(xeus::xmessage* pmsg)
-{
-    xeus::xmessage msg(std::move(*pmsg));
-    xserver::notify_shell_listener(std::move(msg));
-    delete pmsg;
-}
-
 void XeusServer::stop_impl()
 {
     m_pollTimer->stop();
