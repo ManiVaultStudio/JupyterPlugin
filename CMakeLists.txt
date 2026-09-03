@@ -63,7 +63,7 @@ set(xeus-zmq_VERSION "4.0.0")
 set(pybind11_VERSION "v3.1.0")
 set(pybind11_json_VERSION "0.2.15-20250524")
 set(pybind11_json_VERSION_TAG "d0bf434be9d287d73a963ff28745542daf02c08f") # includes support for cmake 4, 24.May.2025
-set(xeus-python_VERSION "0.18.0")   # updating to 0.19 requires updating the python package xeus-python-shell
+set(xeus-python_VERSION "0.18.3")   # updating to 0.19 requires updating the python package xeus-python-shell
 
 find_package(Qt6 COMPONENTS Widgets WebEngineWidgets REQUIRED)
 find_package(ManiVault COMPONENTS Core PointData ClusterData ImageData CONFIG QUIET)
