@@ -9,7 +9,7 @@
 XeusServer::XeusServer(xeus::xcontext& context, const xeus::xconfiguration& config, nl::json::error_handler_t eh) :
     xserver_zmq(context, config, eh)
 {
-    m_pollTimer = new QTimer();
+    m_pollTimer = new QTimer(this);
     m_pollTimer->setInterval(10);
 
     connect(m_pollTimer, &QTimer::timeout, [this]() { 
@@ -26,8 +26,10 @@ XeusServer::XeusServer(xeus::xcontext& context, const xeus::xconfiguration& conf
 
 XeusServer::~XeusServer()
 {
-    m_pollTimer->stop();
-    delete m_pollTimer;
+    if (m_pollTimer)
+    {
+        m_pollTimer->stop();
+    }
 }
 
 void XeusServer::start_impl(xeus::xpub_message message)
