@@ -42,13 +42,13 @@ public:
     XeusServer() = delete;
     XeusServer(XeusServer& xeusServer) = delete;
     XeusServer(XeusServer&& xeusServer) = delete;
-    XeusServer(xeus::xcontext& context,
+    explicit XeusServer(xeus::xcontext& context,
                const xeus::xconfiguration& config,
                nl::json::error_handler_t eh);
 
     ~XeusServer() override;
 
-protected:
+private:
     void start_impl(xeus::xpub_message message) override;
     void stop_impl() override;
 
