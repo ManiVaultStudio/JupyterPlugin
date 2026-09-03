@@ -57,13 +57,13 @@ set(MV_JUPYTER_C_STANDARD 17)
 set(xeus_VERSION "6.0.5")
 set(nlohmann_json_VERSION "v3.12.0")
 set(libzmq_VERSION "v4.3.6-20260726") # 20260726, 20260302
-set(libzmq_VERSION_TAG "46493370217ac135246617fa2f6ac819d8b61bfc") # includes support for cmake 4, 26.July.2026, 02.March.2026, 3a1af92db37d192d4319864a21d9fc14138f4a41
+set(libzmq_VERSION_TAG "46493370217ac135246617fa2f6ac819d8b61bfc") # includes support for cmake 4, 26.July.2026
 set(cppzmq_VERSION "v4.11.0")
 set(xeus-zmq_VERSION "4.0.0")
 set(pybind11_VERSION "v3.1.0")
 set(pybind11_json_VERSION "0.2.15-20250524")
 set(pybind11_json_VERSION_TAG "d0bf434be9d287d73a963ff28745542daf02c08f") # includes support for cmake 4, 24.May.2025
-set(xeus-python_VERSION "0.18.0")   # 19?
+set(xeus-python_VERSION "0.18.0")   # updating to 0.19 requires updating the python package xeus-python-shell
 
 find_package(Qt6 COMPONENTS Widgets WebEngineWidgets REQUIRED)
 find_package(ManiVault COMPONENTS Core PointData ClusterData ImageData CONFIG QUIET)
