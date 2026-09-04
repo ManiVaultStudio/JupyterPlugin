@@ -52,6 +52,7 @@ mvstudio_core::DataItemType get_data_type(const std::string& datasetGuid);
 std::string find_image_dataset(const std::string& datasetGuid);
 pybind11::tuple get_image_dimensions(const std::string& datasetGuid);
 pybind11::tuple get_cluster(const std::string& datasetGuid);
+std::vector<std::string> get_item_dimension_names(const std::string& datasetGuid);
 
 std::string add_new_point_data(const pybind11::array& data, const std::string& dataSetName, const std::string& dataSetParentID, const std::vector<std::string>& dimensionNames);
 std::string add_derived_point_data(const pybind11::array& data, const std::string& dataSetName, const std::string& dataSetSourceID, const std::vector<std::string>& dimensionNames);
