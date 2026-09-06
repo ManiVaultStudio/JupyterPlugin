@@ -21,7 +21,7 @@ class Item:
         self._hierarchy_id = hierarchy_id
         self._selected = False
         self._children = []
-        self._data = None
+        #self._data = None
         self._type = None
         self._setType()
         self._addChildren()
@@ -42,20 +42,20 @@ class Item:
                 self._type = Item.ItemType.Points
             case mvstudio_core.DataItemType.Cluster:
                 self._type = Item.ItemType.Cluster 
-        self._setData()
+        #self._setData()
 
-    def _setData(self):
-        if self._type is Item.ItemType.Points:
-            data = mvstudio_core.get_data_for_item(self.datasetId)
-        # dependant on the data type 
-        # post process to a more pythonic representation
-        match self._type:
-            case Item.ItemType.Points:
-                self._data = data
-            case Item.ItemType.Image:
-                self._data = None
-            case Item.ItemType.Cluster:
-                self._data = None
+    #def _setData(self):
+        #if self._type is Item.ItemType.Points:
+            #data = mvstudio_core.get_data_for_item(self.datasetId)
+        ## dependant on the data type 
+        ## post process to a more pythonic representation
+        #match self._type:
+            #case Item.ItemType.Points:
+                #self._data = data
+            #case Item.ItemType.Image:
+                #self._data = None
+            #case Item.ItemType.Cluster:
+                #self._data = None
     
     def children(self) -> Generator[Self, None, None]:
         """Generator for iterating over any children of this Item.
