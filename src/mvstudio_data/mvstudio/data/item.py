@@ -47,21 +47,10 @@ class Item:
         self._setData()
 
     def _setData(self):
-        if (self._type is Item.ItemType.Points and self._load_option is Item.LoadOption.Immediate):
-            data = mvstudio_core.get_data_for_item(self.datasetId)
+        self._data = None
 
-        # dependant on the data type 
-        # post process to a more pythonic representation
-        match self._type:
-            case Item.ItemType.Points:
-                if self._load_option == Item.LoadOption.Immediate:
-                    self._data = data
-                else:
-                    self._data = None
-            case Item.ItemType.Image:
-                self._data = None
-            case Item.ItemType.Cluster:
-                self._data = None
+        if (self._type is Item.ItemType.Points and self._load_option is Item.LoadOption.Immediate):
+            self._data = mvstudio_core.get_data_for_item(self.datasetId)
     
     def children(self) -> Generator[Self, None, None]:
         """Generator for iterating over any children of this Item.
