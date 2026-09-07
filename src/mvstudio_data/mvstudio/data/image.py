@@ -31,5 +31,5 @@ class ImageItem(ImageMixin, Item):
     Images are numpy arrays shaped to match the image
     meta data
     """
-    def __init__(self, hierarchy, guid_tuple, name, hierarchy_id):
-        super().__init__(hierarchy, guid_tuple, name, hierarchy_id)
+    def __init__(self, hierarchy, guid_tuple, name, hierarchy_id, load_option):
+        super().__init__(hierarchy, guid_tuple, name, hierarchy_id, load_option)

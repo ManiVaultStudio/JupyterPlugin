@@ -6,9 +6,10 @@ from .item import Item
 from .factory import makeItem
          
 class Hierarchy:
-    def __init__(self):
+    def __init__(self, load_option=Item.LoadOption.Immediate):
         self._dataType = "Unknown"
         self._hierarchy = []
+        self._load_option = load_option
         self._refresh()
 
     def _refresh(self) -> None:
@@ -20,7 +21,7 @@ class Hierarchy:
         hierarchy_id = 1
         for guid_tuple in self._top_level:
             item_name = mvstudio_core.get_item_name(guid_tuple[1])
-            self._hierarchy.append(makeItem(self, guid_tuple, item_name, [hierarchy_id]))   
+            self._hierarchy.append(makeItem(self, guid_tuple, item_name, [hierarchy_id], self._load_option))   
             hierarchy_id += 1
 
     def refresh(self): 
