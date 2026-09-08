@@ -15,7 +15,7 @@ class Item:
     ItemType = Enum('ItemType', ['Image', 'Points', 'Cluster'])
     LoadOption = Enum('LoadOption', ['Delayed', 'Immediate'])
             
-    def __init__(self, hierarchy, guid_tuple, name, hierarchy_id, load_option=LoadOption.Immediate):
+    def __init__(self, hierarchy, guid_tuple, name, hierarchy_id, load_option=LoadOption.Delayed):
         self._hierarchy = hierarchy
         self._guid_tuple = guid_tuple  # contains the item guid and dataset guid
         self._name = name
@@ -23,7 +23,7 @@ class Item:
         self._selected = False
         self._load_option = load_option 
         self._children = []
-        self._data = None
+        self._data = None   # Currently not used
         self._type = None
         self._setType()
         self._addChildren()
