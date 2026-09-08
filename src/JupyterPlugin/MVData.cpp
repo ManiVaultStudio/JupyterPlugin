@@ -484,13 +484,7 @@ std::vector<std::string> get_item_dimension_names(const std::string& datasetGuid
     auto item = mv::dataHierarchy().getItem(QString(datasetGuid.c_str()));
     const auto dimensionNames = item->getDataset<Points>()->getDimensionNames();
 
-    std::vector<std::string> result;
-    result.reserve(dimensionNames.size());
-
-    for (const auto& dimensionName : dimensionNames)
-        result.push_back(dimensionName.toStdString());
-
-    return result;
+    return toStdStringVec(dimensionNames);
 }
 
 std::uint64_t get_item_numpoints(const std::string& datasetGuid)
@@ -528,17 +522,11 @@ std::uint64_t get_item_rawsize(const std::string& datasetGuid)
 
 std::vector<std::string> get_item_properties(const std::string& datasetGuid)
 {
-    auto item = mv::dataHierarchy().getItem(QString(datasetGuid.c_str()));
-    auto dataset = item->getDataset<Points>();
-    QStringList propertyNamesQt = dataset->propertyNames();
-    std::vector<std::string> propertyNames;
-    propertyNames.resize(propertyNamesQt.size());
+    const auto item = mv::dataHierarchy().getItem(QString(datasetGuid.c_str()));
+    const auto dataset = item->getDataset<Points>();
+    const QStringList propertyNames = dataset->propertyNames();
 
-    for (const auto& propertyName : propertyNamesQt) {
-        propertyNames.push_back(propertyName.toStdString());
-    }
-
-    return propertyNames;
+    return toStdStringVec(propertyNames);
 }
 
 py::object get_item_property(const std::string& datasetGuid, const std::string& propertyName)

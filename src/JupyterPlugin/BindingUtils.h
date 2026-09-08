@@ -17,13 +17,36 @@
 
 #include <algorithm>
 #include <array>
+#include <concepts>
+#include <cstdint>
 #include <numeric>
 #include <string>
+#include <ranges>
 #include <stdexcept>
 #include <type_traits>
 #include <vector>
 
 std::vector<QString> toQStringVec(const std::vector<std::string>& vec_str);
+
+template <typename R>
+concept QStringRange =
+    std::ranges::random_access_range<R> &&
+    std::same_as<std::ranges::range_value_t<R>, QString>;
+
+template <QStringRange R>
+std::vector<std::string> toStdStringVec(const R& vec_str)
+{
+    const auto n = static_cast<std::int64_t>(vec_str.size());
+
+    std::vector<std::string> result(static_cast<std::size_t>(n));
+
+#pragma omp parallel for
+    for (std::int64_t i = 0; i < n; ++i) {
+        result[i] = vec_str[i].toStdString();
+    }
+
+    return result;
+}
 
 pybind11::buffer_info createBuffer(const pybind11::array& data);
 
