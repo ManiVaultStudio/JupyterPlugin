@@ -73,9 +73,9 @@ py::array get_data_for_item(const std::string& datasetGuid)
         }
     }
 
-    auto inputPoints            = item->getDataset<Points>();
-    unsigned int numDimensions  = inputPoints->getNumDimensions();
-    unsigned int numPoints      = inputPoints->isFull() ? inputPoints->getNumPoints() : inputPoints->indices.size();
+    auto inputPoints             = item->getDataset<Points>();
+    const std::uint64_t numDimensions  = inputPoints->getNumDimensions();
+    const std::uint64_t numPoints      = inputPoints->isFull() ? inputPoints->getNumPoints() : inputPoints->indices.size();
 
     // extract the source type 
     PointData::ElementTypeSpecifier dataSpec{};
@@ -119,28 +119,28 @@ py::array get_data_slice_for_item(const std::string& datasetGuid, const py::obje
     }
 
     auto inputPoints = item->getDataset<Points>();
-    const unsigned int numDimensions = inputPoints->getNumDimensions();
-    const unsigned int numPoints = inputPoints->isFull() ? inputPoints->getNumPoints() : inputPoints->indices.size();
+    const std::uint64_t numDimensions = inputPoints->getNumDimensions();
+    const std::uint64_t numPoints = inputPoints->isFull() ? inputPoints->getNumPoints() : inputPoints->indices.size();
 
     // parse the indices, and validate them against the axis size
-    auto parseIndices = [](const py::object& value, unsigned int axisSize, const char* axisName) -> std::vector<unsigned int>
+    auto parseIndices = [](const py::object& value, std::uint64_t axisSize, const char* axisName) -> std::vector<std::uint64_t>
         {
             if (value.is_none()) {
-                std::vector<unsigned int> allIndices(axisSize);
+                std::vector<std::uint64_t> allIndices(axisSize);
                 std::iota(allIndices.begin(), allIndices.end(), 0);
                 return allIndices;
             }
 
             const auto signedIndices = value.cast<std::vector<std::int64_t>>();
-            std::vector<unsigned int> indices;
+            std::vector<std::uint64_t> indices;
             indices.reserve(signedIndices.size());
 
             for (const auto index : signedIndices) {
-                if (index < 0 || index >= static_cast<std::int64_t>(axisSize)) {
+                if (index < 0 || static_cast<std::uint64_t>(index) >= axisSize) {
                     const std::string validRange = axisSize == 0 ? "an empty axis" : "0.." + std::to_string(axisSize - 1);
                     throw py::index_error( std::string(axisName) + " index " + std::to_string(index) + " is outside " + validRange);
                 }
-                indices.push_back(static_cast<unsigned int>(index));
+                indices.push_back(static_cast<std::uint64_t>(index));
             }
             return indices;
         };
