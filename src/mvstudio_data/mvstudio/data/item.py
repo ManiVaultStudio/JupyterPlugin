@@ -152,6 +152,38 @@ class Item:
         
         return mvstudio_core.set_linked_data(self.datasetId, target.datasetId, selectionMapping)
 
+    def getPoints(self, rows=None, dimensions=None) -> np.ndarray:
+        """Return a copy of selected rows and dimensions.
+        None selects the entire corresponding axis.
+        Indices must be nonnegative integers.
+        The result is always a two-dimensional array.
+        """
+        def normalize_indices(values, name):
+            if values is None:
+                return None
+
+            values = np.asarray(values)
+            if values.ndim != 1:
+                raise ValueError(f"{name} must be a one-dimensional list or array")
+
+            if values.size == 0:
+                return []
+
+            if values.dtype.kind not in ("i", "u"):
+                raise TypeError(f"{name} must contain integer indices")
+
+            if np.any(values < 0):
+                raise IndexError(f"{name} must contain nonnegative indices")
+
+            return values.tolist()
+
+        return mvstudio_core.get_data_slice_for_item(self.datasetId, normalize_indices(rows, "rows"), normalize_indices(dimensions, "dimensions"),)
+
+
+    def getSelectedPoints(self, dimensions=None) -> np.ndarray:
+        """Return a copy of the currently selected points."""
+        return self.getPoints(rows=self.getSelection(), dimensions=dimensions,)
+
     @property
     def points(self) -> np.ndarray:
         return mvstudio_core.get_data_for_item(self.datasetId)

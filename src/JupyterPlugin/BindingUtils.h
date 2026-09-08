@@ -48,6 +48,35 @@ pybind11::array populate_pyarray(mv::Dataset<Points>& inputPoints, unsigned int 
     return result;
 }
 
+// Copy selected dimensions and rows from a ManiVault points dataset
+template<class T> 
+pybind11::array populate_pyarray_slice(mv::Dataset<Points>& inputPoints, unsigned int numPoints, const std::vector<unsigned int>& rowIndices, const std::vector<unsigned int>& dimensionIndices)
+{
+    auto result = pybind11::array_t<T>({ static_cast<pybind11::ssize_t>(rowIndices.size()), static_cast<pybind11::ssize_t>(dimensionIndices.size() )});
+
+    if (rowIndices.empty() || dimensionIndices.empty())
+        return result;
+
+    std::vector<T> selectedDimensionData;
+    selectedDimensionData.resize(static_cast<size_t>(numPoints) * dimensionIndices.size());
+
+    inputPoints->populateDataForDimensions<std::vector<T>, std::vector<unsigned int>>(selectedDimensionData, dimensionIndices);
+
+    pybind11::buffer_info resultInfo = result.request();
+    T* output = static_cast<T*>(resultInfo.ptr);
+    const size_t numSelectedDimensions = dimensionIndices.size();
+
+    for (size_t outputRow = 0; outputRow < rowIndices.size(); ++outputRow) {
+        const size_t inputOffset = static_cast<size_t>(rowIndices[outputRow]) * numSelectedDimensions;
+        const size_t outputOffset = outputRow * numSelectedDimensions;
+
+        std::copy_n(selectedDimensionData.data() + inputOffset, numSelectedDimensions, output + outputOffset);
+    }
+
+    return result;
+}
+
+
 template<typename T>
 PointData::ElementTypeSpecifier getTypeSpecifier() {
     PointData::ElementTypeSpecifier res = PointData::ElementTypeSpecifier::float32;

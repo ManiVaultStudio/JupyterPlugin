@@ -36,8 +36,10 @@ namespace mvstudio_core {
 
 pybind11::object get_top_level_item_names();
 pybind11::array get_data_for_item(const std::string& datasetGuid);
+pybind11::array get_data_slice_for_item(const std::string& datasetGuid, const pybind11::object& rowIndices, const pybind11::object& dimensionIndices);
 pybind11::list get_top_level_guids();
 std::uint64_t get_item_numdimensions(const std::string& datasetGuid);
+std::vector<std::string> get_item_dimension_names(const std::string& datasetGuid);
 std::uint64_t get_item_numpoints(const std::string& datasetGuid);
 std::string get_item_name(const std::string& datasetGuid);
 std::string get_item_type(const std::string& datasetGuid);
@@ -52,7 +54,8 @@ mvstudio_core::DataItemType get_data_type(const std::string& datasetGuid);
 std::string find_image_dataset(const std::string& datasetGuid);
 pybind11::tuple get_image_dimensions(const std::string& datasetGuid);
 pybind11::tuple get_cluster(const std::string& datasetGuid);
-std::vector<std::string> get_item_dimension_names(const std::string& datasetGuid);
+
+
 
 std::string add_new_point_data(const pybind11::array& data, const std::string& dataSetName, const std::string& dataSetParentID, const std::vector<std::string>& dimensionNames);
 std::string add_derived_point_data(const pybind11::array& data, const std::string& dataSetName, const std::string& dataSetSourceID, const std::vector<std::string>& dimensionNames);

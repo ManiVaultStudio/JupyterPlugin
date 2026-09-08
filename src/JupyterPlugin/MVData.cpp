@@ -103,6 +103,79 @@ py::array get_data_for_item(const std::string& datasetGuid)
     return py::array_t<float>(0);
 }
 
+// Get selected rows and dimensions for a point data set
+py::array get_data_slice_for_item(const std::string& datasetGuid, const py::object& rowIndicesObject, const py::object& dimensionIndicesObject)
+{
+    auto item = mv::dataHierarchy().getItem(QString(datasetGuid.c_str()));
+    if (!item)
+        throw py::key_error("Dataset not found: " + datasetGuid);
+
+    // If this is not a point item we need the parent
+    auto dataType = item->getDataType();
+    if (dataType != PointType) {
+        item = item->getParent();
+        if (!item || item->getDataType() != PointType)
+            throw py::type_error("The item is not backed by a point dataset");
+    }
+
+    auto inputPoints = item->getDataset<Points>();
+    const unsigned int numDimensions = inputPoints->getNumDimensions();
+    const unsigned int numPoints = inputPoints->isFull() ? inputPoints->getNumPoints() : inputPoints->indices.size();
+
+    // parse the indices, and validate them against the axis size
+    auto parseIndices = [](const py::object& value, unsigned int axisSize, const char* axisName) -> std::vector<unsigned int>
+        {
+            if (value.is_none()) {
+                std::vector<unsigned int> allIndices(axisSize);
+                std::iota(allIndices.begin(), allIndices.end(), 0);
+                return allIndices;
+            }
+
+            const auto signedIndices = value.cast<std::vector<std::int64_t>>();
+            std::vector<unsigned int> indices;
+            indices.reserve(signedIndices.size());
+
+            for (const auto index : signedIndices) {
+                if (index < 0 || index >= static_cast<std::int64_t>(axisSize)) {
+                    const std::string validRange = axisSize == 0 ? "an empty axis" : "0.." + std::to_string(axisSize - 1);
+                    throw py::index_error( std::string(axisName) + " index " + std::to_string(index) + " is outside " + validRange);
+                }
+                indices.push_back(static_cast<unsigned int>(index));
+            }
+            return indices;
+        };
+
+    const auto rowIndices = parseIndices(rowIndicesObject, numPoints, "Row");
+    const auto dimensionIndices = parseIndices(dimensionIndicesObject, numDimensions, "Dimension");
+
+    // extract the source type 
+    PointData::ElementTypeSpecifier dataSpec{};
+    inputPoints->visitSourceData([&dataSpec](auto pointData) {
+        for (auto pointView : pointData) {
+            for (auto value : pointView) {
+                dataSpec = getTypeSpecifier<decltype(value)>();
+                break;
+            }
+            break;
+        }
+        });
+
+    qDebug() << "PointData::ElementTypeSpecifier is " << static_cast<int>(dataSpec);
+
+    if (dataSpec == PointData::ElementTypeSpecifier::float32)
+        return populate_pyarray_slice<float>(inputPoints, numPoints, rowIndices, dimensionIndices);
+    if (dataSpec == PointData::ElementTypeSpecifier::uint16)
+        return populate_pyarray_slice<std::uint16_t>(inputPoints, numPoints, rowIndices, dimensionIndices);
+    if (dataSpec == PointData::ElementTypeSpecifier::int16)
+        return populate_pyarray_slice<std::int16_t>(inputPoints, numPoints, rowIndices, dimensionIndices);
+    if (dataSpec == PointData::ElementTypeSpecifier::uint8)
+        return populate_pyarray_slice<std::uint8_t>(inputPoints, numPoints, rowIndices, dimensionIndices);
+    if (dataSpec == PointData::ElementTypeSpecifier::int8)
+        return populate_pyarray_slice<std::int8_t>(inputPoints, numPoints, rowIndices, dimensionIndices);
+
+    throw py::type_error("The point dataset uses an unsupported element type");
+}
+
 // Get the selected data points for a data set
 py::array get_selection_for_item(const std::string& datasetGuid)
 {
@@ -702,6 +775,7 @@ namespace mvstudio_core {
         m.def("get_top_level_item_names", get_top_level_item_names);
         m.def("get_top_level_guids", get_top_level_guids);
         m.def("get_data_for_item", get_data_for_item, py::arg("datasetGuid") = std::string());
+        m.def("get_data_slice_for_item", get_data_slice_for_item, py::arg("datasetGuid") = std::string(), py::arg("rowIndices") = py::none(), py::arg("dimensionIndices") = py::none());
         m.def("get_selection_for_item", get_selection_for_item, py::arg("datasetGuid") = std::string());
         m.def("set_selection_for_item", set_selection_for_item, py::arg("datasetGuid") = std::string(), py::arg("selectionIDs") = std::vector<uint32_t>());
         m.def("get_image_item", get_mv_image, py::arg("datasetGuid") = std::string());
