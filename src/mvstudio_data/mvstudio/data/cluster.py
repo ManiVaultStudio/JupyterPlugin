@@ -19,5 +19,5 @@ class ClusterItem(ClusterMixin, Item):
     ClusterItem adds the cluster property to the
     basic Item type 
     """
-    def __init__(self, hierarchy, guid_tuple, item_name, hierarchy_id):
-        super().__init__(hierarchy, guid_tuple, item_name, hierarchy_id)
+    def __init__(self, hierarchy, guid_tuple, item_name, hierarchy_id, load_option):
+        super().__init__(hierarchy, guid_tuple, item_name, hierarchy_id, load_option)
