@@ -13,15 +13,15 @@ points_data = points_item.points
 
 ## Hierarchy
 
-- `Hierarchy(load_option=Item.LoadOption.Immediate)`: Create the data hierarchy.
+- `Hierarchy(load_option=Item.LoadOption.Delayed)`: Create the data hierarchy.
 - `dh.refresh()`: Rebuild the hierarchy from ManiVault.
 - `dh.children()`: Iterate over top-level items.
 - `print(dh)`: Display item indices, dataset IDs, names and types.
 
 ### Loading options
 
-- `Item.LoadOption.Immediate`: Load Points matrices during hierarchy construction (default).
-- `Item.LoadOption.Delayed`: Build hierarchy metadata without loading Points matrices; retrieve values when requested.
+- `Item.LoadOption.Immediate`: Load Points matrices during hierarchy construction.
+- `Item.LoadOption.Delayed`: Build hierarchy metadata without loading Points matrices; retrieve values when requested (default).
 
 ### Find items
 
