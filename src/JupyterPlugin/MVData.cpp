@@ -475,13 +475,13 @@ py::list get_top_level_guids()
 
 std::uint64_t get_item_numdimensions(const std::string& datasetGuid)
 {
-    auto item = mv::dataHierarchy().getItem(QString(datasetGuid.c_str()));
+    const auto item = mv::dataHierarchy().getItem(QString(datasetGuid.c_str()));
     return item->getDataset<Points>()->getNumDimensions();
 }
 
 std::vector<std::string> get_item_dimension_names(const std::string& datasetGuid)
 {
-    auto item = mv::dataHierarchy().getItem(QString(datasetGuid.c_str()));
+    const auto item = mv::dataHierarchy().getItem(QString(datasetGuid.c_str()));
     const auto dimensionNames = item->getDataset<Points>()->getDimensionNames();
 
     return toStdStringVec(dimensionNames);
@@ -489,34 +489,34 @@ std::vector<std::string> get_item_dimension_names(const std::string& datasetGuid
 
 std::uint64_t get_item_numpoints(const std::string& datasetGuid)
 {
-    auto item = mv::dataHierarchy().getItem(QString(datasetGuid.c_str()));
+    const auto item = mv::dataHierarchy().getItem(QString(datasetGuid.c_str()));
     return item->getDataset<Points>()->getNumPoints();
 }
 
 std::string get_item_name(const std::string& datasetGuid)
 {
-    auto item = mv::dataHierarchy().getItem(QString(datasetGuid.c_str()));
-    auto name = item->getDataset()->getGuiName();
+    const auto item = mv::dataHierarchy().getItem(QString(datasetGuid.c_str()));
+    const auto name = item->getDataset()->getGuiName();
     return name.toStdString();
 }
 
 std::string get_item_type(const std::string& datasetGuid)
 {
-    auto item = mv::dataHierarchy().getItem(QString(datasetGuid.c_str()));
-    auto type = item->getDataset()->getDataType();
+    const auto item = mv::dataHierarchy().getItem(QString(datasetGuid.c_str()));
+    const auto type = item->getDataset()->getDataType();
     return type.getTypeString().toStdString();
 }
 
 std::string get_item_rawname(const std::string& datasetGuid)
 {
-    auto item = mv::dataHierarchy().getItem(QString(datasetGuid.c_str()));
-    auto name = item->getDataset()->getRawDataName();
+    const auto item = mv::dataHierarchy().getItem(QString(datasetGuid.c_str()));
+    const auto name = item->getDataset()->getRawDataName();
     return name.toStdString();
 }
 
 std::uint64_t get_item_rawsize(const std::string& datasetGuid)
 {
-    auto item = mv::dataHierarchy().getItem(QString(datasetGuid.c_str()));
+    const auto item = mv::dataHierarchy().getItem(QString(datasetGuid.c_str()));
     return item->getDataset()->getRawDataSize();
 }
 
@@ -591,19 +591,17 @@ py::object get_item_property(const std::string& datasetGuid, const std::string& 
 // (Data Hierarchy Item guid, Dataset guid)
 py::list get_item_children(const std::string& datasetGuid)
 {
-    auto item = mv::dataHierarchy().getItem(QString(datasetGuid.c_str()));
+    const auto item = mv::dataHierarchy().getItem(QString(datasetGuid.c_str()));
     qDebug() << "Children for id: " << QString(datasetGuid.c_str());
 
-    auto children = item->getChildren();
+    const auto children = item->getChildren();
     py::list guidTupleList;
-    for (auto& child : children) {
+    for (const auto& child : children) {
         // The child might be a Dataset rather than an Item
         // however datasets hae 0 children and items have > 0 
-
-        auto childId        = child->getId().toStdString();
-        auto childDatasetId = child->getDataset()->getId().toStdString();
-        auto guidTuple      = py::make_tuple(childId, childDatasetId);
-        guidTupleList.append(guidTuple);
+        const auto childId          = child->getId().toStdString();
+        const auto childDatasetId   = child->getDataset()->getId().toStdString();
+        guidTupleList.append(py::make_tuple(childId, childDatasetId));
     }
     return guidTupleList;
 }
@@ -613,8 +611,8 @@ mvstudio_core::DataItemType get_data_type(const std::string& datasetGuid)
     QString guid = QString(datasetGuid.c_str());
 
     qDebug() << "Get type for id: " << guid;
-    auto dataset    = mv::data().getDataset(guid);
-    auto datatype   = dataset->getDataType();
+    const auto dataset    = mv::data().getDataset(guid);
+    const auto datatype   = dataset->getDataType();
 
     mvstudio_core::DataItemType res = mvstudio_core::NOT_IMPLEMENTED;
 
@@ -640,7 +638,7 @@ std::string find_image_dataset(const std::string& datasetGuid)
 {
     std::string guid = "";
 
-    auto item = mv::dataHierarchy().getItem(QString(datasetGuid.c_str()));
+    const auto item = mv::dataHierarchy().getItem(QString(datasetGuid.c_str()));
     for (auto childHierarchyItem : item->getChildren()) {
         if (childHierarchyItem->getDataType() == ImageType) {
             guid = childHierarchyItem->getDataset()->getId().toStdString();
@@ -656,10 +654,10 @@ std::string find_image_dataset(const std::string& datasetGuid)
 
 py::tuple get_image_dimensions(const std::string& datasetGuid)
 {
-    auto item       = mv::dataHierarchy().getItem(QString(datasetGuid.c_str()));
-    auto images     = item->getDataset<Images>();
-    auto numImages  = images->getNumberOfImages();
-    auto size       = images->getImageSize();
+    const auto item       = mv::dataHierarchy().getItem(QString(datasetGuid.c_str()));
+    const auto images     = item->getDataset<Images>();
+    const auto numImages  = images->getNumberOfImages();
+    const auto size       = images->getImageSize();
 
     return py::make_tuple(size.width(), size.height(), numImages);
 }
@@ -711,8 +709,8 @@ bool set_linked_data(const std::string& sourceDataGuid, const std::string& targe
         return false;
     }
 
-    const std::uint32_t numSource = sourceData->getNumPoints();
-    const std::uint32_t numTarget = targetData->getNumPoints();
+    const std::uint64_t numSource = sourceData->getNumPoints();
+    const std::uint64_t numTarget = targetData->getNumPoints();
 
     if (static_cast<size_t>(numSource) != selectionFromAToB.size()) {
         qWarning() << "set_linked_data:: selectionFromAToB must be of same size as sourceData";
