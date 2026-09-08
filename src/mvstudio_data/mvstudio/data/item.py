@@ -51,6 +51,11 @@ class Item:
 
         if (self._type is Item.ItemType.Points and self._load_option is Item.LoadOption.Immediate):
             self._data = mvstudio_core.get_data_for_item(self.datasetId)
+
+    def setDataDelayed(self):
+        """Prefer LoadOption.Immediate and use points property"""
+        if (self._type is Item.ItemType.Points):
+            self._data = mvstudio_core.get_data_for_item(self.datasetId)
     
     def children(self) -> Generator[Self, None, None]:
         """Generator for iterating over any children of this Item.
