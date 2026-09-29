@@ -44,9 +44,9 @@ namespace {
     }
 }
 
-XeusInterpreter::XeusInterpreter(const std::string& pluginVersion):
+XeusInterpreter::XeusInterpreter(std::string pluginVersion):
     xpyt::interpreter(false, false),
-    _pluginVersion(pluginVersion)
+    _pluginVersion(std::move(pluginVersion))
 {
     m_release_gil_at_startup = false;
 }

@@ -73,9 +73,9 @@ py::array get_data_for_item(const std::string& datasetGuid)
         }
     }
 
-    auto inputPoints            = item->getDataset<Points>();
-    unsigned int numDimensions  = inputPoints->getNumDimensions();
-    unsigned int numPoints      = inputPoints->isFull() ? inputPoints->getNumPoints() : inputPoints->indices.size();
+    auto inputPoints             = item->getDataset<Points>();
+    const std::uint64_t numDimensions  = inputPoints->getNumDimensions();
+    const std::uint64_t numPoints      = inputPoints->isFull() ? inputPoints->getNumPoints() : inputPoints->indices.size();
 
     // extract the source type 
     PointData::ElementTypeSpecifier dataSpec{};
@@ -101,6 +101,79 @@ py::array get_data_for_item(const std::string& datasetGuid)
     }
 
     return py::array_t<float>(0);
+}
+
+// Get selected rows and dimensions for a point data set
+py::array get_data_slice_for_item(const std::string& datasetGuid, const py::object& rowIndicesObject, const py::object& dimensionIndicesObject)
+{
+    auto item = mv::dataHierarchy().getItem(QString(datasetGuid.c_str()));
+    if (!item)
+        throw py::key_error("Dataset not found: " + datasetGuid);
+
+    // If this is not a point item we need the parent
+    auto dataType = item->getDataType();
+    if (dataType != PointType) {
+        item = item->getParent();
+        if (!item || item->getDataType() != PointType)
+            throw py::type_error("The item is not backed by a point dataset");
+    }
+
+    auto inputPoints = item->getDataset<Points>();
+    const std::uint64_t numDimensions = inputPoints->getNumDimensions();
+    const std::uint64_t numPoints = inputPoints->isFull() ? inputPoints->getNumPoints() : inputPoints->indices.size();
+
+    // parse the indices, and validate them against the axis size
+    auto parseIndices = [](const py::object& value, std::uint64_t axisSize, const char* axisName) -> std::vector<std::uint64_t>
+        {
+            if (value.is_none()) {
+                std::vector<std::uint64_t> allIndices(axisSize);
+                std::iota(allIndices.begin(), allIndices.end(), 0);
+                return allIndices;
+            }
+
+            const auto signedIndices = value.cast<std::vector<std::int64_t>>();
+            std::vector<std::uint64_t> indices;
+            indices.reserve(signedIndices.size());
+
+            for (const auto index : signedIndices) {
+                if (index < 0 || static_cast<std::uint64_t>(index) >= axisSize) {
+                    const std::string validRange = axisSize == 0 ? "an empty axis" : "0.." + std::to_string(axisSize - 1);
+                    throw py::index_error( std::string(axisName) + " index " + std::to_string(index) + " is outside " + validRange);
+                }
+                indices.push_back(static_cast<std::uint64_t>(index));
+            }
+            return indices;
+        };
+
+    const auto rowIndices = parseIndices(rowIndicesObject, numPoints, "Row");
+    const auto dimensionIndices = parseIndices(dimensionIndicesObject, numDimensions, "Dimension");
+
+    // extract the source type 
+    PointData::ElementTypeSpecifier dataSpec{};
+    inputPoints->visitSourceData([&dataSpec](auto pointData) {
+        for (auto pointView : pointData) {
+            for (auto value : pointView) {
+                dataSpec = getTypeSpecifier<decltype(value)>();
+                break;
+            }
+            break;
+        }
+        });
+
+    qDebug() << "PointData::ElementTypeSpecifier is " << static_cast<int>(dataSpec);
+
+    if (dataSpec == PointData::ElementTypeSpecifier::float32)
+        return populate_pyarray_slice<float>(inputPoints, numPoints, rowIndices, dimensionIndices);
+    if (dataSpec == PointData::ElementTypeSpecifier::uint16)
+        return populate_pyarray_slice<std::uint16_t>(inputPoints, numPoints, rowIndices, dimensionIndices);
+    if (dataSpec == PointData::ElementTypeSpecifier::int16)
+        return populate_pyarray_slice<std::int16_t>(inputPoints, numPoints, rowIndices, dimensionIndices);
+    if (dataSpec == PointData::ElementTypeSpecifier::uint8)
+        return populate_pyarray_slice<std::uint8_t>(inputPoints, numPoints, rowIndices, dimensionIndices);
+    if (dataSpec == PointData::ElementTypeSpecifier::int8)
+        return populate_pyarray_slice<std::int8_t>(inputPoints, numPoints, rowIndices, dimensionIndices);
+
+    throw py::type_error("The point dataset uses an unsupported element type");
 }
 
 // Get the selected data points for a data set
@@ -402,56 +475,58 @@ py::list get_top_level_guids()
 
 std::uint64_t get_item_numdimensions(const std::string& datasetGuid)
 {
-    auto item = mv::dataHierarchy().getItem(QString(datasetGuid.c_str()));
+    const auto item = mv::dataHierarchy().getItem(QString(datasetGuid.c_str()));
     return item->getDataset<Points>()->getNumDimensions();
+}
+
+std::vector<std::string> get_item_dimension_names(const std::string& datasetGuid)
+{
+    const auto item = mv::dataHierarchy().getItem(QString(datasetGuid.c_str()));
+    const auto dimensionNames = item->getDataset<Points>()->getDimensionNames();
+
+    return toStdStringVec(dimensionNames);
 }
 
 std::uint64_t get_item_numpoints(const std::string& datasetGuid)
 {
-    auto item = mv::dataHierarchy().getItem(QString(datasetGuid.c_str()));
+    const auto item = mv::dataHierarchy().getItem(QString(datasetGuid.c_str()));
     return item->getDataset<Points>()->getNumPoints();
 }
 
 std::string get_item_name(const std::string& datasetGuid)
 {
-    auto item = mv::dataHierarchy().getItem(QString(datasetGuid.c_str()));
-    auto name = item->getDataset()->getGuiName();
+    const auto item = mv::dataHierarchy().getItem(QString(datasetGuid.c_str()));
+    const auto name = item->getDataset()->getGuiName();
     return name.toStdString();
 }
 
 std::string get_item_type(const std::string& datasetGuid)
 {
-    auto item = mv::dataHierarchy().getItem(QString(datasetGuid.c_str()));
-    auto type = item->getDataset()->getDataType();
+    const auto item = mv::dataHierarchy().getItem(QString(datasetGuid.c_str()));
+    const auto type = item->getDataset()->getDataType();
     return type.getTypeString().toStdString();
 }
 
 std::string get_item_rawname(const std::string& datasetGuid)
 {
-    auto item = mv::dataHierarchy().getItem(QString(datasetGuid.c_str()));
-    auto name = item->getDataset()->getRawDataName();
+    const auto item = mv::dataHierarchy().getItem(QString(datasetGuid.c_str()));
+    const auto name = item->getDataset()->getRawDataName();
     return name.toStdString();
 }
 
 std::uint64_t get_item_rawsize(const std::string& datasetGuid)
 {
-    auto item = mv::dataHierarchy().getItem(QString(datasetGuid.c_str()));
+    const auto item = mv::dataHierarchy().getItem(QString(datasetGuid.c_str()));
     return item->getDataset()->getRawDataSize();
 }
 
 std::vector<std::string> get_item_properties(const std::string& datasetGuid)
 {
-    auto item = mv::dataHierarchy().getItem(QString(datasetGuid.c_str()));
-    auto dataset = item->getDataset<Points>();
-    QStringList propertyNamesQt = dataset->propertyNames();
-    std::vector<std::string> propertyNames;
-    propertyNames.resize(propertyNamesQt.size());
+    const auto item = mv::dataHierarchy().getItem(QString(datasetGuid.c_str()));
+    const auto dataset = item->getDataset<Points>();
+    const QStringList propertyNames = dataset->propertyNames();
 
-    for (const auto& propertyName : propertyNamesQt) {
-        propertyNames.push_back(propertyName.toStdString());
-    }
-
-    return propertyNames;
+    return toStdStringVec(propertyNames);
 }
 
 py::object get_item_property(const std::string& datasetGuid, const std::string& propertyName)
@@ -516,19 +591,17 @@ py::object get_item_property(const std::string& datasetGuid, const std::string& 
 // (Data Hierarchy Item guid, Dataset guid)
 py::list get_item_children(const std::string& datasetGuid)
 {
-    auto item = mv::dataHierarchy().getItem(QString(datasetGuid.c_str()));
+    const auto item = mv::dataHierarchy().getItem(QString(datasetGuid.c_str()));
     qDebug() << "Children for id: " << QString(datasetGuid.c_str());
 
-    auto children = item->getChildren();
+    const auto children = item->getChildren();
     py::list guidTupleList;
-    for (auto& child : children) {
+    for (const auto& child : children) {
         // The child might be a Dataset rather than an Item
         // however datasets hae 0 children and items have > 0 
-
-        auto childId        = child->getId().toStdString();
-        auto childDatasetId = child->getDataset()->getId().toStdString();
-        auto guidTuple      = py::make_tuple(childId, childDatasetId);
-        guidTupleList.append(guidTuple);
+        const auto childId          = child->getId().toStdString();
+        const auto childDatasetId   = child->getDataset()->getId().toStdString();
+        guidTupleList.append(py::make_tuple(childId, childDatasetId));
     }
     return guidTupleList;
 }
@@ -538,8 +611,8 @@ mvstudio_core::DataItemType get_data_type(const std::string& datasetGuid)
     QString guid = QString(datasetGuid.c_str());
 
     qDebug() << "Get type for id: " << guid;
-    auto dataset    = mv::data().getDataset(guid);
-    auto datatype   = dataset->getDataType();
+    const auto dataset    = mv::data().getDataset(guid);
+    const auto datatype   = dataset->getDataType();
 
     mvstudio_core::DataItemType res = mvstudio_core::NOT_IMPLEMENTED;
 
@@ -565,7 +638,7 @@ std::string find_image_dataset(const std::string& datasetGuid)
 {
     std::string guid = "";
 
-    auto item = mv::dataHierarchy().getItem(QString(datasetGuid.c_str()));
+    const auto item = mv::dataHierarchy().getItem(QString(datasetGuid.c_str()));
     for (auto childHierarchyItem : item->getChildren()) {
         if (childHierarchyItem->getDataType() == ImageType) {
             guid = childHierarchyItem->getDataset()->getId().toStdString();
@@ -581,10 +654,10 @@ std::string find_image_dataset(const std::string& datasetGuid)
 
 py::tuple get_image_dimensions(const std::string& datasetGuid)
 {
-    auto item       = mv::dataHierarchy().getItem(QString(datasetGuid.c_str()));
-    auto images     = item->getDataset<Images>();
-    auto numImages  = images->getNumberOfImages();
-    auto size       = images->getImageSize();
+    const auto item       = mv::dataHierarchy().getItem(QString(datasetGuid.c_str()));
+    const auto images     = item->getDataset<Images>();
+    const auto numImages  = images->getNumberOfImages();
+    const auto size       = images->getImageSize();
 
     return py::make_tuple(size.width(), size.height(), numImages);
 }
@@ -636,8 +709,8 @@ bool set_linked_data(const std::string& sourceDataGuid, const std::string& targe
         return false;
     }
 
-    const std::uint32_t numSource = sourceData->getNumPoints();
-    const std::uint32_t numTarget = targetData->getNumPoints();
+    const std::uint64_t numSource = sourceData->getNumPoints();
+    const std::uint64_t numTarget = targetData->getNumPoints();
 
     if (static_cast<size_t>(numSource) != selectionFromAToB.size()) {
         qWarning() << "set_linked_data:: selectionFromAToB must be of same size as sourceData";
@@ -688,6 +761,7 @@ namespace mvstudio_core {
         m.def("get_top_level_item_names", get_top_level_item_names);
         m.def("get_top_level_guids", get_top_level_guids);
         m.def("get_data_for_item", get_data_for_item, py::arg("datasetGuid") = std::string());
+        m.def("get_data_slice_for_item", get_data_slice_for_item, py::arg("datasetGuid") = std::string(), py::arg("rowIndices") = py::none(), py::arg("dimensionIndices") = py::none());
         m.def("get_selection_for_item", get_selection_for_item, py::arg("datasetGuid") = std::string());
         m.def("set_selection_for_item", set_selection_for_item, py::arg("datasetGuid") = std::string(), py::arg("selectionIDs") = std::vector<uint32_t>());
         m.def("get_image_item", get_mv_image, py::arg("datasetGuid") = std::string());
@@ -696,6 +770,7 @@ namespace mvstudio_core {
         m.def("get_item_type", get_item_type, py::arg("datasetGuid") = std::string());
         m.def("get_item_rawname", get_item_rawname, py::arg("datasetGuid") = std::string());
         m.def("get_item_numdimensions", get_item_numdimensions, py::arg("datasetGuid") = std::string());
+        m.def("get_item_dimension_names", get_item_dimension_names, py::arg("datasetGuid") = std::string());
         m.def("get_item_numpoints", get_item_numpoints, py::arg("datasetGuid") = std::string());
         m.def("get_item_children", get_item_children, py::arg("datasetGuid") = std::string());
         m.def("get_item_properties", get_item_properties, py::arg("datasetGuid") = std::string());

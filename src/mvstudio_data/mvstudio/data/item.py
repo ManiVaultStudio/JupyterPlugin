@@ -13,15 +13,17 @@ class Item:
     which are created using Mixins
     """
     ItemType = Enum('ItemType', ['Image', 'Points', 'Cluster'])
+    LoadOption = Enum('LoadOption', ['Delayed', 'Immediate'])
             
-    def __init__(self, hierarchy, guid_tuple, name, hierarchy_id):
+    def __init__(self, hierarchy, guid_tuple, name, hierarchy_id, load_option=LoadOption.Delayed):
         self._hierarchy = hierarchy
         self._guid_tuple = guid_tuple  # contains the item guid and dataset guid
         self._name = name
         self._hierarchy_id = hierarchy_id
         self._selected = False
+        self._load_option = load_option 
         self._children = []
-        self._data = None
+        self._data = None   # Currently not used
         self._type = None
         self._setType()
         self._addChildren()
@@ -31,7 +33,7 @@ class Item:
         child_id = 1
         for childGuidTuple in guidTuples:
             child_name = mvstudio_core.get_item_name(childGuidTuple[1])
-            self._children.append(makeItem(self._hierarchy, childGuidTuple, child_name, self._hierarchy_id + [child_id]))
+            self._children.append(makeItem(self._hierarchy, childGuidTuple, child_name, self._hierarchy_id + [child_id], self._load_option))
             child_id += 1
 
     def _setType(self):
@@ -45,17 +47,15 @@ class Item:
         self._setData()
 
     def _setData(self):
-        if self._type is Item.ItemType.Points:
-            data = mvstudio_core.get_data_for_item(self.datasetId)
-        # dependant on the data type 
-        # post process to a more pythonic representation
-        match self._type:
-            case Item.ItemType.Points:
-                self._data = data
-            case Item.ItemType.Image:
-                self._data = None
-            case Item.ItemType.Cluster:
-                self._data = None
+        self._data = None
+
+        if (self._type is Item.ItemType.Points and self._load_option is Item.LoadOption.Immediate):
+            self._data = mvstudio_core.get_data_for_item(self.datasetId)
+
+    def setDataDelayed(self):
+        """Prefer LoadOption.Immediate and use points property"""
+        if (self._type is Item.ItemType.Points):
+            self._data = mvstudio_core.get_data_for_item(self.datasetId)
     
     def children(self) -> Generator[Self, None, None]:
         """Generator for iterating over any children of this Item.
@@ -157,6 +157,38 @@ class Item:
         
         return mvstudio_core.set_linked_data(self.datasetId, target.datasetId, selectionMapping)
 
+    def getPoints(self, rows=None, dimensions=None) -> np.ndarray:
+        """Return a copy of selected rows and dimensions.
+        None selects the entire corresponding axis.
+        Indices must be nonnegative integers.
+        The result is always a two-dimensional array.
+        """
+        def normalize_indices(values, name):
+            if values is None:
+                return None
+
+            values = np.asarray(values)
+            if values.ndim != 1:
+                raise ValueError(f"{name} must be a one-dimensional list or array")
+
+            if values.size == 0:
+                return []
+
+            if values.dtype.kind not in ("i", "u"):
+                raise TypeError(f"{name} must contain integer indices")
+
+            if np.any(values < 0):
+                raise IndexError(f"{name} must contain nonnegative indices")
+
+            return values.tolist()
+
+        return mvstudio_core.get_data_slice_for_item(self.datasetId, normalize_indices(rows, "rows"), normalize_indices(dimensions, "dimensions"),)
+
+
+    def getSelectedPoints(self, dimensions=None) -> np.ndarray:
+        """Return a copy of the currently selected points."""
+        return self.getPoints(rows=self.getSelection(), dimensions=dimensions,)
+
     @property
     def points(self) -> np.ndarray:
         return mvstudio_core.get_data_for_item(self.datasetId)
@@ -196,6 +228,11 @@ class Item:
     def numdimensions(self) -> int:
         """Return the number of dimensions"""
         return mvstudio_core.get_item_numdimensions(self.datasetId)
+
+    @property
+    def dimensionNames(self) -> list[str]:
+        """Return the dimension names."""
+        return mvstudio_core.get_item_dimension_names(self.datasetId)
     
     @property
     def numpoints(self) -> int:

@@ -17,13 +17,36 @@
 
 #include <algorithm>
 #include <array>
+#include <concepts>
+#include <cstdint>
 #include <numeric>
 #include <string>
+#include <ranges>
 #include <stdexcept>
 #include <type_traits>
 #include <vector>
 
 std::vector<QString> toQStringVec(const std::vector<std::string>& vec_str);
+
+template <typename R>
+concept QStringRange =
+    std::ranges::random_access_range<R> &&
+    std::same_as<std::ranges::range_value_t<R>, QString>;
+
+template <QStringRange R>
+std::vector<std::string> toStdStringVec(const R& vec_str)
+{
+    const auto n = static_cast<std::int64_t>(vec_str.size());
+
+    std::vector<std::string> result(static_cast<std::size_t>(n));
+
+#pragma omp parallel for
+    for (std::int64_t i = 0; i < n; ++i) {
+        result[i] = vec_str[i].toStdString();
+    }
+
+    return result;
+}
 
 pybind11::buffer_info createBuffer(const pybind11::array& data);
 
@@ -47,6 +70,35 @@ pybind11::array populate_pyarray(mv::Dataset<Points>& inputPoints, unsigned int 
     }
     return result;
 }
+
+// Copy selected dimensions and rows from a ManiVault points dataset
+template<class T> 
+pybind11::array populate_pyarray_slice(const mv::Dataset<Points>& inputPoints, const std::uint64_t numPoints, const std::vector<std::uint64_t>& rowIndices, const std::vector<std::uint64_t>& dimensionIndices)
+{
+    auto result = pybind11::array_t<T>({ static_cast<pybind11::ssize_t>(rowIndices.size()), static_cast<pybind11::ssize_t>(dimensionIndices.size() )});
+
+    if (rowIndices.empty() || dimensionIndices.empty())
+        return result;
+
+    std::vector<T> selectedDimensionData;
+    selectedDimensionData.resize(numPoints * dimensionIndices.size());
+
+    inputPoints->populateDataForDimensions(selectedDimensionData, dimensionIndices);
+
+    pybind11::buffer_info resultInfo = result.request();
+    T* output = static_cast<T*>(resultInfo.ptr);
+    const size_t numSelectedDimensions = dimensionIndices.size();
+
+    for (size_t outputRow = 0; outputRow < rowIndices.size(); ++outputRow) {
+        const size_t inputOffset = static_cast<size_t>(rowIndices[outputRow]) * numSelectedDimensions;
+        const size_t outputOffset = outputRow * numSelectedDimensions;
+
+        std::copy_n(selectedDimensionData.data() + inputOffset, numSelectedDimensions, output + outputOffset);
+    }
+
+    return result;
+}
+
 
 template<typename T>
 PointData::ElementTypeSpecifier getTypeSpecifier() {

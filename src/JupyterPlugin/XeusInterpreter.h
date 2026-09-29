@@ -22,10 +22,10 @@ public:
     XeusInterpreter() = delete;
     XeusInterpreter(XeusInterpreter& xeusInterpreter) = delete;
     XeusInterpreter(XeusInterpreter&& xeusInterpreter) = delete;
-    XeusInterpreter(const std::string& pluginVersion);
+    explicit XeusInterpreter(std::string pluginVersion);
     ~XeusInterpreter() override = default;
 
-private:
+protected:
     void configure_impl() override;
 
     void execute_request_impl(send_reply_callback cb,
