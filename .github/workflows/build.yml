@@ -17,7 +17,7 @@ jobs:
     steps:
     - name: Get matrix from file
       id: matrix_setup
-      uses: ManiVaultStudio/github-actions/matrix_setup@main
+      uses: ManiVaultStudio/github-actions/matrix_setup@UsePublicRulesSupport
 
   cross-platform-build:
     name: Cross platform build
@@ -56,17 +56,6 @@ jobs:
         uses: actions/setup-python@v7
         with:
           python-version: "3.13"
-
-      - name: Start ssh key agent
-        uses: webfactory/ssh-agent@v0.9.0
-        with:
-          ssh-private-key: ${{ secrets.RULESSUPPORT_DEPLOY_KEY }}
-
-      - name: Install SSH deploy key for rulessupport
-        uses: shimataro/ssh-key-action@v2
-        with:
-          key: ${{ secrets.RULESSUPPORT_DEPLOY_KEY }}
-          known_hosts: github.com AAAAB3NzaC1yc2EAAAABIwAAAQEAq2A7hRGmdnm9tUDbO9IDSwBK6TbQa+PXYPCPy6rbTrTtw7PHkccKrpp0yVhp5HdEIcKr6pLlVDBfOLX9QUsyCOV0wzfjIJNlGEYsdlLJizHhbn2mUjvSAHQqZETYP81eFzLQNnPHt4EVVUh7VfDESU84KezmD5QlWpXLmvU31/yMf+Se8xhHTvKSCZIFImWwoG6mbUoWf9nzpIoaSjB+weqqUUmpaaasXVal72J+UX2B+2RPW3RcT0eOzQgqlJL3RKrTJvdsjE3JEAvGq3lGHSZXy28G3skua2SmVi/w4yCE6gbODqnTWlg7+wC604ydGXA8VJiS5ap43JXiUFFAaQ==
      
       - name: Set vcpkg environment (Unix)
         if: "!startsWith(runner.os, 'Windows')"
@@ -108,7 +97,7 @@ jobs:
       # Build the package
       - name: Windows build
         if: startsWith(matrix.os, 'windows')
-        uses: ManiVaultStudio/github-actions/conan_windows_build@main
+        uses: ManiVaultStudio/github-actions/conan_windows_build@UsePublicRulesSupport
         with:
           conan-visual-version: ${{matrix.build-cversion}}
           conan-visual-runtime: ${{matrix.build-runtime}}
@@ -116,11 +105,10 @@ jobs:
           conan-user: ${{secrets.LKEB_UPLOAD_USER}}
           conan-password: ${{secrets.LKEB_UPLOAD_USER_PASSWORD}}
           conan-pem: ${{secrets.LKEB_UPLOAD_CERT_CHAIN}}
-          rs_ssh_key: ${{ secrets.RULESSUPPORT_DEPLOY_KEY }}
 
       - name: Linux build
         if: startsWith(matrix.os, 'ubuntu')
-        uses: ManiVaultStudio/github-actions/conan_linuxmac_build@main
+        uses: ManiVaultStudio/github-actions/conan_linuxmac_build@UsePublicRulesSupport
         with:
           conan-compiler: ${{matrix.build-compiler}}
           conan-compiler-version: ${{matrix.build-cversion}}
@@ -136,7 +124,7 @@ jobs:
 
       - name: Mac build
         if: startsWith(matrix.os, 'macos')
-        uses: ManiVaultStudio/github-actions/conan_linuxmac_build@main
+        uses: ManiVaultStudio/github-actions/conan_linuxmac_build@UsePublicRulesSupport
         with:
           conan-compiler: ${{matrix.build-compiler}}
           conan-compiler-version: ${{matrix.build-cversion}}
