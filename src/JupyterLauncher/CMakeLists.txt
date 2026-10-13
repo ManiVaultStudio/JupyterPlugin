@@ -78,8 +78,8 @@ target_include_directories(${JUPYTERLAUNCHER} PRIVATE ${md4qt_SOURCE_DIR})
 # -----------------------------------------------------------------------------
 target_compile_features(${JUPYTERLAUNCHER} PRIVATE cxx_std_${MV_JUPYTER_CXX_STANDARD})
 
-set_target_properties(${JUPYTERLAUNCHER} 
-    PROPERTIES 
+set_target_properties(${JUPYTERLAUNCHER} PROPERTIES
+    AUTOMOC ON 
     FOLDER AnalysisPlugins
 )
 

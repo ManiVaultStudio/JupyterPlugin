@@ -9,7 +9,6 @@ if(${MV_JUPYTER_USE_VCPKG} AND WIN32)
     message(STATUS "JupyterPlugins: Using vcpkg to install dependencies")
     set(VCPKG_HOST_TRIPLET "x64-windows-static-md" CACHE STRING "")
     set(VCPKG_TARGET_TRIPLET "x64-windows-static-md" CACHE STRING "")
-    set(VCPKG_LIBRARY_LINKAGE "static" CACHE STRING "")
 endif()
 
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
@@ -29,8 +28,6 @@ PROJECT("JupyterPlugins"
 # -----------------------------------------------------------------------------
 # CMake Options
 # -----------------------------------------------------------------------------
-set(CMAKE_AUTOMOC ON)
-
 # Ensures that all non-inline and inline symbols are hidden unless explicitly marked for export
 set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 set(CMAKE_VISIBILITY_INLINES_HIDDEN ON)
