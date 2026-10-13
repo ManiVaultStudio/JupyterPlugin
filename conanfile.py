@@ -112,6 +112,7 @@ class JupyterPluginConan(ConanFile):
         # Set some build options
         tc.cache_variables["MV_UNITY_BUILD"] = "ON"
         tc.cache_variables["CMAKE_CONFIGURATION_TYPES"] = "RelWithDebInfo"
+        tc.cache_variables["CMAKE_MSVC_RUNTIME_LIBRARY"] = "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL"
 
         # Use vcpkg-installed dependencies
         if self.settings.os == "Windows":

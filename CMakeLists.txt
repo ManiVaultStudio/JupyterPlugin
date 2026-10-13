@@ -4,13 +4,6 @@ option(XEUS_BUILD_STATIC_DEPENDENCIES "Xeus depends on libuuid. If that package 
 option(MV_JUPYTER_USE_VCPKG "Use vcpkg for openssl dependency" OFF)
 option(MV_JUPYTER_BUILD_TEST "Build test target for Jupyter plugin" OFF)
 
-# vcpkg library settings
-if(${MV_JUPYTER_USE_VCPKG} AND WIN32)
-    message(STATUS "JupyterPlugins: Using vcpkg to install dependencies")
-    set(VCPKG_HOST_TRIPLET "x64-windows-static-md" CACHE STRING "")
-    set(VCPKG_TARGET_TRIPLET "x64-windows-static-md" CACHE STRING "")
-endif()
-
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 include(read_plugin_version)
 read_plugin_version("${CMAKE_CURRENT_SOURCE_DIR}/src/JupyterLauncher/PluginInfo.json" PLUGIN_VERSION_MAJOR PLUGIN_VERSION_MINOR PLUGIN_VERSION_PATCH)
